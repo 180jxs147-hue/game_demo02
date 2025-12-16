@@ -14,3 +14,4 @@ class_name UnitData extends Resource
 # 修改：改为 float 类型，支持 0.5 或 1.5 这样的消耗
 @export var manpower_cost: float = 1.0 
 @export var cooldown: float = 2.0
+@export var attack_damage: float = 10.0 # <--- 新增：攻击力

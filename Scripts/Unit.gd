@@ -5,21 +5,39 @@ extends Node2D
 # 引用状态机节点
 @onready var state_chart = $StateChart
 @onready var timer = $Timer
-@onready var label = $Label
 
 # 动态属性
 var current_cooldown: float
 var visual_blocks: Array[ColorRect] = []
+var _processed_death_ids: Dictionary = {}
+
+# --- 拖拽相关变量 ---
+var is_dragging: bool = false
+var drag_offset: Vector2 = Vector2.ZERO
+var original_position: Vector2 = Vector2.ZERO # 记录拖拽前的位置，放不下去要弹回
+
+# 引用新的 Label 节点
+@onready var status_label = $StatusLabel # 记得在场景里改名
+@onready var name_label = $NameLabel     # 新加的 Label
 
 func _ready():
 	if not data: return
-	current_cooldown = data.cooldown
 	
-	# 1. 这里调用了函数，所以下面必须有定义
+	# 1. 显示名字
+	if name_label:
+		name_label.text = data.name
+		# 将名字居中显示在形状上方
+		name_label.position = Vector2(0, -20) 
+	
+	current_cooldown = data.cooldown
 	_build_visuals()
 	
-	# 2. 连接队友死亡信号 (皮洛士机制)
+	# 确保计时器没自动开始
+	timer.stop()
+	
+	# 信号连接
 	EventBus.unit_died.connect(_on_ally_died)
+	timer.timeout.connect(_on_timer_timeout)
 	
 	# 3. 连接状态机信号
 	# 请确保你的 StateChart 节点路径正确
@@ -31,13 +49,15 @@ func _ready():
 	$StateChart/Root/Dead.state_entered.connect(_on_dead_entered)
 	
 	# 4. 初始化 Timer 信号 (用于驱动 Cooldown 状态)
-	timer.timeout.connect(_on_timer_timeout)
+	# 初始时，先不启动 Timer (只有战斗开始才启动)
+	timer.stop() 
+	# 或者让状态机处于 "Preparation" 状态
 
 # --- 状态机逻辑 ---
 
 # 状态 1: 进入冷却
 func _on_cooldown_entered():
-	label.text = "CD..."
+	status_label.text = "CD..."
 	timer.start(current_cooldown)
 
 # Timer 跑完了 -> 告诉状态机 "CD结束了"
@@ -60,7 +80,7 @@ func _check_condition():
 		state_chart.send_event("act")
 	else:
 		# 缺气，等待 0.5s 后重试 (停留在 Ready 状态)
-		label.text = "缺气"
+		status_label.text = "缺气"
 		get_tree().create_timer(0.5).timeout.connect(_check_condition)
 
 # 状态 3: 执行动作
@@ -74,7 +94,7 @@ func _on_action_entered():
 # 状态 4: 死亡
 func _on_dead_entered():
 	timer.stop()
-	label.text = "X"
+	status_label.text = "X"
 	modulate = Color(0.3, 0.3, 0.3)
 	EventBus.unit_died.emit(self, global_position.x)
 
@@ -89,6 +109,8 @@ func _produce():
 func _attack():
 	var manager = get_parent().get_parent()
 	manager.modify_manpower(-data.manpower_cost)
+	var dmg = data.attack_damage if "attack_damage" in data else 10.0
+	manager.deal_damage_to_enemy(dmg)
 	_pop_text("ATK!")
 
 # --- 外部调用与辅助函数 (之前缺失的部分) ---
@@ -111,12 +133,18 @@ func check_burn(line_x: float):
 
 # 皮洛士机制
 func _on_ally_died(unit, _pos):
-	if not timer.is_stopped(): # 只有活着且不在 Dead 状态才触发
+	if unit == self:
+		return
+	var id = unit.get_instance_id()
+	if _processed_death_ids.has(id):
+		return
+	_processed_death_ids[id] = true
+	if not timer.is_stopped():
 		if "sacrifice" in data.tags:
-			current_cooldown *= 0.9
+			current_cooldown = max(0.2, current_cooldown * 0.7)
 			if timer.time_left > current_cooldown:
 				timer.start(current_cooldown)
-			label.modulate = Color.RED
+			status_label.modulate = Color.RED
 
 # 构建视觉方块 (之前缺失的函数!)
 func _build_visuals():
@@ -126,7 +154,7 @@ func _build_visuals():
 		
 		block.size = Vector2(size_val, size_val)
 		block.color = data.color
-		
+		block.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var offset = Vector2(grid_pos) * GameConst.GRID_SIZE
 		var padding = Vector2(GameConst.GRID_PADDING, GameConst.GRID_PADDING) / 2.0
 		block.position = offset + padding
@@ -134,9 +162,75 @@ func _build_visuals():
 		add_child(block)
 		visual_blocks.append(block)
 
-# 弹出文字特效 (之前缺失的函数!)
 func _pop_text(txt):
-	label.text = txt
+	status_label.text = txt
 	var t = create_tween()
-	t.tween_property(label, "position:y", -50.0, 0.1)
-	t.tween_property(label, "position:y", -40.0, 0.1)
+	# 让状态文字跳动，不要遮挡名字
+	t.tween_property(status_label, "position:y", -50.0, 0.1)
+	t.tween_property(status_label, "position:y", -40.0, 0.1)
+
+	
+#  --- 输入处理 (实现拖拽) ---
+func _unhandled_input(event):
+	# 如果战斗已经开始，禁止拖拽
+	if BattleManager.is_battle_started: return
+	
+	if event is InputEventMouseButton:
+		if event.button_index == MOUSE_BUTTON_LEFT:
+			if event.pressed:
+				_try_start_drag()
+			elif is_dragging:
+				_end_drag()
+	
+	elif event is InputEventMouseMotion and is_dragging:
+		# 跟随鼠标，并应用偏移
+		global_position = get_global_mouse_position() - drag_offset
+
+func _try_start_drag():
+	# 简单的点击检测：鼠标是否在我的“锚点”附近 (粗略检测，实际建议用Area2D)
+	# 这里为了演示简单，假设点击任何属于该单位的格子都算
+	var mouse_pos = get_global_mouse_position()
+	var my_rect = Rect2(global_position, Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE))
+	
+	# 检测是否点击到了本单位的任何一部分
+	var clicked_on_me = false
+	for grid_pos in data.grid_shape:
+		var part_pos = global_position + Vector2(grid_pos) * GameConst.GRID_SIZE
+		var part_rect = Rect2(part_pos, Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE))
+		if part_rect.has_point(mouse_pos):
+			clicked_on_me = true
+			break
+			
+	if clicked_on_me:
+		is_dragging = true
+		original_position = global_position
+		drag_offset = mouse_pos - global_position
+		z_index = 100 # 拖拽时显示在最上层
+		
+		# 拖起时，告诉 GridManager 释放我原来的位置
+		GridManager.clear_unit(self)
+
+func _end_drag():
+	is_dragging = false
+	z_index = 0
+	
+	# 1. 计算吸附位置
+	# 获取鼠标当前的格子坐标
+	var drop_grid_pos = GridManager.world_to_grid(global_position)
+	
+	# 2. 询问 GridManager 能不能放
+	if GridManager.can_place_unit(data, drop_grid_pos):
+		# A. 可以放置：吸附并注册
+		global_position = GridManager.grid_to_world(drop_grid_pos)
+		GridManager.place_unit(self, drop_grid_pos)
+		# 播放一个放置音效
+	else:
+		# B. 不能放置：弹回原位 (并重新注册原位)
+		var tween = create_tween()
+		tween.tween_property(self, "global_position", original_position, 0.2).set_trans(Tween.TRANS_CUBIC)
+		# 记得把原位置重新占回去
+		var old_grid_pos = GridManager.world_to_grid(original_position)
+		GridManager.place_unit(self, old_grid_pos)
+func start_battle():
+	# 也可以发送事件给 StateChart
+	state_chart.send_event("battle_started")

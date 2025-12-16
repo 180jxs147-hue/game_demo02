@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=3 uid="uid://bf0m5gwi3ks3n"]
+[gd_scene load_steps=7 format=3 uid="uid://bf0m5gwi3ks3n"]
 
 [ext_resource type="Script" uid="uid://6g5fjfka4775" path="res://Scripts/Unit.gd" id="1_qk68r"]
 [ext_resource type="Script" uid="uid://couw105c3bde4" path="res://addons/godot_state_charts/state_chart.gd" id="2_x1v5g"]
@@ -6,10 +6,12 @@
 [ext_resource type="Script" uid="uid://cf1nsco3w0mf6" path="res://addons/godot_state_charts/transition.gd" id="4_20lhf"]
 [ext_resource type="Script" uid="uid://cytafq8i1y8qm" path="res://addons/godot_state_charts/atomic_state.gd" id="5_uqujc"]
 
-[node name="Unit" type="Node2D"]
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_x1v5g"]
+
+[node name="Unit" type="Node2D" groups=["units"]]
 script = ExtResource("1_qk68r")
 
-[node name="Label" type="Label" parent="."]
+[node name="StatusLabel" type="Label" parent="."]
 offset_right = 40.0
 offset_bottom = 23.0
 
@@ -21,13 +23,24 @@ metadata/_custom_type_script = "uid://couw105c3bde4"
 
 [node name="Root" type="Node" parent="StateChart"]
 script = ExtResource("3_ppost")
-initial_state = NodePath("Alive")
+initial_state = NodePath("Idle")
 metadata/_custom_type_script = "uid://jk2jm1g6q853"
 
 [node name="ToDead" type="Node" parent="StateChart/Root"]
 script = ExtResource("4_20lhf")
 to = NodePath("../Dead")
 event = &"die"
+delay_in_seconds = "0.0"
+metadata/_custom_type_script = "uid://cf1nsco3w0mf6"
+
+[node name="Idle" type="Node" parent="StateChart/Root"]
+script = ExtResource("5_uqujc")
+metadata/_custom_type_script = "uid://cytafq8i1y8qm"
+
+[node name="Transition" type="Node" parent="StateChart/Root/Idle"]
+script = ExtResource("4_20lhf")
+to = NodePath("../../Alive")
+event = &"battle_started"
 delay_in_seconds = "0.0"
 metadata/_custom_type_script = "uid://cf1nsco3w0mf6"
 
@@ -71,3 +84,15 @@ metadata/_custom_type_script = "uid://cf1nsco3w0mf6"
 [node name="Dead" type="Node" parent="StateChart/Root"]
 script = ExtResource("5_uqujc")
 metadata/_custom_type_script = "uid://cytafq8i1y8qm"
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("RectangleShape2D_x1v5g")
+
+[node name="NameLabel" type="Label" parent="."]
+z_index = 20
+offset_right = 40.0
+offset_bottom = 23.0
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 12

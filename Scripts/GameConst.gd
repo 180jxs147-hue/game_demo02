@@ -1,8 +1,11 @@
 class_name GameConst
 
-# 每一个格子的像素大小
 const GRID_SIZE: int = 64
-# 格子之间的视觉缝隙
 const GRID_PADDING: int = 4
-# 战场右边界 (战线开始的位置)
-const BATTLE_FIELD_WIDTH: float = 900.0
+
+# 战场配置 (可扩展性：修改这里即可改变战场大小)
+const MAP_COLUMNS: int = 4 # 宽 12 格
+const MAP_ROWS: int = 2     # 高 8 格
+
+# 计算战场总像素宽度 (用于战线判定)
+const BATTLE_FIELD_WIDTH: float = MAP_COLUMNS * GRID_SIZE
