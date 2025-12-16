@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://wkd2p00ti4vh"]
+
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_pytha"]
+
+[resource]
+script = ExtResource("1_pytha")
+name = "士兵"
+color = Color(0.5890956, 0.5890956, 0.5890956, 1)
+metadata/_custom_type_script = "uid://eret7x2tfet4"

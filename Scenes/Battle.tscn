@@ -1,3 +1,48 @@
-[gd_scene format=3 uid="uid://c1k11wlkwvsqm"]
+[gd_scene load_steps=6 format=3 uid="uid://c1k11wlkwvsqm"]
+
+[ext_resource type="Script" uid="uid://dv6ra6rxgdm5g" path="res://Scripts/BattleManager.gd" id="1_p46lj"]
+[ext_resource type="PackedScene" uid="uid://bf0m5gwi3ks3n" path="res://Scenes/Unit.tscn" id="1_wvl2i"]
+[ext_resource type="Resource" uid="uid://wkd2p00ti4vh" path="res://Resources/DataFiles/soldier.tres" id="2_1samx"]
+[ext_resource type="Resource" uid="uid://c8ewqmbtabew2" path="res://Resources/DataFiles/Pyrrhus.tres" id="3_p46lj"]
+[ext_resource type="Resource" uid="uid://clvtqjq78277n" path="res://Resources/DataFiles/quarter.tres" id="4_8teo4"]
 
 [node name="Battle" type="Node2D"]
+script = ExtResource("1_p46lj")
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="ManpowerLabel" type="Label" parent="CanvasLayer"]
+offset_right = 40.0
+offset_bottom = 23.0
+
+[node name="UnitsContainer" type="Node2D" parent="."]
+
+[node name="Unit" parent="UnitsContainer" instance=ExtResource("1_wvl2i")]
+position = Vector2(405, 167)
+data = ExtResource("2_1samx")
+
+[node name="Unit2" parent="UnitsContainer" instance=ExtResource("1_wvl2i")]
+position = Vector2(302, 300)
+data = ExtResource("2_1samx")
+
+[node name="Unit5" parent="UnitsContainer" instance=ExtResource("1_wvl2i")]
+position = Vector2(412, 292)
+data = ExtResource("2_1samx")
+
+[node name="Unit6" parent="UnitsContainer" instance=ExtResource("1_wvl2i")]
+position = Vector2(299, 166)
+data = ExtResource("2_1samx")
+
+[node name="Unit3" parent="UnitsContainer" instance=ExtResource("1_wvl2i")]
+position = Vector2(175, 166)
+data = ExtResource("3_p46lj")
+
+[node name="Unit4" parent="UnitsContainer" instance=ExtResource("1_wvl2i")]
+position = Vector2(172, 298)
+data = ExtResource("4_8teo4")
+
+[node name="BattleLine" type="ColorRect" parent="."]
+custom_minimum_size = Vector2(2, 1000)
+offset_right = 10.0
+offset_bottom = 1000.0
+color = Color(0.77096003, 0, 0.114372455, 1)
