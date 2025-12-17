@@ -18,7 +18,7 @@ var max_army_hp: float = 1000.0
 var enemy_hp: float = 1000.0 
 var max_enemy_hp: float = 1000.0
 
-@onready var battle_line = $BattleLine
+@onready var battle_line = $Battlefield/BattleLine
 
 func _ready():
 	is_battle_started = false
@@ -43,7 +43,7 @@ func _process(delta):
 	battle_line.position.x = target_x
 	
 	# 3. 检查单位被吞没
-	for unit in $UnitsContainer.get_children():
+	for unit in $Battlefield/UnitsContainer.get_children():
 		if unit.has_method("check_burn"):
 			unit.check_burn(target_x)
 			

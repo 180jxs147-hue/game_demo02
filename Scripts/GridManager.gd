@@ -46,6 +46,6 @@ func clear_unit(unit: Node2D):
 func world_to_grid(world_pos: Vector2) -> Vector2i:
 	return Vector2i(world_pos / GameConst.GRID_SIZE)
 
-# 辅助：网格坐标 -> 世界坐标 (吸附后的位置)
+# 这里返回的也是相对坐标
 func grid_to_world(grid_pos: Vector2i) -> Vector2:
 	return Vector2(grid_pos) * GameConst.GRID_SIZE

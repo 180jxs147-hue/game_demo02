@@ -6,4 +6,5 @@
 script = ExtResource("1_pytha")
 name = "士兵"
 color = Color(0.5890956, 0.5890956, 0.5890956, 1)
+attack_damage = 30.0
 metadata/_custom_type_script = "uid://eret7x2tfet4"

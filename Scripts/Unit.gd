@@ -2,6 +2,7 @@ extends Node2D
 
 @export var data: UnitData
 
+var battle_manager: BattleManager
 # 引用状态机节点
 @onready var state_chart = $StateChart
 @onready var timer = $Timer
@@ -14,15 +15,21 @@ var _processed_death_ids: Dictionary = {}
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
-var original_position: Vector2 = Vector2.ZERO # 记录拖拽前的位置，放不下去要弹回
+var original_local_pos: Vector2 = Vector2.ZERO # 记录拖拽前的位置，放不下去要弹回
 
 # 引用新的 Label 节点
 @onready var status_label = $StatusLabel # 记得在场景里改名
 @onready var name_label = $NameLabel     # 新加的 Label
 
 func _ready():
+	var node = self
+	while node:
+		if node is BattleManager:
+			battle_manager = node
+			break
+		node = node.get_parent()
+		
 	if not data: return
-	
 	# 1. 显示名字
 	if name_label:
 		name_label.text = data.name
@@ -75,7 +82,7 @@ func _check_condition():
 		return
 
 	# B. 消耗类单位
-	var manager = get_parent().get_parent()
+	var manager = battle_manager
 	if manager.current_manpower >= data.manpower_cost:
 		state_chart.send_event("act")
 	else:
@@ -101,13 +108,13 @@ func _on_dead_entered():
 # --- 业务逻辑 ---
 
 func _produce():
-	var manager = get_parent().get_parent()
+	var manager = battle_manager
 	var amount = absf(data.manpower_cost)
 	manager.modify_manpower(amount)
 	_pop_text("+%.1f" % amount)
 
 func _attack():
-	var manager = get_parent().get_parent()
+	var manager = battle_manager
 	manager.modify_manpower(-data.manpower_cost)
 	var dmg = data.attack_damage if "attack_damage" in data else 10.0
 	manager.deal_damage_to_enemy(dmg)
@@ -203,7 +210,7 @@ func _try_start_drag():
 			
 	if clicked_on_me:
 		is_dragging = true
-		original_position = global_position
+		original_local_pos = global_position
 		drag_offset = mouse_pos - global_position
 		z_index = 100 # 拖拽时显示在最上层
 		
@@ -214,23 +221,39 @@ func _end_drag():
 	is_dragging = false
 	z_index = 0
 	
-	# 1. 计算吸附位置
-	# 获取鼠标当前的格子坐标
-	var drop_grid_pos = GridManager.world_to_grid(global_position)
+	# --- 核心修改开始 ---
 	
-	# 2. 询问 GridManager 能不能放
+	# 1. 获取鼠标当前的世界坐标
+	# (global_position 是单位当前的绝对位置)
+	var mouse_world_pos = global_position
+	
+	# 2. 将世界坐标转换为 "UnitsContainer" 内部的本地坐标
+	# UnitsContainer 是 Unit 的父节点
+	var local_pos = get_parent().to_local(mouse_world_pos)
+	
+	# 3. 使用本地坐标去计算它在第几个格子
+	# GridManager 只需要知道 "相对于战场原点" 的位置
+	var drop_grid_pos = GridManager.world_to_grid(local_pos)
+	
+	# --- 核心修改结束 ---
+	
+	# 后续逻辑保持不变
 	if GridManager.can_place_unit(data, drop_grid_pos):
-		# A. 可以放置：吸附并注册
-		global_position = GridManager.grid_to_world(drop_grid_pos)
 		GridManager.place_unit(self, drop_grid_pos)
-		# 播放一个放置音效
+		
+		# 吸附时，GridManager 返回的是相对于战场的本地坐标
+		# 我们直接赋值给 position (position 属性本身就是本地坐标)
+		position = GridManager.grid_to_world(drop_grid_pos)
 	else:
-		# B. 不能放置：弹回原位 (并重新注册原位)
+		# 失败弹回
 		var tween = create_tween()
-		tween.tween_property(self, "global_position", original_position, 0.2).set_trans(Tween.TRANS_CUBIC)
-		# 记得把原位置重新占回去
-		var old_grid_pos = GridManager.world_to_grid(original_position)
+		# 这里用 position 而不是 global_position，因为我们已经在父节点坐标系内了
+		tween.tween_property(self, "position", original_local_pos, 0.2)
+		
+		# 占回原位
+		var old_grid_pos = GridManager.world_to_grid(original_local_pos)
 		GridManager.place_unit(self, old_grid_pos)
 func start_battle():
 	# 也可以发送事件给 StateChart
 	state_chart.send_event("battle_started")
+	
