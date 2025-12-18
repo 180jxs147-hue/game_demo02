@@ -49,3 +49,7 @@ func world_to_grid(world_pos: Vector2) -> Vector2i:
 # 这里返回的也是相对坐标
 func grid_to_world(grid_pos: Vector2i) -> Vector2:
 	return Vector2(grid_pos) * GameConst.GRID_SIZE
+
+func is_inside_map(grid_pos: Vector2i) -> bool:
+	return grid_pos.x >= 0 and grid_pos.x < GameConst.MAP_COLUMNS and \
+		   grid_pos.y >= 0 and grid_pos.y < GameConst.MAP_ROWS

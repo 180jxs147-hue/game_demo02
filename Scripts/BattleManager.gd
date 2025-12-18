@@ -4,6 +4,7 @@ class_name BattleManager extends Node2D
 @export var left_hp_bar: ProgressBar
 @export var right_hp_bar: ProgressBar
 @export var manpower_label: Label
+@export var units_container: Node2D  # <--- 确保这一行存在，且名字一字不差
 
 # --- 战斗参数 ---
 static var is_battle_started: bool = false
@@ -28,6 +29,9 @@ func _ready():
 	if left_hp_bar: left_hp_bar.max_value = max_army_hp
 	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
 	_update_ui()
+	
+	# 确保 _arrange_bench 在节点就绪后安全调用
+	call_deferred("_arrange_bench")
 
 func _process(delta):
 	if not is_battle_started: return
@@ -87,3 +91,40 @@ func _on_start_button_pressed():
 
 func _on_button_pressed() -> void:
 	pass # Replace with function body.
+
+func _arrange_bench():
+	# 如果 units_container 没赋值，尝试自己找一下
+	if not units_container:
+		units_container = $Battlefield/UnitsContainer
+		
+	if not units_container:
+		print("Error: units_container not found in BattleManager")
+		return
+
+	# 定义备战区的起始位置 (相对于 Battlefield 节点)
+	var bench_rect = $Battlefield/ColorRect
+	if bench_rect:
+		# 让备战区背景框也自动适配位置
+		bench_rect.position.y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 20
+		bench_rect.size.x = GameConst.BATTLE_FIELD_WIDTH + 40
+		bench_rect.position.x = -20 # 稍微往左一点，居中好看
+
+	var start_x = 20.0
+	var start_y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 40.0 # 地图下方 40 像素
+	var gap = 100.0 # 每个兵种之间的间隔
+	var index = 0
+	for unit in units_container.get_children():
+		# 只有那些没有部署在格子里的单位，才需要排队
+		# 我们先假设所有单位都要排队，然后 Unit 脚本自己决定要不要听
+		# 或者更智能一点：先检查 unit.is_deployed (如果能访问到)
+		if unit.get("is_deployed") == true:
+			continue
+			
+		# 计算该单位应该在哪
+		var target_pos = Vector2(start_x + index * gap, start_y)
+		# --- 核心操作 ---
+		# 检查这个单位脚本里有没有 update_bench_pos 这个函数
+		if unit.has_method("update_bench_pos"):
+			# 有的话，就调用它，把目标坐标传过去
+			unit.update_bench_pos(target_pos)        
+		index += 1

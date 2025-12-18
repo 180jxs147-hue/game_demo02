@@ -15,11 +15,15 @@ var _processed_death_ids: Dictionary = {}
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
-var original_local_pos: Vector2 = Vector2.ZERO # 记录拖拽前的位置，放不下去要弹回
 
 # 引用新的 Label 节点
 @onready var status_label = $StatusLabel # 记得在场景里改名
 @onready var name_label = $NameLabel     # 新加的 Label
+
+# --- 新增状态变量 ---
+var is_deployed: bool = false      # 是否在军阵中
+var bench_position: Vector2        # 备战区的坐标（老家）
+var stored_grid_pos: Vector2i      # 上一次合法的格子坐标（用于手滑弹回）
 
 func _ready():
 	var node = self
@@ -37,6 +41,10 @@ func _ready():
 		name_label.position = Vector2(0, -20) 
 	
 	current_cooldown = data.cooldown
+	 # 1. 记录初始位置作为"老家" (假设你在编辑器里把它们放在了格子外面)
+	bench_position = position
+	is_deployed = false # 默认未部署
+
 	_build_visuals()
 	
 	# 确保计时器没自动开始
@@ -58,8 +66,19 @@ func _ready():
 	# 4. 初始化 Timer 信号 (用于驱动 Cooldown 状态)
 	# 初始时，先不启动 Timer (只有战斗开始才启动)
 	timer.stop() 
-	# 或者让状态机处于 "Preparation" 状态
-
+	
+	# 5. 尝试在当前位置自动部署
+	var start_grid_pos = GridManager.world_to_grid(position)
+	# 检查是否在地图内且不重叠
+	# 注意：GameConst.MAP_ROWS 已经增加，现在 y=233 应该在地图内了
+	if GridManager.can_place_unit(data, start_grid_pos):
+		_deploy_to_grid(start_grid_pos)
+	else:
+		# _return_to_bench() # 无法部署则进入备战状态
+		# 此时 bench_position 还没被 BattleManager 设置，所以先不乱跑
+		# 等 BattleManager._arrange_bench() 调用我的 update_bench_pos 时，我自然会归位
+		is_deployed = false
+		modulate = Color(0.7, 0.7, 0.7, 1)
 # --- 状态机逻辑 ---
 
 # 状态 1: 进入冷却
@@ -122,9 +141,16 @@ func _attack():
 
 # --- 外部调用与辅助函数 (之前缺失的部分) ---
 
+# --- 修改 1: 战斗相关函数加锁 ---
+# 只有部署了的单位才准打架、挨打
+
+func start_battle():
+	if not is_deployed: return # <--- 加锁
+	state_chart.send_event("battle_started")
+
 # 战线判定 (由 BattleManager 调用)
 func check_burn(line_x: float):
-	# 视觉变灰逻辑
+	if not is_deployed: return # <--- 加锁，备战区不会被烧死
 	for i in range(visual_blocks.size()):
 		var block = visual_blocks[i]
 		var relative_pos = data.grid_shape[i]
@@ -196,8 +222,8 @@ func _unhandled_input(event):
 func _try_start_drag():
 	# 简单的点击检测：鼠标是否在我的“锚点”附近 (粗略检测，实际建议用Area2D)
 	# 这里为了演示简单，假设点击任何属于该单位的格子都算
+	modulate = Color(1.2, 1.2, 1.2, 1)
 	var mouse_pos = get_global_mouse_position()
-	var my_rect = Rect2(global_position, Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE))
 	
 	# 检测是否点击到了本单位的任何一部分
 	var clicked_on_me = false
@@ -210,12 +236,12 @@ func _try_start_drag():
 			
 	if clicked_on_me:
 		is_dragging = true
-		original_local_pos = global_position
 		drag_offset = mouse_pos - global_position
 		z_index = 100 # 拖拽时显示在最上层
 		
-		# 拖起时，告诉 GridManager 释放我原来的位置
-		GridManager.clear_unit(self)
+		# 拖起时，如果在格子里，要清除占用
+		if is_deployed:
+			GridManager.clear_unit(self)
 
 func _end_drag():
 	is_dragging = false
@@ -237,23 +263,53 @@ func _end_drag():
 	
 	# --- 核心修改结束 ---
 	
-	# 后续逻辑保持不变
-	if GridManager.can_place_unit(data, drop_grid_pos):
-		GridManager.place_unit(self, drop_grid_pos)
-		
-		# 吸附时，GridManager 返回的是相对于战场的本地坐标
-		# 我们直接赋值给 position (position 属性本身就是本地坐标)
-		position = GridManager.grid_to_world(drop_grid_pos)
+	# 2. 核心判断逻辑
+	if GridManager.is_inside_map(drop_grid_pos):
+		# Case A: 鼠标在地图范围内
+		if GridManager.can_place_unit(data, drop_grid_pos):
+			# A1: 位置合法 -> 部署成功！
+			_deploy_to_grid(drop_grid_pos)
+		else:
+			# A2: 位置重叠/非法 -> 弹回上一次的位置
+			_revert_position()
 	else:
-		# 失败弹回
-		var tween = create_tween()
-		# 这里用 position 而不是 global_position，因为我们已经在父节点坐标系内了
-		tween.tween_property(self, "position", original_local_pos, 0.2)
-		
-		# 占回原位
-		var old_grid_pos = GridManager.world_to_grid(original_local_pos)
-		GridManager.place_unit(self, old_grid_pos)
-func start_battle():
-	# 也可以发送事件给 StateChart
-	state_chart.send_event("battle_started")
+		# Case B: 鼠标在地图范围外 -> 撤回备战区
+		_return_to_bench()
 	
+# 辅助：部署到格子
+func _deploy_to_grid(grid_pos: Vector2i):
+	GridManager.place_unit(self, grid_pos)
+	position = GridManager.grid_to_world(grid_pos)
+	is_deployed = true
+	stored_grid_pos = grid_pos # 记住这个新位置，下次手滑可以弹回来
+	
+	# 视觉反馈：恢复正常亮度
+	modulate = Color(1, 1, 1, 1)
+
+# 辅助：回备战区
+func _return_to_bench():
+	var tween = create_tween()
+	tween.tween_property(self, "position", bench_position, 0.2)
+	is_deployed = false
+	
+	# 视觉反馈：变暗一点，表示未激活
+	modulate = Color(0.7, 0.7, 0.7, 1)
+
+# 辅助：弹回上一次状态
+func _revert_position():
+	if is_deployed:
+		# 如果本来就在格子里，只是挪窝失败了 -> 回原来的格子
+		_deploy_to_grid(stored_grid_pos)
+	else:
+		# 如果本来在备战区，想上阵失败了 -> 回备战区
+		_return_to_bench()
+		
+func update_bench_pos(new_pos: Vector2):
+	# 1. 更新内部记录的“老家”坐标
+	bench_position = new_pos
+	# 2. 实际移动到新位置
+	position = new_pos
+	# 3. 既然回到了备战区，肯定就是未部署状态
+	is_deployed = false
+	# 4. 视觉反馈：变暗
+	modulate = Color(0.7, 0.7, 0.7, 1)

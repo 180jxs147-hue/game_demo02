@@ -75,23 +75,23 @@ script = ExtResource("6_8teo4")
 [node name="UnitsContainer" type="Node2D" parent="Battlefield"]
 
 [node name="Unit" parent="Battlefield/UnitsContainer" instance=ExtResource("1_wvl2i")]
-position = Vector2(196, 106)
+position = Vector2(379, 430)
 data = ExtResource("2_1samx")
 
 [node name="Unit2" parent="Battlefield/UnitsContainer" instance=ExtResource("1_wvl2i")]
-position = Vector2(196, 228)
+position = Vector2(261, 430)
 data = ExtResource("2_1samx")
 
 [node name="Unit5" parent="Battlefield/UnitsContainer" instance=ExtResource("1_wvl2i")]
-position = Vector2(253, 100)
+position = Vector2(157, 430)
 data = ExtResource("2_1samx")
 
 [node name="Unit3" parent="Battlefield/UnitsContainer" instance=ExtResource("1_wvl2i")]
-position = Vector2(51, 107)
+position = Vector2(48, 435)
 data = ExtResource("3_p46lj")
 
 [node name="Unit4" parent="Battlefield/UnitsContainer" instance=ExtResource("1_wvl2i")]
-position = Vector2(55, 233)
+position = Vector2(309, 440)
 data = ExtResource("4_8teo4")
 
 [node name="BattleLine" type="ColorRect" parent="Battlefield"]
@@ -99,5 +99,13 @@ custom_minimum_size = Vector2(2, 1000)
 offset_right = 3.0
 offset_bottom = 1000.0
 color = Color(0.77096003, 0, 0.114372455, 1)
+
+[node name="ColorRect" type="ColorRect" parent="Battlefield"]
+offset_left = 13.0
+offset_top = 368.0
+offset_right = 741.0
+offset_bottom = 487.0
+mouse_filter = 2
+color = Color(0.5489626, 0.5489626, 0.54896253, 0.4117647)
 
 [connection signal="pressed" from="CanvasLayer/HUD/StartButton" to="." method="_on_start_button_pressed"]
