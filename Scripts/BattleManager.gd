@@ -5,6 +5,11 @@ class_name BattleManager extends Node2D
 @export var right_hp_bar: ProgressBar
 @export var manpower_label: Label
 @export var units_container: Node2D  # <--- 确保这一行存在，且名字一字不差
+@export var initial_roster: Array[Resource] = [] # 初始自带的卡牌 (在编辑器里填 UnitData)
+@export var player_library: CardLibrary # 玩家拥有的卡牌库（用于持久化存储）
+
+# --- 内部引用 ---
+var unit_scene = preload("res://Scenes/Unit.tscn")
 
 # --- 战斗参数 ---
 static var is_battle_started: bool = false
@@ -29,9 +34,78 @@ func _ready():
 	if left_hp_bar: left_hp_bar.max_value = max_army_hp
 	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
 	_update_ui()
+
+	# --- 动态生成初始阵容 ---
+	if not units_container:
+		units_container = $Battlefield/UnitsContainer
+		
+	if units_container and initial_roster.size() > 0:
+		# 如果配置了初始阵容，先清空场景里摆烂的（可选，这里我选择追加，或者你可以 uncomment 下面这行）
+		# for child in units_container.get_children(): child.queue_free()
+		
+		for data in initial_roster:
+			spawn_unit(data)
 	
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
+
+	# 自动加载库中的卡牌到初始阵容（如果配置了）
+	if player_library:
+		print("Loaded player library with ", player_library.collected_cards.size(), " cards.")
+		# 只有在游戏开始时，才把库里的卡加进战斗
+		for card_data in player_library.collected_cards:
+			spawn_unit(card_data)
+
+func _input(event):
+	# --- 调试功能：按 D 键随机增加一个兵 ---
+	if event is InputEventKey and event.pressed and event.keycode == KEY_D:
+		_debug_add_random_unit()
+		
+	# --- 调试功能：按 A 键增加一张卡到库里并保存 ---
+	if event is InputEventKey and event.pressed and event.keycode == KEY_A:
+		_debug_add_card_to_library()
+
+func _debug_add_random_unit() -> UnitData:
+	var random_datas = [
+		preload("res://Resources/DataFiles/soldier.tres"),
+		preload("res://Resources/DataFiles/Pyrrhus.tres"),
+		preload("res://Resources/DataFiles/quarter.tres")
+	]
+	var data = random_datas.pick_random()
+	spawn_unit(data)
+	print("Debug: Added unit ", data.name)
+	return data
+
+func _debug_add_card_to_library():
+	if not player_library:
+		print("Error: No PlayerLibrary assigned to BattleManager!")
+		return
+		
+	# 随机生成一个（这里复用生成逻辑，但不一定非要生成实体）
+	var random_datas = [
+		preload("res://Resources/DataFiles/soldier.tres"),
+		preload("res://Resources/DataFiles/Pyrrhus.tres"),
+		preload("res://Resources/DataFiles/quarter.tres")
+	]
+	var data = random_datas.pick_random()
+	
+	# 添加到库
+	player_library.collected_cards.append(data)
+	
+	# 保存到磁盘
+	var save_path = player_library.resource_path
+	if save_path.is_empty():
+		save_path = "res://Resources/PlayerLibrary.tres"
+		
+	var error = ResourceSaver.save(player_library, save_path)
+	if error == OK:
+		print("Debug: Added ", data.name, " to library and saved to ", save_path)
+		print("Current library size: ", player_library.collected_cards.size())
+		
+		# 顺便也在战场上生成一个，让你看到效果
+		spawn_unit(data)
+	else:
+		print("Error saving library: ", error)
 
 func _process(delta):
 	if not is_battle_started: return
@@ -88,6 +162,29 @@ func _on_start_button_pressed():
 	# 激活所有单位
 	# 告诉所有 Unit 开始 Timer
 	get_tree().call_group("units", "start_battle")
+
+# 动态生成单位
+func spawn_unit(data: Resource):
+	if not unit_scene:
+		return
+		
+	var new_unit = unit_scene.instantiate()
+	new_unit.data = data
+	# 默认设为未部署
+	new_unit.is_deployed = false
+	new_unit.spawned_via_script = true # 标记为脚本生成
+	
+	if not units_container:
+		units_container = $Battlefield/UnitsContainer
+		
+	units_container.add_child(new_unit)
+	
+	# 重新排列备战区
+	# 注意：如果是批量生成，建议生成完再调一次，而不是每生成一个调一次
+	# 这里为了简单，每次都调，但在 _ready 里我们只最后调一次
+	if is_inside_tree(): # 确保我们在树里
+		# 使用 call_deferred 避免在同一帧多次重排造成性能浪费（虽然这里很简单）
+		call_deferred("_arrange_bench")
 
 func _on_button_pressed() -> void:
 	pass # Replace with function body.

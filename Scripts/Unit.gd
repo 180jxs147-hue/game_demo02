@@ -25,6 +25,9 @@ var is_deployed: bool = false      # 是否在军阵中
 var bench_position: Vector2        # 备战区的坐标（老家）
 var stored_grid_pos: Vector2i      # 上一次合法的格子坐标（用于手滑弹回）
 
+# --- 生成控制 ---
+var spawned_via_script: bool = false # 如果是代码生成的，默认不去尝试部署
+
 func _ready():
 	var node = self
 	while node:
@@ -67,18 +70,21 @@ func _ready():
 	# 初始时，先不启动 Timer (只有战斗开始才启动)
 	timer.stop() 
 	
-	# 5. 尝试在当前位置自动部署
-	var start_grid_pos = GridManager.world_to_grid(position)
-	# 检查是否在地图内且不重叠
-	# 注意：GameConst.MAP_ROWS 已经增加，现在 y=233 应该在地图内了
-	if GridManager.can_place_unit(data, start_grid_pos):
-		_deploy_to_grid(start_grid_pos)
+	# 5. 尝试在当前位置自动部署 (仅限非脚本生成的单位)
+	if not spawned_via_script:
+		var start_grid_pos = GridManager.world_to_grid(position)
+		# 检查是否在地图内且不重叠
+		if GridManager.can_place_unit(data, start_grid_pos):
+			_deploy_to_grid(start_grid_pos)
+		else:
+			# 无法部署则进入备战状态
+			is_deployed = false
+			modulate = Color(0.7, 0.7, 0.7, 1)
 	else:
-		# _return_to_bench() # 无法部署则进入备战状态
-		# 此时 bench_position 还没被 BattleManager 设置，所以先不乱跑
-		# 等 BattleManager._arrange_bench() 调用我的 update_bench_pos 时，我自然会归位
+		# 脚本生成的，直接进入备战状态
 		is_deployed = false
 		modulate = Color(0.7, 0.7, 0.7, 1)
+
 # --- 状态机逻辑 ---
 
 # 状态 1: 进入冷却
