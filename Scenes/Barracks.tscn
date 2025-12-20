@@ -1,7 +1,9 @@
-[gd_scene load_steps=3 format=3 uid="uid://c7yq8x2l5q2m"]
+[gd_scene load_steps=5 format=3 uid="uid://c7yq8x2l5q2m"]
 
 [ext_resource type="Script" path="res://Scripts/Barracks.gd" id="1_barracks"]
 [ext_resource type="Resource" path="res://Resources/PlayerLibrary.tres" id="2_library"]
+[ext_resource type="Script" path="res://Scripts/ShapePreview.gd" id="3_shape"]
+[ext_resource type="Resource" path="res://Resources/UnitDatabase.tres" id="4_unit_db"]
 
 [node name="Barracks" type="Control"]
 layout_mode = 3
@@ -12,6 +14,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_barracks")
 player_library = ExtResource("2_library")
+unit_database = ExtResource("4_unit_db")
 
 [node name="ColorRect" type="ColorRect" parent="."]
 layout_mode = 1
@@ -22,52 +25,206 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.2, 0.2, 0.2, 1)
 
-[node name="Label" type="Label" parent="."]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -100.0
-offset_top = 30.0
-offset_right = 100.0
-offset_bottom = 75.0
-grow_horizontal = 2
-theme_override_font_sizes/font_size = 32
-text = "我的军营"
-horizontal_alignment = 1
-
-[node name="ScrollContainer" type="ScrollContainer" parent="."]
+[node name="RootLayout" type="HBoxContainer" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 50.0
-offset_top = 100.0
-offset_right = -50.0
-offset_bottom = -100.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="GridContainer" type="GridContainer" parent="ScrollContainer"]
-layout_mode = 2
-theme_override_constants/h_separation = 20
-theme_override_constants/v_separation = 20
-columns = 6
-
-[node name="BackButton" type="Button" parent="."]
-layout_mode = 1
-anchors_preset = 7
-anchor_left = 0.5
-anchor_top = 1.0
-anchor_right = 0.5
-anchor_bottom = 1.0
-offset_left = -60.0
-offset_top = -80.0
-offset_right = 60.0
+offset_left = 30.0
+offset_top = 30.0
+offset_right = -30.0
 offset_bottom = -30.0
 grow_horizontal = 2
-grow_vertical = 0
+grow_vertical = 2
+theme_override_constants/separation = 18
+
+[node name="Sidebar" type="PanelContainer" parent="RootLayout"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+
+[node name="SidebarVBox" type="VBoxContainer" parent="RootLayout/Sidebar"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="TitleLabel" type="Label" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
 theme_override_font_sizes/font_size = 24
+text = "图鉴"
+horizontal_alignment = 1
+
+[node name="CollectedButton" type="Button" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
+text = "已收集"
+
+[node name="AllUnitsButton" type="Button" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
+text = "全部兵种"
+
+[node name="TagsButton" type="Button" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
+text = "标签"
+
+[node name="Spacer" type="Control" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BackButton" type="Button" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
 text = "返回菜单"
 
-[connection signal="pressed" from="BackButton" to="." method="_on_back_button_pressed"]
+[node name="Content" type="PanelContainer" parent="RootLayout"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ContentVBox" type="VBoxContainer" parent="RootLayout/Content"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="PageHeader" type="Label" parent="RootLayout/Content/ContentVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+text = "已收集"
+
+[node name="MainArea" type="HBoxContainer" parent="RootLayout/Content/ContentVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 12
+
+[node name="Pages" type="Control" parent="RootLayout/Content/ContentVBox/MainArea"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="CollectedPage" type="VBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Toolbar" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SearchLineEdit" type="LineEdit" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "搜索名称"
+
+[node name="TypeOptionButton" type="OptionButton" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage/Toolbar"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 4
+
+[node name="AllPage" type="VBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="Toolbar" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SearchLineEdit" type="LineEdit" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage/Toolbar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "搜索名称"
+
+[node name="TypeOptionButton" type="OptionButton" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage/Toolbar"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 4
+
+[node name="TagsPage" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="TagList" type="ItemList" parent="RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+
+[node name="CardList" type="PanelContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage/CardList"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="GridContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage/CardList/ScrollContainer"]
+layout_mode = 2
+theme_override_constants/h_separation = 16
+theme_override_constants/v_separation = 16
+columns = 4
+
+[node name="Detail" type="PanelContainer" parent="RootLayout/Content/ContentVBox/MainArea"]
+custom_minimum_size = Vector2(340, 0)
+layout_mode = 2
+
+[node name="DetailVBox" type="VBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Detail"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="NameLabel" type="Label" parent="RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 22
+text = "未选择"
+horizontal_alignment = 1
+
+[node name="CountLabel" type="Label" parent="RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
+text = ""
+horizontal_alignment = 1
+
+[node name="ShapePreview" type="Control" parent="RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox"]
+custom_minimum_size = Vector2(0, 180)
+layout_mode = 2
+size_flags_horizontal = 3
+script = ExtResource("3_shape")
+
+[node name="TagsLabel" type="RichTextLabel" parent="RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox"]
+custom_minimum_size = Vector2(0, 90)
+layout_mode = 2
+fit_content = true
+scroll_active = false
+
+[node name="StoryLabel" type="RichTextLabel" parent="RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox"]
+layout_mode = 2
+size_flags_vertical = 3
+scroll_active = true
+
+[connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/CollectedButton" to="." method="_on_collected_button_pressed"]
+[connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/AllUnitsButton" to="." method="_on_all_units_button_pressed"]
+[connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/TagsButton" to="." method="_on_tags_button_pressed"]
+[connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/BackButton" to="." method="_on_back_button_pressed"]

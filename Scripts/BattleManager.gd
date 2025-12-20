@@ -26,6 +26,7 @@ var max_army_hp: float = 1000.0
 var enemy_hp: float = 1000.0 
 var max_enemy_hp: float = 1000.0
 
+@onready var battlefield = $Battlefield
 @onready var friendly_field = $Battlefield/FriendlyField
 @onready var enemy_field = $Battlefield/EnemyField
 @onready var battle_line = $Battlefield/FriendlyField/BattleLine
@@ -42,12 +43,7 @@ func _ready():
 	get_tree().paused = false
 	is_battle_started = false
 	battle_ended = false
-	if enemy_field:
-		enemy_field.position.x = GameConst.BATTLE_FIELD_WIDTH + 200
-	if battle_line:
-		battle_line.position.x = GameConst.BATTLE_FIELD_WIDTH
-	if enemy_battle_line:
-		enemy_battle_line.position.x = 0.0
+	_apply_layout()
 	if result_overlay:
 		result_overlay.visible = false
 	
@@ -86,13 +82,41 @@ func _ready():
 	
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
+	call_deferred("_apply_layout")
 
 	# 自动加载库中的卡牌到初始阵容（如果配置了）
+	if GameState and GameState.has_method("load_player_library"):
+		var loaded = GameState.load_player_library()
+		if loaded:
+			player_library = loaded
 	if player_library:
 		print("Loaded player library with ", player_library.collected_cards.size(), " cards.")
 		# 只有在游戏开始时，才把库里的卡加进战斗
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
+
+func _apply_layout():
+	if not battlefield:
+		return
+	var viewport_size: Vector2 = get_viewport_rect().size
+	var gap: float = 160.0
+	var total_width: float = GameConst.BATTLE_FIELD_WIDTH * 2.0 + gap
+	var origin_x: float = (viewport_size.x - total_width) * 0.5
+	var origin_y: float = 90.0
+	battlefield.position = Vector2(origin_x, origin_y)
+	
+	if friendly_field:
+		friendly_field.position = Vector2.ZERO
+	if enemy_field:
+		enemy_field.position = Vector2(GameConst.BATTLE_FIELD_WIDTH + gap, 0.0)
+	
+	var line_height: float = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 320.0
+	if battle_line:
+		battle_line.position = Vector2(GameConst.BATTLE_FIELD_WIDTH, 0.0)
+		battle_line.size = Vector2(2.0, line_height)
+	if enemy_battle_line:
+		enemy_battle_line.position = Vector2(0.0, 0.0)
+		enemy_battle_line.size = Vector2(2.0, line_height)
 
 func _input(event):
 	# --- 调试功能：按 D 键随机增加一个兵 ---
@@ -107,7 +131,13 @@ func _debug_add_random_unit() -> UnitData:
 	var random_datas = [
 		preload("res://Resources/DataFiles/soldier.tres"),
 		preload("res://Resources/DataFiles/Pyrrhus.tres"),
-		preload("res://Resources/DataFiles/quarter.tres")
+		preload("res://Resources/DataFiles/quarter.tres"),
+		preload("res://Resources/DataFiles/archer.tres"),
+		preload("res://Resources/DataFiles/spear.tres"),
+		preload("res://Resources/DataFiles/cavalry.tres"),
+		preload("res://Resources/DataFiles/catapult.tres"),
+		preload("res://Resources/DataFiles/shield.tres"),
+		preload("res://Resources/DataFiles/farmer.tres")
 	]
 	var data = random_datas.pick_random()
 	spawn_unit(data)
@@ -123,7 +153,13 @@ func _debug_add_card_to_library():
 	var random_datas = [
 		preload("res://Resources/DataFiles/soldier.tres"),
 		preload("res://Resources/DataFiles/Pyrrhus.tres"),
-		preload("res://Resources/DataFiles/quarter.tres")
+		preload("res://Resources/DataFiles/quarter.tres"),
+		preload("res://Resources/DataFiles/archer.tres"),
+		preload("res://Resources/DataFiles/spear.tres"),
+		preload("res://Resources/DataFiles/cavalry.tres"),
+		preload("res://Resources/DataFiles/catapult.tres"),
+		preload("res://Resources/DataFiles/shield.tres"),
+		preload("res://Resources/DataFiles/farmer.tres")
 	]
 	var data = random_datas.pick_random()
 	
@@ -132,8 +168,8 @@ func _debug_add_card_to_library():
 	
 	# 保存到磁盘
 	var save_path = player_library.resource_path
-	if save_path.is_empty():
-		save_path = "res://Resources/PlayerLibrary.tres"
+	if save_path.is_empty() or save_path.begins_with("res://"):
+		save_path = "user://PlayerLibrary.tres"
 		
 	var error = ResourceSaver.save(player_library, save_path)
 	if error == OK:

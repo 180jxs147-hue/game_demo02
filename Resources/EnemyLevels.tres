@@ -1,10 +1,16 @@
-[gd_resource type="Resource" script_class="LevelDatabase" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="LevelDatabase" load_steps=16 format=3]
 
 [ext_resource type="Script" path="res://Resources/LevelDatabase.gd" id="1_db"]
 [ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="2_level"]
 [ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="3_spawn"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="4_soldier"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="5_pyrrhus"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="6_archer"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/spear.tres" id="7_spear"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cavalry.tres" id="8_cavalry"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/catapult.tres" id="9_catapult"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="10_shield"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/farmer.tres" id="11_farmer"]
 
 [sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_1"]
 script = ExtResource("3_spawn")
@@ -23,7 +29,50 @@ army_hp = 1000.0
 enemy_hp = 1000.0
 enemy_units = Array[Resource]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2")])
 
+[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_3"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("6_archer")
+grid_pos = Vector2i(4, 0)
+
+[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_4"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("7_spear")
+grid_pos = Vector2i(2, 0)
+
+[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_5"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("10_shield")
+grid_pos = Vector2i(3, 2)
+
+[sub_resource type="Resource" script_class="LevelConfig" id="LevelConfig_2"]
+script = ExtResource("2_level")
+level_name = "第 2 关"
+army_hp = 1100.0
+enemy_hp = 1300.0
+enemy_units = Array[Resource]([SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5")])
+
+[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_6"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("8_cavalry")
+grid_pos = Vector2i(3, 0)
+
+[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_7"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("9_catapult")
+grid_pos = Vector2i(0, 4)
+
+[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_8"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_farmer")
+grid_pos = Vector2i(5, 4)
+
+[sub_resource type="Resource" script_class="LevelConfig" id="LevelConfig_3"]
+script = ExtResource("2_level")
+level_name = "第 3 关"
+army_hp = 1200.0
+enemy_hp = 1700.0
+enemy_units = Array[Resource]([SubResource("UnitSpawn_6"), SubResource("UnitSpawn_7"), SubResource("UnitSpawn_8"), SubResource("UnitSpawn_2")])
+
 [resource]
 script = ExtResource("1_db")
-levels = Array[Resource]([SubResource("LevelConfig_1")])
-
+levels = Array[Resource]([SubResource("LevelConfig_1"), SubResource("LevelConfig_2"), SubResource("LevelConfig_3")])

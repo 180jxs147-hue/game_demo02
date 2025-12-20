@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_unit_data"]
+
+[resource]
+script = ExtResource("1_unit_data")
+name = "农夫"
+color = Color(0.2, 0.8, 0.4, 1)
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 60.0
+manpower_cost = -6.0
+cooldown = 1.6
+attack_damage = 0.0
+story = "耕作、修补、搬运。\n他们不站在战线的最前，却撑起了所有人的后方。"

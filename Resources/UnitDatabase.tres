@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="UnitDatabase" load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitDatabase.gd" id="1_db"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="2_pyrrhus"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="3_archer"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/catapult.tres" id="4_catapult"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cavalry.tres" id="5_cavalry"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/farmer.tres" id="6_farmer"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/quarter.tres" id="7_quarter"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="8_shield"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="9_soldier"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/spear.tres" id="10_spear"]
+
+[resource]
+script = ExtResource("1_db")
+units = Array[Resource]([ExtResource("9_soldier"), ExtResource("10_spear"), ExtResource("3_archer"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("2_pyrrhus")])
+story_by_path = {
+"res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",
+"res://Resources/DataFiles/archer.tres": "弓弦一响，远处便有人倒下。\n他们不擅长坚守，却擅长把敌人逼进恐惧。",
+"res://Resources/DataFiles/catapult.tres": "巨石飞过，城墙与意志一起碎裂。\n每一次装填，都是把未来投向远方。",
+"res://Resources/DataFiles/cavalry.tres": "马蹄落地，战场就开始重新书写。\n骑兵不擅长等待，他们只擅长突破。",
+"res://Resources/DataFiles/farmer.tres": "耕作、修补、搬运。\n他们不站在战线的最前，却撑起了所有人的后方。",
+"res://Resources/DataFiles/shield.tres": "盾牌举起时，退路便消失了。\n他们不一定赢，但他们让别人有机会赢。",
+"res://Resources/DataFiles/soldier.tres": "无名者，最先踏上战线。\n他们用纪律与队形，把混乱挡在身后。",
+"res://Resources/DataFiles/quarter.tres": "不显于锋刃，却决定一支军队能走多远。\n营帐里有补给、医治、休整，也有明天的计划。",
+"res://Resources/DataFiles/spear.tres": "长枪成林，脚步如一。\n他们以长度换取安全，以阵形换取胜利。"
+}

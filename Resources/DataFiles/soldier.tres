@@ -7,4 +7,5 @@ script = ExtResource("1_pytha")
 name = "士兵"
 color = Color(0.5890956, 0.5890956, 0.5890956, 1)
 attack_damage = 30.0
+story = "无名者，最先踏上战线。\n他们用纪律与队形，把混乱挡在身后。"
 metadata/_custom_type_script = "uid://eret7x2tfet4"

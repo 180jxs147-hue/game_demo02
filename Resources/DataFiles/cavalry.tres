@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_unit_data"]
+
+[resource]
+script = ExtResource("1_unit_data")
+name = "骑兵"
+color = Color(0.9, 0.6, 0.2, 1)
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+max_hp = 180.0
+manpower_cost = 4.0
+cooldown = 3.2
+attack_damage = 65.0
+story = "马蹄落地，战场就开始重新书写。\n骑兵不擅长等待，他们只擅长突破。"

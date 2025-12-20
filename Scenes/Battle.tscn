@@ -24,16 +24,26 @@ level_index = 0
 
 [node name="HUD" type="Control" parent="CanvasLayer"]
 layout_mode = 3
-anchors_preset = 0
-offset_right = 40.0
-offset_bottom = 40.0
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
 
 [node name="StartButton" type="Button" parent="CanvasLayer/HUD"]
-layout_mode = 0
-offset_left = 12.0
-offset_top = 616.0
-offset_right = 84.0
-offset_bottom = 647.0
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -80.0
+offset_top = -60.0
+offset_right = 80.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 0
 text = "开始战斗"
 
 [node name="ManpowerLabel" type="Label" parent="CanvasLayer/HUD"]
@@ -44,6 +54,7 @@ offset_left = 2.0
 offset_top = 35.0
 offset_right = 102.0
 offset_bottom = 58.0
+mouse_filter = 2
 
 [node name="LeftHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
 custom_minimum_size = Vector2(300, 20)
@@ -53,6 +64,7 @@ offset_top = 1.0
 offset_right = 321.0
 offset_bottom = 28.0
 theme_override_styles/fill = SubResource("StyleBoxLine_8teo4")
+mouse_filter = 2
 
 [node name="RightHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
 custom_minimum_size = Vector2(300, 20)
@@ -66,6 +78,7 @@ offset_right = 1110.0
 offset_bottom = 28.0
 grow_horizontal = 0
 theme_override_styles/fill = SubResource("StyleBoxLine_c5ef4")
+mouse_filter = 2
 
 [node name="ResultOverlay" type="Control" parent="CanvasLayer"]
 process_mode = 3
@@ -144,7 +157,7 @@ theme_override_font_sizes/font_size = 20
 text = "返回主菜单"
 
 [node name="Battlefield" type="Node2D" parent="."]
-position = Vector2(50, 100)
+position = Vector2(0, 90)
 
 [node name="FriendlyField" type="Node2D" parent="Battlefield"]
 
@@ -168,7 +181,7 @@ mouse_filter = 2
 color = Color(0.5489626, 0.5489626, 0.54896253, 0.4117647)
 
 [node name="EnemyField" type="Node2D" parent="Battlefield"]
-position = Vector2(520, 0)
+position = Vector2(0, 0)
 
 [node name="GridVisualizer" type="Node2D" parent="Battlefield/EnemyField"]
 script = ExtResource("6_8teo4")

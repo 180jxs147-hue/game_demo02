@@ -10,4 +10,5 @@ tags = Array[String](["sacrifice"])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(1, 0)])
 manpower_cost = 3.0
 attack_damage = 100.0
+story = "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。"
 metadata/_custom_type_script = "uid://eret7x2tfet4"

@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_unit_data"]
+
+[resource]
+script = ExtResource("1_unit_data")
+name = "投石车"
+color = Color(0.6, 0.4, 0.2, 1)
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(2, 0)])
+max_hp = 140.0
+manpower_cost = 6.0
+cooldown = 5.0
+attack_damage = 120.0
+story = "巨石飞过，城墙与意志一起碎裂。\n每一次装填，都是把未来投向远方。"

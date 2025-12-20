@@ -15,3 +15,6 @@ class_name UnitData extends Resource
 @export var manpower_cost: float = 1.0 
 @export var cooldown: float = 2.0
 @export var attack_damage: float = 10.0 # <--- 新增：攻击力
+
+@export_group("背景故事")
+@export var story: String = ""
