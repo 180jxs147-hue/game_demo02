@@ -1,10 +1,11 @@
-[gd_resource type="Resource" script_class="CardLibrary" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="CardLibrary" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_7c4xd"]
 [ext_resource type="Script" path="res://Scripts/CardLibrary.gd" id="1_library"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="3_wa5j5"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="4_iv505"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/quarter.tres" id="4_yq7w2"]
 
 [resource]
 script = ExtResource("1_library")
-collected_cards = Array[ExtResource("1_7c4xd")]([ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("4_yq7w2"), ExtResource("4_yq7w2"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5")])
+collected_cards = Array[ExtResource("1_7c4xd")]([ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("4_yq7w2"), ExtResource("4_yq7w2"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("4_iv505"), ExtResource("3_wa5j5"), ExtResource("4_iv505")])

@@ -25,10 +25,19 @@ var enemy_hp: float = 1000.0
 var max_enemy_hp: float = 1000.0
 
 @onready var battle_line = $Battlefield/BattleLine
+@onready var result_overlay = $CanvasLayer/ResultOverlay
+@onready var result_title_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/TitleLabel
+@onready var result_detail_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/DetailLabel
+
+var battle_ended: bool = false
 
 func _ready():
+	get_tree().paused = false
 	is_battle_started = false
+	battle_ended = false
 	battle_line.position.x = GameConst.BATTLE_FIELD_WIDTH
+	if result_overlay:
+		result_overlay.visible = false
 	
 	# 初始化血条最大值
 	if left_hp_bar: left_hp_bar.max_value = max_army_hp
@@ -109,7 +118,13 @@ func _debug_add_card_to_library():
 
 func _process(delta):
 	if not is_battle_started: return
-	if army_hp <= 0 or enemy_hp <= 0: return # 游戏结束
+	if battle_ended: return
+	if army_hp <= 0:
+		_end_battle(false)
+		return
+	if enemy_hp <= 0:
+		_end_battle(true)
+		return
 	
 	# 1. 敌人对我方持续造成伤害 (模拟)
 	var enemy_dps = 80.0
@@ -147,10 +162,20 @@ func _update_ui():
 	if left_hp_bar: left_hp_bar.value = army_hp
 	if right_hp_bar: right_hp_bar.value = enemy_hp
 	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
-	
-	# 简单的输赢判断打印
-	if army_hp <= 0: print("失败！阵线崩溃")
-	if enemy_hp <= 0: print("胜利！敌人被消灭")
+
+func _end_battle(victory: bool):
+	if battle_ended:
+		return
+	battle_ended = true
+	is_battle_started = false
+	get_tree().paused = true
+	if result_overlay:
+		result_overlay.visible = true
+	if result_title_label:
+		result_title_label.text = "胜利" if victory else "失败"
+	if result_detail_label:
+		var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower]
+		result_detail_label.text = detail
 
 # 按钮点击回调
 func _on_start_button_pressed():
@@ -162,6 +187,14 @@ func _on_start_button_pressed():
 	# 激活所有单位
 	# 告诉所有 Unit 开始 Timer
 	get_tree().call_group("units", "start_battle")
+
+func _on_retry_button_pressed():
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+
+func _on_menu_button_pressed():
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 # 动态生成单位
 func spawn_unit(data: Resource):
