@@ -7,6 +7,8 @@ class_name BattleManager extends Node2D
 @export var units_container: Node2D  # <--- 确保这一行存在，且名字一字不差
 @export var initial_roster: Array[Resource] = [] # 初始自带的卡牌 (在编辑器里填 UnitData)
 @export var player_library: CardLibrary # 玩家拥有的卡牌库（用于持久化存储）
+@export var level_database: LevelDatabase
+@export var level_index: int = 0
 
 # --- 内部引用 ---
 var unit_scene = preload("res://Scenes/Unit.tscn")
@@ -24,30 +26,57 @@ var max_army_hp: float = 1000.0
 var enemy_hp: float = 1000.0 
 var max_enemy_hp: float = 1000.0
 
-@onready var battle_line = $Battlefield/BattleLine
+@onready var friendly_field = $Battlefield/FriendlyField
+@onready var enemy_field = $Battlefield/EnemyField
+@onready var battle_line = $Battlefield/FriendlyField/BattleLine
+@onready var enemy_battle_line = $Battlefield/EnemyField/BattleLine
 @onready var result_overlay = $CanvasLayer/ResultOverlay
 @onready var result_title_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/TitleLabel
 @onready var result_detail_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/DetailLabel
 
 var battle_ended: bool = false
+var _has_level_enemies: bool = false
+var _enemy_occupied: Dictionary = {}
 
 func _ready():
 	get_tree().paused = false
 	is_battle_started = false
 	battle_ended = false
-	battle_line.position.x = GameConst.BATTLE_FIELD_WIDTH
+	if enemy_field:
+		enemy_field.position.x = GameConst.BATTLE_FIELD_WIDTH + 200
+	if battle_line:
+		battle_line.position.x = GameConst.BATTLE_FIELD_WIDTH
+	if enemy_battle_line:
+		enemy_battle_line.position.x = 0.0
 	if result_overlay:
 		result_overlay.visible = false
 	
+	if not units_container:
+		units_container = $Battlefield/FriendlyField/UnitsContainer
+	
+	var level: LevelConfig = null
+	if GameState:
+		level_index = GameState.selected_level_index
+	if level_database:
+		level = level_database.get_level(level_index)
+	
+	if level:
+		max_army_hp = level.army_hp
+		army_hp = max_army_hp
+		max_enemy_hp = level.enemy_hp
+		enemy_hp = max_enemy_hp
+		
+		if units_container:
+			for spawn in level.enemy_units:
+				_spawn_enemy(spawn)
+			_has_level_enemies = level.enemy_units.size() > 0
+
 	# 初始化血条最大值
 	if left_hp_bar: left_hp_bar.max_value = max_army_hp
 	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
 	_update_ui()
 
 	# --- 动态生成初始阵容 ---
-	if not units_container:
-		units_container = $Battlefield/UnitsContainer
-		
 	if units_container and initial_roster.size() > 0:
 		# 如果配置了初始阵容，先清空场景里摆烂的（可选，这里我选择追加，或者你可以 uncomment 下面这行）
 		# for child in units_container.get_children(): child.queue_free()
@@ -126,19 +155,31 @@ func _process(delta):
 		_end_battle(true)
 		return
 	
-	# 1. 敌人对我方持续造成伤害 (模拟)
-	var enemy_dps = 80.0
-	army_hp -= enemy_dps * delta
+	if not _has_level_enemies:
+		var enemy_dps = 80.0
+		army_hp -= enemy_dps * delta
 	
 	# 2. 计算战线红线位置
 	var hp_percent = army_hp / max_army_hp
-	var target_x = hp_percent * GameConst.BATTLE_FIELD_WIDTH
-	battle_line.position.x = target_x
+	var friendly_target_x = hp_percent * GameConst.BATTLE_FIELD_WIDTH
+	if battle_line:
+		battle_line.position.x = friendly_target_x
+	
+	var enemy_hp_percent = enemy_hp / max_enemy_hp
+	var enemy_target_x = (1.0 - enemy_hp_percent) * GameConst.BATTLE_FIELD_WIDTH
+	if enemy_battle_line:
+		enemy_battle_line.position.x = enemy_target_x
 	
 	# 3. 检查单位被吞没
-	for unit in $Battlefield/UnitsContainer.get_children():
+	var friendly_line_global_x = battle_line.global_position.x if battle_line else 0.0
+	for unit in $Battlefield/FriendlyField/UnitsContainer.get_children():
 		if unit.has_method("check_burn"):
-			unit.check_burn(target_x)
+			unit.check_burn(friendly_line_global_x, true)
+	
+	var enemy_line_global_x = enemy_battle_line.global_position.x if enemy_battle_line else 0.0
+	for unit in $Battlefield/EnemyField/UnitsContainer.get_children():
+		if unit.has_method("check_burn"):
+			unit.check_burn(enemy_line_global_x, false)
 			
 	_update_ui() # 每帧更新血条有点浪费，实际可优化，原型先这样
 
@@ -149,6 +190,11 @@ func deal_damage_to_enemy(amount: float):
 	enemy_hp -= amount
 	if enemy_hp < 0: enemy_hp = 0
 	# 这里可以加个飘字特效或者受击闪烁
+	_update_ui()
+
+func deal_damage_to_army(amount: float):
+	army_hp -= amount
+	if army_hp < 0: army_hp = 0
 	_update_ui()
 
 # 修改民力
@@ -196,6 +242,47 @@ func _on_menu_button_pressed():
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
+func _spawn_enemy(spawn: UnitSpawn):
+	if not spawn:
+		return
+	if not spawn.unit_data:
+		return
+	if not enemy_field:
+		return
+	var enemy_units_container = $Battlefield/EnemyField/UnitsContainer
+	if not enemy_units_container:
+		return
+	
+	var new_unit = unit_scene.instantiate()
+	new_unit.data = spawn.unit_data
+	new_unit.spawned_via_script = true
+	new_unit.faction = new_unit.Faction.ENEMY
+	enemy_units_container.add_child(new_unit)
+	
+	if _enemy_can_place(spawn.unit_data, spawn.grid_pos):
+		_enemy_mark_occupied(spawn.unit_data, spawn.grid_pos)
+		new_unit.position = GridManager.grid_to_world(spawn.grid_pos)
+		new_unit.is_deployed = true
+		new_unit.stored_grid_pos = spawn.grid_pos
+
+func _enemy_can_place(data: UnitData, grid_pos: Vector2i) -> bool:
+	for part in data.grid_shape:
+		var cell = grid_pos + part
+		if cell.x < 0 or cell.x >= GameConst.MAP_COLUMNS:
+			return false
+		if cell.y < 0 or cell.y >= GameConst.MAP_ROWS:
+			return false
+		var key = str(cell.x) + "," + str(cell.y)
+		if _enemy_occupied.has(key):
+			return false
+	return true
+
+func _enemy_mark_occupied(data: UnitData, grid_pos: Vector2i):
+	for part in data.grid_shape:
+		var cell = grid_pos + part
+		var key = str(cell.x) + "," + str(cell.y)
+		_enemy_occupied[key] = true
+
 # 动态生成单位
 func spawn_unit(data: Resource):
 	if not unit_scene:
@@ -208,7 +295,7 @@ func spawn_unit(data: Resource):
 	new_unit.spawned_via_script = true # 标记为脚本生成
 	
 	if not units_container:
-		units_container = $Battlefield/UnitsContainer
+		units_container = $Battlefield/FriendlyField/UnitsContainer
 		
 	units_container.add_child(new_unit)
 	
@@ -225,14 +312,14 @@ func _on_button_pressed() -> void:
 func _arrange_bench():
 	# 如果 units_container 没赋值，尝试自己找一下
 	if not units_container:
-		units_container = $Battlefield/UnitsContainer
+		units_container = $Battlefield/FriendlyField/UnitsContainer
 		
 	if not units_container:
 		print("Error: units_container not found in BattleManager")
 		return
 
 	# 定义备战区的起始位置 (相对于 Battlefield 节点)
-	var bench_rect = $Battlefield/ColorRect
+	var bench_rect = $Battlefield/FriendlyField/ColorRect
 	if bench_rect:
 		# 让备战区背景框也自动适配位置
 		bench_rect.position.y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 20

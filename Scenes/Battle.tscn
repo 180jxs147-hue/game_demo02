@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dv6ra6rxgdm5g" path="res://Scripts/BattleManager.gd" id="1_p46lj"]
 [ext_resource type="Resource" path="res://Resources/PlayerLibrary.tres" id="4_library"]
+[ext_resource type="Resource" path="res://Resources/EnemyLevels.tres" id="5_levels"]
 [ext_resource type="Script" uid="uid://u1q5ipdswswu" path="res://Scripts/GridPaint.gd" id="6_8teo4"]
 
 [sub_resource type="StyleBoxLine" id="StyleBoxLine_8teo4"]
@@ -16,6 +17,8 @@ left_hp_bar = NodePath("CanvasLayer/HUD/LeftHPBar")
 right_hp_bar = NodePath("CanvasLayer/HUD/RightHPBar")
 manpower_label = NodePath("CanvasLayer/HUD/ManpowerLabel")
 player_library = ExtResource("4_library")
+level_database = ExtResource("5_levels")
+level_index = 0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -143,24 +146,40 @@ text = "返回主菜单"
 [node name="Battlefield" type="Node2D" parent="."]
 position = Vector2(50, 100)
 
-[node name="GridVisualizer" type="Node2D" parent="Battlefield"]
+[node name="FriendlyField" type="Node2D" parent="Battlefield"]
+
+[node name="GridVisualizer" type="Node2D" parent="Battlefield/FriendlyField"]
 script = ExtResource("6_8teo4")
 
-[node name="UnitsContainer" type="Node2D" parent="Battlefield"]
+[node name="UnitsContainer" type="Node2D" parent="Battlefield/FriendlyField"]
 
-[node name="BattleLine" type="ColorRect" parent="Battlefield"]
+[node name="BattleLine" type="ColorRect" parent="Battlefield/FriendlyField"]
 custom_minimum_size = Vector2(2, 1000)
 offset_right = 3.0
 offset_bottom = 1000.0
 color = Color(0.77096003, 0, 0.114372455, 1)
 
-[node name="ColorRect" type="ColorRect" parent="Battlefield"]
+[node name="ColorRect" type="ColorRect" parent="Battlefield/FriendlyField"]
 offset_left = 13.0
 offset_top = 368.0
 offset_right = 741.0
 offset_bottom = 487.0
 mouse_filter = 2
 color = Color(0.5489626, 0.5489626, 0.54896253, 0.4117647)
+
+[node name="EnemyField" type="Node2D" parent="Battlefield"]
+position = Vector2(520, 0)
+
+[node name="GridVisualizer" type="Node2D" parent="Battlefield/EnemyField"]
+script = ExtResource("6_8teo4")
+
+[node name="UnitsContainer" type="Node2D" parent="Battlefield/EnemyField"]
+
+[node name="BattleLine" type="ColorRect" parent="Battlefield/EnemyField"]
+custom_minimum_size = Vector2(2, 1000)
+offset_right = 3.0
+offset_bottom = 1000.0
+color = Color(0.77096003, 0, 0.114372455, 1)
 
 [connection signal="pressed" from="CanvasLayer/HUD/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton" to="." method="_on_retry_button_pressed"]

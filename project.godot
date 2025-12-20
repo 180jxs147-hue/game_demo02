@@ -20,6 +20,7 @@ config/icon="res://icon.svg"
 EventBus="*res://AutoLoad/EventBus.gd"
 DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 GridManager="*res://Scripts/GridManager.gd"
+GameState="*res://AutoLoad/GameState.gd"
 
 [editor_plugins]
 

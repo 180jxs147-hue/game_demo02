@@ -52,4 +52,4 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
 
 func is_inside_map(grid_pos: Vector2i) -> bool:
 	return grid_pos.x >= 0 and grid_pos.x < GameConst.MAP_COLUMNS and \
-		   grid_pos.y >= 0 and grid_pos.y < GameConst.MAP_ROWS
+		grid_pos.y >= 0 and grid_pos.y < GameConst.MAP_ROWS

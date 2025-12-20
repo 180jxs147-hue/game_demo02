@@ -1,6 +1,8 @@
 extends Node2D
 
 @export var data: UnitData
+enum Faction { FRIENDLY, ENEMY }
+@export var faction: Faction = Faction.FRIENDLY
 
 var battle_manager: BattleManager
 # 引用状态机节点
@@ -44,10 +46,9 @@ func _ready():
 		name_label.position = Vector2(0, -20) 
 	
 	current_cooldown = data.cooldown
-	 # 1. 记录初始位置作为"老家" (假设你在编辑器里把它们放在了格子外面)
+	# 1. 记录初始位置作为"老家" (假设你在编辑器里把它们放在了格子外面)
 	bench_position = position
-	is_deployed = false # 默认未部署
-
+	
 	_build_visuals()
 	
 	# 确保计时器没自动开始
@@ -81,10 +82,10 @@ func _ready():
 			is_deployed = false
 			modulate = Color(0.7, 0.7, 0.7, 1)
 	else:
-		# 脚本生成的，直接进入备战状态
-		is_deployed = false
-		modulate = Color(0.7, 0.7, 0.7, 1)
-
+		if not is_deployed:
+			is_deployed = false
+			modulate = Color(0.7, 0.7, 0.7, 1)
+ 
 # --- 状态机逻辑 ---
 
 # 状态 1: 进入冷却
@@ -101,6 +102,10 @@ func _on_ready_entered():
 	_check_condition()
 
 func _check_condition():
+	if faction == Faction.ENEMY:
+		state_chart.send_event("act")
+		return
+	
 	# A. 产出类单位
 	if data.manpower_cost < 0:
 		state_chart.send_event("act")
@@ -133,6 +138,8 @@ func _on_dead_entered():
 # --- 业务逻辑 ---
 
 func _produce():
+	if faction == Faction.ENEMY:
+		return
 	var manager = battle_manager
 	var amount = absf(data.manpower_cost)
 	manager.modify_manpower(amount)
@@ -140,9 +147,12 @@ func _produce():
 
 func _attack():
 	var manager = battle_manager
-	manager.modify_manpower(-data.manpower_cost)
 	var dmg = data.attack_damage if "attack_damage" in data else 10.0
-	manager.deal_damage_to_enemy(dmg)
+	if faction == Faction.ENEMY:
+		manager.deal_damage_to_army(dmg)
+	else:
+		manager.modify_manpower(-data.manpower_cost)
+		manager.deal_damage_to_enemy(dmg)
 	_pop_text("ATK!")
 
 # --- 外部调用与辅助函数 (之前缺失的部分) ---
@@ -155,20 +165,27 @@ func start_battle():
 	state_chart.send_event("battle_started")
 
 # 战线判定 (由 BattleManager 调用)
-func check_burn(line_x: float):
+func check_burn(line_x: float, burn_from_right: bool = true):
 	if not is_deployed: return # <--- 加锁，备战区不会被烧死
 	for i in range(visual_blocks.size()):
 		var block = visual_blocks[i]
 		var relative_pos = data.grid_shape[i]
 		var block_world_x = global_position.x + (relative_pos.x * GameConst.GRID_SIZE)
 		
-		# 红线从右往左烧，如果方块X > 红线X，说明在红线右边
-		if block_world_x > line_x:
-			block.color = Color(0.2, 0.2, 0.2)
+		if burn_from_right:
+			if block_world_x > line_x:
+				block.color = Color(0.2, 0.2, 0.2)
+		else:
+			if block_world_x < line_x:
+				block.color = Color(0.2, 0.2, 0.2)
 	
 	# 死亡判定 (发送事件给状态机)
-	if global_position.x > line_x:
-		state_chart.send_event("die")
+	if burn_from_right:
+		if global_position.x > line_x:
+			state_chart.send_event("die")
+	else:
+		if global_position.x < line_x:
+			state_chart.send_event("die")
 
 # 皮洛士机制
 func _on_ally_died(unit, _pos):
@@ -213,6 +230,7 @@ func _pop_text(txt):
 func _unhandled_input(event):
 	# 如果战斗已经开始，禁止拖拽
 	if BattleManager.is_battle_started: return
+	if faction != Faction.FRIENDLY: return
 	
 	if event is InputEventMouseButton:
 		if event.button_index == MOUSE_BUTTON_LEFT:

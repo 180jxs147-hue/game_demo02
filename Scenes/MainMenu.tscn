@@ -47,6 +47,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "开始游戏"
 
+[node name="LevelSelectButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "选关"
+
 [node name="BarracksButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
@@ -60,5 +66,6 @@ theme_override_font_sizes/font_size = 24
 text = "退出"
 
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/LevelSelectButton" to="." method="_on_level_select_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/BarracksButton" to="." method="_on_barracks_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
