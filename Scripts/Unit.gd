@@ -19,6 +19,7 @@ var battle_manager: BattleManager
 
 # 动态属性
 var current_cooldown: float
+var current_hp: float
 var visual_blocks: Array[ColorRect] = []
 var _processed_death_ids: Dictionary = {}
 var _last_stand_triggered: bool = false
@@ -26,10 +27,13 @@ var _last_stand_triggered: bool = false
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
+var drag_preview: Node2D = null # 拖拽时的指示器
 
 # 引用新的 Label 节点
 @onready var status_label = $StatusLabel # 记得在场景里改名
 @onready var name_label = $NameLabel     # 新加的 Label
+var hp_bar: ColorRect # 血条
+var cooldown_bar: ColorRect # 冷却条
 
 # --- 新增状态变量 ---
 var is_deployed: bool = false      # 是否在军阵中
@@ -50,17 +54,34 @@ func _ready():
 		node = node.get_parent()
 		
 	if not data: return
-	# 1. 显示名字
-	if name_label:
-		name_label.text = data.name
-		# 将名字居中显示在形状上方
-		name_label.position = Vector2(0, -20) 
 	
 	current_cooldown = data.cooldown
+	current_hp = data.max_hp
 	# 1. 记录初始位置作为"老家" (假设你在编辑器里把它们放在了格子外面)
 	bench_position = position
 	
 	_build_visuals()
+	
+	# 2. 根据视觉包围盒调整 UI 位置
+	var bounds = _calculate_visual_bounds()
+	
+	if name_label:
+		name_label.text = data.name
+		# 居中显示在包围盒内部上方
+		var center_x = bounds.position.x + bounds.size.x / 2.0
+		# 名字放在顶部内侧 (假设 GridSize 足够大)
+		name_label.position = Vector2(center_x, bounds.position.y + 2)
+		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		# 确保文字在最上层
+		name_label.z_index = 20 
+	
+	if status_label:
+		# 状态文字放在名字下方
+		status_label.position = name_label.position + Vector2(0, 20)
+		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		status_label.z_index = 20
+	
+	_create_hp_bar(bounds)
 	
 	# 确保计时器没自动开始
 	timer.stop()
@@ -97,8 +118,97 @@ func _ready():
 			is_deployed = false
 			modulate = Color(0.7, 0.7, 0.7, 1)
  
+func _create_hp_bar(bounds: Rect2):
+	# 创建一个简易血条
+	# 修改：宽度不再横跨整个包围盒，而是固定为一个标准格子的宽度 (GameConst.GRID_SIZE - 10)
+	var bar_width = GameConst.GRID_SIZE - 10
+	var bar_height = 6.0
+	
+	# 放在包围盒内部底部，水平居中
+	var bottom_y = bounds.position.y + bounds.size.y
+	var center_x = bounds.position.x + bounds.size.x / 2.0
+	var start_x = center_x - bar_width / 2.0
+	
+	var bg = ColorRect.new()
+	bg.size = Vector2(bar_width, bar_height)
+	bg.position = Vector2(start_x, bottom_y - 14)
+	bg.color = Color(0.2, 0.2, 0.2, 0.8)
+	bg.z_index = 20 # 提高层级
+	add_child(bg)
+	
+	hp_bar = ColorRect.new()
+	hp_bar.size = bg.size
+	hp_bar.color = Color(0, 1, 0, 1) # 绿色
+	bg.add_child(hp_bar)
+	
+	# 记录最大宽度用于更新
+	hp_bar.set_meta("max_width", bar_width)
+	
+	# 创建冷却条 (放在血条下方)
+	var cd_bg = ColorRect.new()
+	cd_bg.size = Vector2(bar_width, 4.0)
+	cd_bg.position = Vector2(start_x, bottom_y - 6) # 底部留2px
+	cd_bg.color = Color(0.2, 0.2, 0.2, 0.8)
+	cd_bg.z_index = 20 # 提高层级
+	add_child(cd_bg)
+	
+	cooldown_bar = ColorRect.new()
+	cooldown_bar.size = cd_bg.size
+	cooldown_bar.size.x = 0 # 初始为空
+	cooldown_bar.color = Color(1, 1, 0, 1) # 黄色
+	cd_bg.add_child(cooldown_bar)
+	
+	cooldown_bar.set_meta("max_width", bar_width)
+
+func take_damage(amount: float):
+	if not is_deployed: return # 备战区无敌
+	if current_hp <= 0: return
+	
+	current_hp -= amount
+	_update_hp_bar()
+	
+	# 受击闪烁
+	modulate = Color(1, 0.5, 0.5)
+	var tween = create_tween()
+	tween.tween_property(self, "modulate", Color.WHITE, 0.1)
+	
+	if current_hp <= 0:
+		current_hp = 0
+		_on_death()
+
+func _update_hp_bar():
+	if not hp_bar: return
+	if not data: return
+	
+	var max_w = hp_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
+	var percent = current_hp / data.max_hp
+	hp_bar.size.x = max_w * percent
+	
+	# 血量低变红
+	if percent < 0.3:
+		hp_bar.color = Color(1, 0, 0)
+	elif percent < 0.6:
+		hp_bar.color = Color(1, 1, 0)
+	else:
+		hp_bar.color = Color(0, 1, 0)
+
+func _on_death():
+	# 触发死亡状态机
+	$StateChart.send_event("die")
+
 func _process(delta):
 	if is_dragging or BattleManager.is_battle_started:
+		# 更新冷却条
+		if cooldown_bar and current_cooldown > 0:
+			var max_w = cooldown_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
+			if not timer.is_stopped():
+				# 正在冷却中：显示进度 (0 -> 1)
+				var progress = 1.0 - (timer.time_left / current_cooldown)
+				cooldown_bar.size.x = max_w * progress
+			else:
+				# 冷却完毕/未开始：满条
+				cooldown_bar.size.x = max_w
+				
 		# 拖拽中或战斗中，不检测悬停（或者你可以选择战斗中也显示）
 		if _is_hovered:
 			_is_hovered = false
@@ -134,7 +244,7 @@ func _process(delta):
 
 # 状态 1: 进入冷却
 func _on_cooldown_entered():
-	status_label.text = "CD..."
+	# status_label.text = "CD..." # 移除文字
 	timer.start(current_cooldown)
 
 # Timer 跑完了 -> 告诉状态机 "CD结束了"
@@ -177,6 +287,10 @@ func _on_dead_entered():
 	timer.stop()
 	status_label.text = "X"
 	modulate = Color(0.3, 0.3, 0.3)
+	
+	# 释放格子占用
+	GridManager.clear_unit(self)
+	
 	EventBus.unit_died.emit(self, global_position.x)
 
 # --- 业务逻辑 ---
@@ -196,7 +310,7 @@ func _attack():
 	if not manager:
 		return
 		
-	# 特性: 医者 (medic) - 治疗我方，不造成伤害
+	# 特性: 医者 (medic) - 治疗我方
 	if faction == Faction.FRIENDLY and "medic" in data.tags:
 		# 治疗量 = 攻击力
 		var heal = data.attack_damage
@@ -208,23 +322,71 @@ func _attack():
 		return
 
 	var dmg = data.attack_damage
+	var target = manager.find_target_for(self)
 	
-	# 特性: 神射手 (sniper) - 距离战线越远伤害越高
+	# --- 攻击表现优化 ---
+	
+	# 1. 冲撞动画
+	var original_pos = position # 注意这里用的是局部 position (相对于 Container)
+	# 为了防止 Tween 冲突，最好操作 visual_blocks 的父级或整体偏移
+	# 这里简单起见，我们做一个 visual_blocks 的整体震动
+	var punch_dir = Vector2.RIGHT if faction == Faction.FRIENDLY else Vector2.LEFT
+	
+	# 遍历移动所有方块
+	for block in visual_blocks:
+		var tw = create_tween()
+		var start_p = block.position
+		tw.tween_property(block, "position", start_p + punch_dir * 10, 0.05)
+		tw.tween_property(block, "position", start_p, 0.1)
+	
+	# 2. 弹道连线 (如果距离较远)
+	if target and is_instance_valid(target):
+		_draw_attack_line(target.global_position)
+	
+	# --------------------
+	
+	# 特性: 神射手 (sniper) - 距离目标越远伤害越高
 	if faction == Faction.FRIENDLY and "sniper" in data.tags:
-		if manager.battle_line:
-			# 假设战线向右推进，单位在左边。距离 = 战线X - 单位X
-			# 注意：BattleLine 是 FriendlyField 的子节点，global_position 比较稳
-			var dist = abs(global_position.x - manager.battle_line.global_position.x)
-			# 每 100 像素增加 10% 伤害
-			var bonus = (dist / 100.0) * 0.1
-			dmg *= (1.0 + bonus)
+		var dist = 0.0
+		if target:
+			dist = abs(global_position.x - target.global_position.x)
+		else:
+			# 如果打基地，假设距离是到屏幕边缘
+			dist = abs(global_position.x - GameConst.BATTLE_FIELD_WIDTH)
+			
+		# 每 100 像素增加 10% 伤害
+		var bonus = (dist / 100.0) * 0.1
+		dmg *= (1.0 + bonus)
 
-	if faction == Faction.ENEMY:
-		manager.deal_damage_to_army(dmg)
-	else:
+	if faction == Faction.FRIENDLY:
 		manager.modify_manpower(-data.manpower_cost)
-		manager.deal_damage_to_enemy(dmg)
-	_pop_text("ATK!")
+		
+	if target:
+		if target.has_method("take_damage"):
+			target.take_damage(dmg)
+			# _pop_text("ATK!") # 移除旧的飘字
+	else:
+		# 没有单位目标，攻击基地
+		if faction == Faction.ENEMY:
+			manager.deal_damage_to_army(dmg)
+		else:
+			manager.deal_damage_to_enemy(dmg)
+		# _pop_text("Base!") # 移除旧的飘字
+
+# 绘制简单的攻击连线
+func _draw_attack_line(target_global_pos: Vector2):
+	var line = Line2D.new()
+	line.width = 2.0
+	line.default_color = Color(1, 1, 0, 0.8) # 黄色激光
+	# 坐标需要转换到自己的局部坐标系下
+	line.add_point(Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2)) # 从自己中心
+	line.add_point(to_local(target_global_pos) + Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2))
+	line.z_index = 20
+	add_child(line)
+	
+	var tw = create_tween()
+	tw.tween_property(line, "modulate:a", 0.0, 0.1) # 0.1秒消失
+	tw.tween_callback(line.queue_free)
 
 # --- 外部调用与辅助函数 (之前缺失的部分) ---
 
@@ -302,6 +464,31 @@ func _build_visuals():
 		add_child(block)
 		visual_blocks.append(block)
 
+# 辅助：计算视觉包围盒
+func _calculate_visual_bounds() -> Rect2:
+	if not data or data.grid_shape.is_empty():
+		return Rect2(0, 0, GameConst.GRID_SIZE, GameConst.GRID_SIZE)
+		
+	var min_x = INF
+	var min_y = INF
+	var max_x = -INF
+	var max_y = -INF
+	
+	for grid_pos in data.grid_shape:
+		if grid_pos.x < min_x: min_x = grid_pos.x
+		if grid_pos.y < min_y: min_y = grid_pos.y
+		if grid_pos.x > max_x: max_x = grid_pos.x
+		if grid_pos.y > max_y: max_y = grid_pos.y
+		
+	var width_grids = max_x - min_x + 1
+	var height_grids = max_y - min_y + 1
+	
+	var bounds = Rect2()
+	bounds.position = Vector2(min_x, min_y) * GameConst.GRID_SIZE
+	bounds.size = Vector2(width_grids, height_grids) * GameConst.GRID_SIZE
+	
+	return bounds
+
 func _pop_text(txt):
 	status_label.text = txt
 	var t = create_tween()
@@ -326,6 +513,8 @@ func _unhandled_input(event):
 	elif event is InputEventMouseMotion and is_dragging:
 		# 跟随鼠标，并应用偏移
 		global_position = get_global_mouse_position() - drag_offset
+		# 更新指示器位置
+		_update_drag_preview()
 
 func _try_start_drag():
 	# 简单的点击检测：鼠标是否在我的“锚点”附近 (粗略检测，实际建议用Area2D)
@@ -347,6 +536,9 @@ func _try_start_drag():
 		drag_offset = mouse_pos - global_position
 		z_index = 100 # 拖拽时显示在最上层
 		
+		# 创建拖拽指示器
+		_create_drag_preview()
+		
 		# 拖起时，如果在格子里，要清除占用
 		if is_deployed:
 			GridManager.clear_unit(self)
@@ -354,6 +546,11 @@ func _try_start_drag():
 func _end_drag():
 	is_dragging = false
 	z_index = 0
+	
+	# 清除指示器
+	if drag_preview:
+		drag_preview.queue_free()
+		drag_preview = null
 	
 	# --- 核心修改开始 ---
 	
@@ -420,3 +617,54 @@ func update_bench_pos(new_pos: Vector2):
 	is_deployed = false
 	# 4. 视觉反馈：变暗
 	modulate = Color(0.7, 0.7, 0.7, 1)
+
+# --- 拖拽指示器逻辑 ---
+
+func _create_drag_preview():
+	if drag_preview:
+		drag_preview.queue_free()
+	
+	drag_preview = Node2D.new()
+	drag_preview.z_index = 90 # 比拖拽单位(100)低，比其他单位高
+	# 添加到 UnitsContainer (父节点)
+	get_parent().add_child(drag_preview)
+	
+	# 根据形状生成预览块
+	for grid_pos in data.grid_shape:
+		var rect = ColorRect.new()
+		# 稍微缩小一点，产生间隔感
+		var size_val = GameConst.GRID_SIZE - 4
+		rect.size = Vector2(size_val, size_val)
+		# 初始位置是相对于 drag_preview 的
+		rect.position = Vector2(grid_pos) * GameConst.GRID_SIZE + Vector2(2, 2)
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		drag_preview.add_child(rect)
+		
+	_update_drag_preview()
+
+func _update_drag_preview():
+	if not drag_preview: return
+	
+	# 1. 计算目标格子 (逻辑与 _end_drag 保持一致)
+	var center_offset = Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE) / 2.0
+	var mouse_world_pos = global_position + center_offset
+	var local_pos = get_parent().to_local(mouse_world_pos)
+	var target_grid_pos = GridManager.world_to_grid(local_pos)
+	
+	# 2. 移动指示器到吸附位置
+	# 注意：preview 是 UnitsContainer 的子节点，所以可以直接用 GridManager.grid_to_world 的结果(如果是基于Container的)
+	# GridManager.grid_to_world 返回的是 local 坐标 (相对于 Container)
+	drag_preview.position = GridManager.grid_to_world(target_grid_pos)
+	
+	# 3. 检查合法性并变色
+	var is_valid = false
+	if GridManager.is_inside_map(target_grid_pos):
+		# 传入 data 和 anchor，检查所有格子是否空闲
+		if GridManager.can_place_unit(data, target_grid_pos):
+			is_valid = true
+			
+	var color = Color(0, 1, 0, 0.5) if is_valid else Color(1, 0, 0, 0.5)
+	
+	for child in drag_preview.get_children():
+		if child is ColorRect:
+			child.color = color

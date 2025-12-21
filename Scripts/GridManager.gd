@@ -51,6 +51,10 @@ func clear_unit(unit: Node2D):
 	for key in keys_to_erase:
 		grid_occupancy.erase(key)
 
+# 清空所有占用 (用于关卡重置)
+func clear_all():
+	grid_occupancy.clear()
+
 # 辅助：世界坐标 -> 网格坐标
 func world_to_grid(world_pos: Vector2) -> Vector2i:
 	# world_pos 这里约定为“相对战场原点的局部坐标”，而不是全局坐标。

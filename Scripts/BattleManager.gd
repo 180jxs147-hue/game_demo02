@@ -98,6 +98,9 @@ func _ready():
 	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
 	_update_ui()
 
+	# --- 清理残留的 Grid 占用 (防止重开游戏时格子被锁) ---
+	GridManager.clear_all()
+
 	# --- 动态生成初始阵容 ---
 	if units_container and initial_roster.size() > 0:
 		# 如果配置了初始阵容，先清空场景里摆烂的（可选，这里我选择追加，或者你可以 uncomment 下面这行）
@@ -145,10 +148,12 @@ func _apply_layout():
 	
 	var line_height: float = GameConst.MAP_ROWS * GameConst.GRID_SIZE
 	if battle_line:
+		battle_line.visible = false # 隐藏旧的红线
 		battle_line.custom_minimum_size = Vector2(2.0, line_height)
 		battle_line.position = Vector2(GameConst.BATTLE_FIELD_WIDTH, 0.0)
 		battle_line.size = Vector2(2.0, line_height)
 	if enemy_battle_line:
+		enemy_battle_line.visible = false # 隐藏旧的红线
 		enemy_battle_line.custom_minimum_size = Vector2(2.0, line_height)
 		enemy_battle_line.position = Vector2(0.0, 0.0)
 		enemy_battle_line.size = Vector2(2.0, line_height)
@@ -222,31 +227,76 @@ func _process(delta):
 		var enemy_dps = 80.0
 		army_hp -= enemy_dps * delta
 	
-	# 2. 计算战线红线位置
-	var hp_percent = army_hp / max_army_hp
-	var friendly_target_x = hp_percent * GameConst.BATTLE_FIELD_WIDTH
-	if battle_line:
-		battle_line.position.x = friendly_target_x
-	
-	var enemy_hp_percent = enemy_hp / max_enemy_hp
-	var enemy_target_x = (1.0 - enemy_hp_percent) * GameConst.BATTLE_FIELD_WIDTH
-	if enemy_battle_line:
-		enemy_battle_line.position.x = enemy_target_x
-	
-	# 3. 检查单位被吞没
-	var friendly_line_global_x = battle_line.global_position.x if battle_line else 0.0
-	for unit in $Battlefield/FriendlyField/UnitsContainer.get_children():
-		if unit.has_method("check_burn"):
-			unit.check_burn(friendly_line_global_x, true)
-	
-	var enemy_line_global_x = enemy_battle_line.global_position.x if enemy_battle_line else 0.0
-	for unit in $Battlefield/EnemyField/UnitsContainer.get_children():
-		if unit.has_method("check_burn"):
-			unit.check_burn(enemy_line_global_x, false)
-			
 	_update_ui() # 每帧更新血条有点浪费，实际可优化，原型先这样
 
 # --- 供 Unit 调用的接口 ---
+
+func find_target_for(attacker: Node2D) -> Node2D:
+	if not attacker or not is_instance_valid(attacker): return null
+	
+	# 确定敌对阵营容器
+	var target_container = null
+	if attacker.faction == 0: # FRIENDLY
+		target_container = $Battlefield/EnemyField/UnitsContainer
+	else:
+		target_container = $Battlefield/FriendlyField/UnitsContainer
+		
+	if not target_container: return null
+	
+	var my_rows = _get_unit_occupied_rows(attacker)
+	var best_target = null
+	var min_dist = INF
+	
+	# 遍历所有敌人寻找最近的
+	for enemy in target_container.get_children():
+		if not is_instance_valid(enemy): continue
+		# 排除未部署的单位 (如备战区的)
+		if "is_deployed" in enemy and not enemy.is_deployed: continue
+		
+		# 假设 Unit 脚本里有 current_hp
+		if "current_hp" in enemy and enemy.current_hp <= 0: continue
+		
+		var enemy_rows = _get_unit_occupied_rows(enemy)
+		
+		# 检查是否有共同行
+		var has_overlap = false
+		for r in my_rows:
+			if r in enemy_rows:
+				has_overlap = true
+				break
+		
+		if has_overlap:
+			var dist = abs(attacker.global_position.x - enemy.global_position.x)
+			
+			# 如果是敌方，必须在我方右边 (x 更大) ? 不对，是距离绝对值
+			# 但是需要确保方向正确吗？
+			# 我方(左)打敌方(右)：敌方x > 我方x
+			# 敌方(右)打我方(左)：我方x < 敌方x
+			# 其实只要在同一行，且距离最近即可。因为不会出现绕背的情况 (目前逻辑)
+			
+			if dist < min_dist:
+				min_dist = dist
+				best_target = enemy
+				
+	return best_target
+
+func _get_unit_occupied_rows(unit: Node2D) -> Array:
+	var rows = []
+	# 假设 unit.position 是相对于 Container 的，可以直接换算成 Grid
+	# 注意：这里需要确保 GridManager 的 grid_size 正确
+	# 更好的是用 stored_grid_pos，如果 Unit 存了这个
+	if "stored_grid_pos" in unit:
+		var anchor = unit.stored_grid_pos
+		if "data" in unit and unit.data and unit.data.grid_shape:
+			for offset in unit.data.grid_shape:
+				rows.append(anchor.y + offset.y)
+		else:
+			rows.append(anchor.y)
+	else:
+		# fallback
+		var grid_pos = GridManager.world_to_grid(unit.position)
+		rows.append(grid_pos.y)
+	return rows
 
 # 对敌人造成伤害 (新增)
 func deal_damage_to_enemy(amount: float):
