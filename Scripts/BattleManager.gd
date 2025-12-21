@@ -216,18 +216,39 @@ func _process(delta):
 	# 战斗循环：推进战线、检测胜负、让超出战线的单位进入死亡状态。
 	if not is_battle_started: return
 	if battle_ended: return
-	if army_hp <= 0:
-		_end_battle(false)
-		return
-	if enemy_hp <= 0:
+	
+	# 改为检测双方存活单位数量
+	var friendly_alive = _count_alive_units(true)
+	var enemy_alive = _count_alive_units(false)
+	
+	if enemy_alive == 0:
 		_end_battle(true)
 		return
-	
-	if not _has_level_enemies:
-		var enemy_dps = 80.0
-		army_hp -= enemy_dps * delta
+		
+	if friendly_alive == 0:
+		_end_battle(false)
+		return
 	
 	_update_ui() # 每帧更新血条有点浪费，实际可优化，原型先这样
+
+func _count_alive_units(is_friendly: bool) -> int:
+	var container = null
+	if is_friendly:
+		container = $Battlefield/FriendlyField/UnitsContainer
+	else:
+		container = $Battlefield/EnemyField/UnitsContainer
+		
+	if not container: return 0
+	
+	var count = 0
+	for unit in container.get_children():
+		if is_instance_valid(unit) and not unit.is_queued_for_deletion():
+			# 必须是存活的 (假设 Unit 有 current_hp)
+			if "current_hp" in unit and unit.current_hp > 0:
+				# 对于玩家，备战区的也算活着；对于敌人，必须是部署了的
+				# 或者简化：只要在容器里就算
+				count += 1
+	return count
 
 # --- 供 Unit 调用的接口 ---
 
@@ -247,18 +268,11 @@ func find_target_for(attacker: Node2D) -> Node2D:
 	var best_target = null
 	var min_dist = INF
 	
-	# 遍历所有敌人寻找最近的
+	# 策略1: 优先寻找本行最近的
 	for enemy in target_container.get_children():
-		if not is_instance_valid(enemy): continue
-		# 排除未部署的单位 (如备战区的)
-		if "is_deployed" in enemy and not enemy.is_deployed: continue
-		
-		# 假设 Unit 脚本里有 current_hp
-		if "current_hp" in enemy and enemy.current_hp <= 0: continue
+		if not _is_valid_target(enemy): continue
 		
 		var enemy_rows = _get_unit_occupied_rows(enemy)
-		
-		# 检查是否有共同行
 		var has_overlap = false
 		for r in my_rows:
 			if r in enemy_rows:
@@ -267,18 +281,30 @@ func find_target_for(attacker: Node2D) -> Node2D:
 		
 		if has_overlap:
 			var dist = abs(attacker.global_position.x - enemy.global_position.x)
+			if dist < min_dist:
+				min_dist = dist
+				best_target = enemy
+	
+	# 策略2: 如果本行没找到，寻找全局最近的 (跨行支援)
+	if not best_target:
+		min_dist = INF # 重置
+		for enemy in target_container.get_children():
+			if not _is_valid_target(enemy): continue
 			
-			# 如果是敌方，必须在我方右边 (x 更大) ? 不对，是距离绝对值
-			# 但是需要确保方向正确吗？
-			# 我方(左)打敌方(右)：敌方x > 我方x
-			# 敌方(右)打我方(左)：我方x < 敌方x
-			# 其实只要在同一行，且距离最近即可。因为不会出现绕背的情况 (目前逻辑)
-			
+			# 计算欧几里得距离 (不仅仅是 x 轴)
+			var dist = attacker.global_position.distance_to(enemy.global_position)
 			if dist < min_dist:
 				min_dist = dist
 				best_target = enemy
 				
 	return best_target
+
+func _is_valid_target(unit: Node2D) -> bool:
+	if not is_instance_valid(unit): return false
+	if unit.is_queued_for_deletion(): return false
+	if "is_deployed" in unit and not unit.is_deployed: return false
+	if "current_hp" in unit and unit.current_hp <= 0: return false
+	return true
 
 func _get_unit_occupied_rows(unit: Node2D) -> Array:
 	var rows = []
@@ -299,16 +325,15 @@ func _get_unit_occupied_rows(unit: Node2D) -> Array:
 	return rows
 
 # 对敌人造成伤害 (新增)
-func deal_damage_to_enemy(amount: float):
-	enemy_hp -= amount
-	if enemy_hp < 0: enemy_hp = 0
-	# 这里可以加个飘字特效或者受击闪烁
-	_update_ui()
+func deal_damage_to_enemy(_amount: float):
+	# enemy_hp -= amount
+	# 现改为只依赖单位存活数判负，此处不再扣除 Boss 血量
+	pass
 
-func deal_damage_to_army(amount: float):
-	army_hp -= amount
-	if army_hp < 0: army_hp = 0
-	_update_ui()
+func deal_damage_to_army(_amount: float):
+	# army_hp -= amount
+	# 现改为只依赖单位存活数判负
+	pass
 
 # 修改民力
 func modify_manpower(amount: float):
@@ -318,8 +343,10 @@ func modify_manpower(amount: float):
 
 # 统一更新 UI
 func _update_ui():
-	if left_hp_bar: left_hp_bar.value = army_hp
-	if right_hp_bar: right_hp_bar.value = enemy_hp
+	# 隐藏原来的血条，或者改为显示存活数？
+	if left_hp_bar: left_hp_bar.visible = false
+	if right_hp_bar: right_hp_bar.visible = false
+	
 	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
 	
 	# 更新 Tooltip 位置
@@ -375,7 +402,7 @@ func _end_battle(victory: bool):
 			retry_button.visible = false
 		
 		if result_detail_label:
-			var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f%s" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower, reward_text]
+			var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f%s" % [_count_alive_units(true), _count_alive_units(false), current_manpower, reward_text]
 			result_detail_label.text = detail
 	else:
 		# 失败逻辑
@@ -383,7 +410,7 @@ func _end_battle(victory: bool):
 		if retry_button: retry_button.visible = true
 		if reward_container: reward_container.visible = false
 		if result_detail_label:
-			var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower]
+			var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f" % [_count_alive_units(true), _count_alive_units(false), current_manpower]
 			result_detail_label.text = detail
 
 # 按钮点击回调
