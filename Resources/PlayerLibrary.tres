@@ -8,4 +8,4 @@
 
 [resource]
 script = ExtResource("1_library")
-collected_cards = Array[ExtResource("1_7c4xd")]([ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("4_yq7w2"), ExtResource("4_yq7w2"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("3_wa5j5"), ExtResource("4_iv505"), ExtResource("3_wa5j5"), ExtResource("4_iv505")])
+collected_cards = Array[ExtResource("1_7c4xd")]([])

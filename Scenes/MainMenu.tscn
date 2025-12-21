@@ -38,7 +38,7 @@ theme_override_constants/separation = 20
 [node name="Label" type="Label" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 48
-text = "History Mixer"
+text = "时空阵线"
 horizontal_alignment = 1
 
 [node name="StartButton" type="Button" parent="VBoxContainer"]

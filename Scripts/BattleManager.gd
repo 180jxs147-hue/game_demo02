@@ -123,11 +123,13 @@ func _apply_layout():
 	if enemy_field:
 		enemy_field.position = Vector2(GameConst.BATTLE_FIELD_WIDTH + gap, 0.0)
 	
-	var line_height: float = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 320.0
+	var line_height: float = GameConst.MAP_ROWS * GameConst.GRID_SIZE
 	if battle_line:
+		battle_line.custom_minimum_size = Vector2(2.0, line_height)
 		battle_line.position = Vector2(GameConst.BATTLE_FIELD_WIDTH, 0.0)
 		battle_line.size = Vector2(2.0, line_height)
 	if enemy_battle_line:
+		enemy_battle_line.custom_minimum_size = Vector2(2.0, line_height)
 		enemy_battle_line.position = Vector2(0.0, 0.0)
 		enemy_battle_line.size = Vector2(2.0, line_height)
 
@@ -412,30 +414,49 @@ func _arrange_bench():
 			push_error("units_container not found in BattleManager.")
 		return
 
-	# 定义备战区的起始位置 (相对于 Battlefield 节点)
-	var bench_rect = $Battlefield/FriendlyField/ColorRect
-	if bench_rect:
-		# 让备战区背景框也自动适配位置
-		bench_rect.position.y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 20
-		bench_rect.size.x = GameConst.BATTLE_FIELD_WIDTH + 40
-		bench_rect.position.x = -20 # 稍微往左一点，居中好看
-
-	var start_x = 20.0
-	var start_y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 40.0 # 地图下方 40 像素
-	var gap = 100.0 # 每个兵种之间的间隔
-	var index = 0
+	# 获取所有未部署的单位
+	var visible_cards = []
 	for unit in units_container.get_children():
 		# 只有那些没有部署在格子里的单位，才需要排队
-		# 我们先假设所有单位都要排队，然后 Unit 脚本自己决定要不要听
-		# 或者更智能一点：先检查 unit.is_deployed (如果能访问到)
 		if unit.get("is_deployed") == true:
 			continue
-			
-		# 计算该单位应该在哪
-		var target_pos = Vector2(start_x + index * gap, start_y)
-		# --- 核心操作 ---
+		visible_cards.append(unit)
+
+	# 布局配置
+	var start_y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 40.0 # 地图下方 40 像素
+	var gap_x = 85.0 
+	var gap_y = 90.0
+	var cols = 4 # 战场宽度 384，每行放4个比较合适
+	
+	# 计算起始 X 坐标以居中显示
+	# 整个网格的宽度约为 cols * gap_x
+	var grid_width = cols * gap_x
+	var start_x = (GameConst.BATTLE_FIELD_WIDTH - grid_width) / 2.0 + 10.0 # 微调居中
+
+	# 调整背景框
+	var bench_rect = $Battlefield/FriendlyField/ColorRect
+	if bench_rect:
+		var rows = ceil(visible_cards.size() / float(cols))
+		if rows < 1: rows = 1
+		# 动态调整背景高度
+		var total_h = rows * gap_y + 20
+		bench_rect.position.y = start_y - 20
+		bench_rect.size.x = GameConst.BATTLE_FIELD_WIDTH + 40
+		bench_rect.position.x = -20 
+		bench_rect.size.y = total_h
+
+	# 开始排布
+	for i in range(visible_cards.size()):
+		var unit = visible_cards[i]
+		var row = i / cols
+		var col = i % cols
+		
+		var x = start_x + (col * gap_x)
+		var y = start_y + (row * gap_y)
+		
+		var target_pos = Vector2(x, y)
+		
 		# 检查这个单位脚本里有没有 update_bench_pos 这个函数
 		if unit.has_method("update_bench_pos"):
 			# 有的话，就调用它，把目标坐标传过去
-			unit.update_bench_pos(target_pos)        
-		index += 1
+			unit.update_bench_pos(target_pos)
