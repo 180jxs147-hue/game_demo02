@@ -1,5 +1,13 @@
 extends Node2D
 
+## 战斗单位节点。
+## 同一套 Unit 同时用于我方与敌方，通过 faction 区分行为：
+## - FRIENDLY：消耗/产出民力，攻击敌方 boss（右侧血条）
+## - ENEMY：不消耗民力，直接攻击我方阵线（左侧血条）
+## 交互约定：
+## - 拖拽部署仅允许 FRIENDLY 且战斗未开始
+## - 部署后才允许进入战斗状态机（start_battle 会做锁定）
+
 @export var data: UnitData
 enum Faction { FRIENDLY, ENEMY }
 @export var faction: Faction = Faction.FRIENDLY
@@ -141,13 +149,17 @@ func _produce():
 	if faction == Faction.ENEMY:
 		return
 	var manager = battle_manager
+	if not manager:
+		return
 	var amount = absf(data.manpower_cost)
 	manager.modify_manpower(amount)
 	_pop_text("+%.1f" % amount)
 
 func _attack():
 	var manager = battle_manager
-	var dmg = data.attack_damage if "attack_damage" in data else 10.0
+	if not manager:
+		return
+	var dmg = data.attack_damage
 	if faction == Faction.ENEMY:
 		manager.deal_damage_to_army(dmg)
 	else:

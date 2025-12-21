@@ -1,78 +1,126 @@
-[gd_resource type="Resource" script_class="LevelDatabase" load_steps=16 format=3]
+[gd_resource type="Resource" script_class="LevelDatabase" load_steps=38 format=3 uid="uid://durniktkpk52p"]
 
-[ext_resource type="Script" path="res://Resources/LevelDatabase.gd" id="1_db"]
-[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="2_level"]
-[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="3_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="4_soldier"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="5_pyrrhus"]
+[ext_resource type="Script" uid="uid://b3jjta8myy3pp" path="res://Resources/LevelDatabase.gd" id="1_db"]
+[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="2_level"]
+[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="3_spawn"]
+[ext_resource type="Resource" uid="uid://wkd2p00ti4vh" path="res://Resources/DataFiles/soldier.tres" id="4_soldier"]
+[ext_resource type="Resource" uid="uid://c8ewqmbtabew2" path="res://Resources/DataFiles/Pyrrhus.tres" id="5_pyrrhus"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="6_archer"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/spear.tres" id="7_spear"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/cavalry.tres" id="8_cavalry"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/catapult.tres" id="9_catapult"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="10_shield"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/farmer.tres" id="11_farmer"]
+[ext_resource type="Resource" uid="uid://dx5x0b5txntgm" path="res://Resources/DataFiles/spear.tres" id="7_spear"]
+[ext_resource type="Resource" uid="uid://dfvi4rb81lp52" path="res://Resources/DataFiles/catapult.tres" id="9_catapult"]
+[ext_resource type="Resource" uid="uid://dtkov63hi08cp" path="res://Resources/DataFiles/shield.tres" id="10_shield"]
+[ext_resource type="Resource" uid="uid://clvtqjq78277n" path="res://Resources/DataFiles/quarter.tres" id="11_quarter"]
 
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_1"]
+[sub_resource type="Resource" id="UnitSpawn_L1_1"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("4_soldier")
 grid_pos = Vector2i(4, 0)
 
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_2"]
+[sub_resource type="Resource" id="UnitSpawn_L1_2"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("4_soldier")
+grid_pos = Vector2i(4, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_L1_3"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("4_soldier")
+grid_pos = Vector2i(4, 4)
+
+[sub_resource type="Resource" id="UnitSpawn_L1_4"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_quarter")
+grid_pos = Vector2i(5, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_L1_5"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_quarter")
+grid_pos = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="LevelConfig_1"]
+script = ExtResource("2_level")
+level_name = "第 1 关 - 初阵"
+enemy_hp = 800.0
+enemy_units = Array[ExtResource("3_spawn")]([SubResource("UnitSpawn_L1_1"), SubResource("UnitSpawn_L1_2"), SubResource("UnitSpawn_L1_3"), SubResource("UnitSpawn_L1_4"), SubResource("UnitSpawn_L1_5")])
+
+[sub_resource type="Resource" id="UnitSpawn_L2_1"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("10_shield")
+grid_pos = Vector2i(2, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_L2_2"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("6_archer")
+grid_pos = Vector2i(4, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_L2_3"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("6_archer")
+grid_pos = Vector2i(4, 3)
+
+[sub_resource type="Resource" id="UnitSpawn_L2_4"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_quarter")
+grid_pos = Vector2i(5, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_L2_5"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_quarter")
+grid_pos = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="LevelConfig_2"]
+script = ExtResource("2_level")
+level_name = "第 2 关 - 坚盾利箭"
+army_hp = 1200.0
+enemy_hp = 1200.0
+enemy_units = Array[ExtResource("3_spawn")]([SubResource("UnitSpawn_L2_1"), SubResource("UnitSpawn_L2_2"), SubResource("UnitSpawn_L2_3"), SubResource("UnitSpawn_L2_4"), SubResource("UnitSpawn_L2_5")])
+
+[sub_resource type="Resource" id="UnitSpawn_L3_1"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("5_pyrrhus")
 grid_pos = Vector2i(3, 1)
 
-[sub_resource type="Resource" script_class="LevelConfig" id="LevelConfig_1"]
-script = ExtResource("2_level")
-level_name = "第 1 关"
-army_hp = 1000.0
-enemy_hp = 1000.0
-enemy_units = Array[Resource]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2")])
-
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_3"]
+[sub_resource type="Resource" id="UnitSpawn_L3_2"]
 script = ExtResource("3_spawn")
-unit_data = ExtResource("6_archer")
-grid_pos = Vector2i(4, 0)
+unit_data = ExtResource("10_shield")
+grid_pos = Vector2i(1, 2)
 
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_4"]
+[sub_resource type="Resource" id="UnitSpawn_L3_3"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("7_spear")
 grid_pos = Vector2i(2, 0)
 
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_5"]
+[sub_resource type="Resource" id="UnitSpawn_L3_4"]
 script = ExtResource("3_spawn")
-unit_data = ExtResource("10_shield")
-grid_pos = Vector2i(3, 2)
+unit_data = ExtResource("7_spear")
+grid_pos = Vector2i(2, 3)
 
-[sub_resource type="Resource" script_class="LevelConfig" id="LevelConfig_2"]
-script = ExtResource("2_level")
-level_name = "第 2 关"
-army_hp = 1100.0
-enemy_hp = 1300.0
-enemy_units = Array[Resource]([SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5")])
-
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_6"]
-script = ExtResource("3_spawn")
-unit_data = ExtResource("8_cavalry")
-grid_pos = Vector2i(3, 0)
-
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_7"]
+[sub_resource type="Resource" id="UnitSpawn_L3_5"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("9_catapult")
-grid_pos = Vector2i(0, 4)
+grid_pos = Vector2i(3, 0)
 
-[sub_resource type="Resource" script_class="UnitSpawn" id="UnitSpawn_8"]
+[sub_resource type="Resource" id="UnitSpawn_L3_6"]
 script = ExtResource("3_spawn")
-unit_data = ExtResource("11_farmer")
-grid_pos = Vector2i(5, 4)
+unit_data = ExtResource("9_catapult")
+grid_pos = Vector2i(3, 4)
 
-[sub_resource type="Resource" script_class="LevelConfig" id="LevelConfig_3"]
+[sub_resource type="Resource" id="UnitSpawn_L3_7"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_quarter")
+grid_pos = Vector2i(5, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_L3_8"]
+script = ExtResource("3_spawn")
+unit_data = ExtResource("11_quarter")
+grid_pos = Vector2i(5, 3)
+
+[sub_resource type="Resource" id="LevelConfig_3"]
 script = ExtResource("2_level")
-level_name = "第 3 关"
-army_hp = 1200.0
-enemy_hp = 1700.0
-enemy_units = Array[Resource]([SubResource("UnitSpawn_6"), SubResource("UnitSpawn_7"), SubResource("UnitSpawn_8"), SubResource("UnitSpawn_2")])
+level_name = "第 3 关 - 越王亲征"
+army_hp = 1500.0
+enemy_hp = 2000.0
+enemy_units = Array[ExtResource("3_spawn")]([SubResource("UnitSpawn_L3_1"), SubResource("UnitSpawn_L3_2"), SubResource("UnitSpawn_L3_3"), SubResource("UnitSpawn_L3_4"), SubResource("UnitSpawn_L3_5"), SubResource("UnitSpawn_L3_6"), SubResource("UnitSpawn_L3_7"), SubResource("UnitSpawn_L3_8")])
 
 [resource]
 script = ExtResource("1_db")
-levels = Array[Resource]([SubResource("LevelConfig_1"), SubResource("LevelConfig_2"), SubResource("LevelConfig_3")])
+levels = Array[ExtResource("2_level")]([SubResource("LevelConfig_1"), SubResource("LevelConfig_2"), SubResource("LevelConfig_3")])

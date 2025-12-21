@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://dtkov63hi08cp"]
 
-[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_unit_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_unit_data"]
 
 [resource]
 script = ExtResource("1_unit_data")
@@ -11,4 +11,5 @@ max_hp = 260.0
 manpower_cost = 2.0
 cooldown = 2.2
 attack_damage = 18.0
-story = "盾牌举起时，退路便消失了。\n他们不一定赢，但他们让别人有机会赢。"
+story = "盾牌举起时，退路便消失了。
+他们不一定赢，但他们让别人有机会赢。"

@@ -1,5 +1,8 @@
 extends Control
 
+## 关卡选择界面。
+## 约定：选中关卡索引写入 GameState.selected_level_index，战斗场景读取后生成敌军。
+
 @export var level_database: LevelDatabase
 
 @onready var list_container = $ScrollContainer/VBoxContainer
@@ -9,7 +12,10 @@ func _ready():
 
 func _build_list():
 	if not level_database:
-		level_database = load("res://Resources/EnemyLevels.tres")
+		if GameState and GameState.has_method("get_level_database"):
+			level_database = GameState.get_level_database()
+		if not level_database:
+			level_database = load("res://Resources/EnemyLevels.tres")
 	
 	for child in list_container.get_children():
 		child.queue_free()

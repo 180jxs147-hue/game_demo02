@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://bhocrl8wqrwom"]
 
-[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_unit_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_unit_data"]
 
 [resource]
 script = ExtResource("1_unit_data")
@@ -11,4 +11,5 @@ max_hp = 180.0
 manpower_cost = 4.0
 cooldown = 3.2
 attack_damage = 65.0
-story = "马蹄落地，战场就开始重新书写。\n骑兵不擅长等待，他们只擅长突破。"
+story = "马蹄落地，战场就开始重新书写。
+骑兵不擅长等待，他们只擅长突破。"

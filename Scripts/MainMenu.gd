@@ -1,9 +1,13 @@
 extends Control
 
+## 主菜单：负责场景跳转与存档清理入口。
+
 @onready var clear_save_dialog = $ClearSaveDialog
 @onready var info_dialog = $InfoDialog
 
 func _on_start_button_pressed():
+	if GameState:
+		GameState.load_progress()
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 
 func _on_level_select_button_pressed():

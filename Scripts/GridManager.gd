@@ -1,5 +1,10 @@
 extends Node
 
+## 网格占用管理器（用于拖拽部署）。
+## 坐标约定：
+## - grid 坐标：以战场左上角为 (0,0)，单位为“格”
+## - world/local 坐标：以 UnitsContainer 为父节点的局部坐标系来计算
+
 # 存储格子占用情况: { Vector2i(x,y): UnitNode }
 var grid_occupancy: Dictionary = {}
 
@@ -44,6 +49,8 @@ func clear_unit(unit: Node2D):
 
 # 辅助：世界坐标 -> 网格坐标
 func world_to_grid(world_pos: Vector2) -> Vector2i:
+	# world_pos 这里约定为“相对战场原点的局部坐标”，而不是全局坐标。
+	# 如果拿到的是 global_position，需要先转换到 UnitsContainer 的 local 再调用。
 	return Vector2i(world_pos / GameConst.GRID_SIZE)
 
 # 这里返回的也是相对坐标

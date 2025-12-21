@@ -1,5 +1,13 @@
 extends Control
 
+## 图鉴/兵种总览界面。
+## 页面：
+## - 已收集：读取玩家存档库并按同卡堆叠显示
+## - 全部兵种：读取 UnitDatabase 的权威列表
+## - 标签：对 UnitDatabase 做 tag 过滤
+## 右侧详情：
+## - 始终用 UnitDatabase 兜底简介，确保导出 EXE 下也能稳定显示
+
 @export var player_library: CardLibrary
 @export var unit_database: UnitDatabase
 @onready var page_header = $RootLayout/Content/ContentVBox/PageHeader
@@ -29,24 +37,28 @@ var _tags_cache: Array[String] = []
 var _current_tag: String = ""
 enum UnitTypeFilter { ALL, CONSUME, PRODUCE }
 var _tag_desc: Dictionary = {
-	"sacrifice": "牺牲：以自身为代价换取更强的战果。"
+	"sacrifice": "牺牲：每当有己方单位阵亡时，该单位的行动冷却时间减少 30%（最低降至 0.2 秒）。"
 }
 var _selected_unit: UnitData
-var _unit_lookup_by_path: Dictionary = {}
-var _unit_lookup_by_name: Dictionary = {}
-var _story_cache_by_path: Dictionary = {}
-var _logged_story_issue_by_path: Dictionary = {}
 
 func _ready():
+	# 图鉴数据有两部分来源：
+	# 1) 玩家存档库：决定“已收集”页显示哪些卡、各卡数量（user://PlayerLibrary.tres）
+	# 2) 单位数据库：决定“全部兵种/标签页”有哪些卡，以及用于补全导出时可能丢失的字段（例如简介）
 	if GameState and GameState.has_method("load_player_library"):
 		var loaded = GameState.load_player_library()
 		if loaded:
 			player_library = loaded
+	
+	# 单位数据库必须用“显式引用资源”的方式（UnitDatabase.tres 引用所有 UnitData），
+	# 否则导出 EXE 后可能因资源未被打包而加载不全。
 	if not unit_database:
-		var loaded_db = load("res://Resources/UnitDatabase.tres")
-		if loaded_db is UnitDatabase:
-			unit_database = loaded_db
-	_build_unit_lookups()
+		if GameState and GameState.has_method("get_unit_database"):
+			unit_database = GameState.get_unit_database()
+		if not unit_database:
+			var loaded_db = load("res://Resources/UnitDatabase.tres")
+			if loaded_db is UnitDatabase:
+				unit_database = loaded_db
 	_setup_filters()
 	_switch_page("collected")
 	_connect_signals()
@@ -54,118 +66,20 @@ func _ready():
 	_update_columns()
 	_show_unit_detail(null)
 
-func _build_unit_lookups():
-	_unit_lookup_by_path.clear()
-	_unit_lookup_by_name.clear()
-	_story_cache_by_path.clear()
-	if not unit_database:
-		return
-	for u in unit_database.get_units():
-		if not u:
-			continue
-		if not u.resource_path.is_empty():
-			_unit_lookup_by_path[u.resource_path] = u
-		if not u.name.is_empty() and not _unit_lookup_by_name.has(u.name):
-			_unit_lookup_by_name[u.name] = u
-
 func _resolve_unit_data(data: UnitData) -> UnitData:
 	if not data:
 		return null
-	if not data.resource_path.is_empty() and _unit_lookup_by_path.has(data.resource_path):
-		return _unit_lookup_by_path[data.resource_path]
-	if not data.name.is_empty() and _unit_lookup_by_name.has(data.name):
-		return _unit_lookup_by_name[data.name]
+	if unit_database and unit_database.has_method("resolve_unit"):
+		return unit_database.resolve_unit(data)
 	return data
 
 func _get_story_text(data: UnitData) -> String:
 	if not data:
 		return ""
-	var s := data.story
-	if not s.strip_edges().is_empty():
-		return _normalize_story_text(s)
+	# 导出后如果 UnitData 的某些字段（例如 story）加载为空，这里会走 UnitDatabase 的兜底表。
 	if unit_database and unit_database.has_method("get_story_for"):
-		var ds: String = unit_database.get_story_for(data)
-		if not ds.strip_edges().is_empty():
-			return _normalize_story_text(ds)
-	var p := data.resource_path
-	if p.is_empty():
-		return ""
-	if _story_cache_by_path.has(p):
-		return _normalize_story_text(str(_story_cache_by_path[p]))
-	var reloaded = ResourceLoader.load(p, "", ResourceLoader.CACHE_MODE_IGNORE)
-	if reloaded is UnitData:
-		var rs: String = reloaded.story
-		if not rs.strip_edges().is_empty():
-			_story_cache_by_path[p] = rs
-			return _normalize_story_text(rs)
-	var fallback := _read_story_from_tres(p)
-	_story_cache_by_path[p] = fallback
-	if fallback.strip_edges().is_empty():
-		_log_story_issue(p, data, reloaded)
-	return _normalize_story_text(fallback)
-
-func _normalize_story_text(text: String) -> String:
-	return text.replace("\\n", "\n").replace("/n", "\n").replace("\\t", "\t")
-
-func _read_story_from_tres(resource_path: String) -> String:
-	if resource_path.is_empty():
-		return ""
-	var f := FileAccess.open(resource_path, FileAccess.READ)
-	if not f:
-		return ""
-	var text := f.get_as_text()
-	var key := "\nstory = \""
-	var start := text.find(key)
-	if start == -1:
-		if text.begins_with("story = \""):
-			start = 0
-		else:
-			return ""
-	var i := start + (key.length() if start != 0 else "story = \"".length())
-	var out := ""
-	while i < text.length():
-		var ch := text[i]
-		if ch == "\"":
-			break
-		if ch == "\\" and i + 1 < text.length():
-			var n := text[i + 1]
-			if n == "n":
-				out += "\n"
-				i += 2
-				continue
-			if n == "t":
-				out += "\t"
-				i += 2
-				continue
-			out += n
-			i += 2
-			continue
-		out += ch
-		i += 1
-	return out
-
-func _log_story_issue(resource_path: String, data: UnitData, reloaded: Resource) -> void:
-	if _logged_story_issue_by_path.has(resource_path):
-		return
-	_logged_story_issue_by_path[resource_path] = true
-	var f := FileAccess.open("user://story_debug.log", FileAccess.READ_WRITE)
-	if not f:
-		f = FileAccess.open("user://story_debug.log", FileAccess.WRITE)
-	if not f:
-		return
-	f.seek_end()
-	var exists := ResourceLoader.exists(resource_path)
-	var can_open := FileAccess.open(resource_path, FileAccess.READ) != null
-	var data_story_len := 0
-	if data:
-		data_story_len = data.story.length()
-	var reloaded_story_len := -1
-	if reloaded is UnitData:
-		reloaded_story_len = (reloaded as UnitData).story.length()
-	var line := "%s | exists=%s | can_open=%s | data_story_len=%d | reloaded_story_len=%d\n" % [
-		resource_path, str(exists), str(can_open), data_story_len, reloaded_story_len
-	]
-	f.store_string(line)
+		return unit_database.get_story_for(data)
+	return data.story
 
 func _setup_filters():
 	_setup_type_option(collected_type)
@@ -260,6 +174,8 @@ func _filter_units(units: Array[UnitData], query: String, type_filter_id: int, t
 	return out
 
 func _fill_grid(grid: GridContainer, units: Array[UnitData]):
+	# 将单位数组渲染为一组卡牌槽位（不堆叠）。
+	# 这里会先用 UnitDatabase 将 UnitData 解析回“权威实例”，避免导出后字段缺失/资源引用不一致。
 	for child in grid.get_children():
 		child.queue_free()
 	for u in units:
@@ -270,6 +186,8 @@ func _fill_grid(grid: GridContainer, units: Array[UnitData]):
 		slot.pressed.connect(_on_card_pressed)
 
 func _get_stacked_collected() -> Array[Dictionary]:
+	# “已收集”页需要把同名/同资源的卡牌堆叠显示（xN），所以先按 key 聚合计数。
+	# key 优先用 resource_path（导出更稳定），否则退回 name。
 	var counts: Dictionary = {}
 	var rep: Dictionary = {}
 	if player_library:
@@ -307,6 +225,7 @@ func _filter_stacked_entries(entries: Array[Dictionary], query: String, type_fil
 	return out
 
 func _fill_grid_stacked(grid: GridContainer, entries: Array[Dictionary]):
+	# 渲染“已收集”页的堆叠卡牌（slot.setup_stacked 会显示 xN）。
 	for child in grid.get_children():
 		child.queue_free()
 	for e in entries:
@@ -321,6 +240,8 @@ func _fill_grid_stacked(grid: GridContainer, entries: Array[Dictionary]):
 		slot.pressed.connect(_on_card_pressed)
 
 func _get_all_units() -> Array[UnitData]:
+	# “全部兵种/标签”页的候选单位列表。
+	# 正常情况下应来自 UnitDatabase（导出时保证资源被打包）。
 	if not _all_units_cache.is_empty():
 		return _all_units_cache
 	var result: Array[UnitData] = []
@@ -330,22 +251,6 @@ func _get_all_units() -> Array[UnitData]:
 				result.append(u)
 		_all_units_cache = result
 		return _all_units_cache
-	var dir = DirAccess.open("res://Resources/DataFiles")
-	if dir:
-		dir.list_dir_begin()
-		while true:
-			var file_name = dir.get_next()
-			if file_name == "":
-				break
-			if dir.current_is_dir():
-				continue
-			if not file_name.ends_with(".tres"):
-				continue
-			var path = "res://Resources/DataFiles/%s" % file_name
-			var res = load(path)
-			if res is UnitData:
-				result.append(res)
-		dir.list_dir_end()
 	_all_units_cache = result
 	return _all_units_cache
 
@@ -396,6 +301,8 @@ func _on_card_pressed(data: UnitData):
 	_show_unit_detail(_selected_unit)
 
 func _show_unit_detail(data: UnitData):
+	# 右侧详情面板渲染入口。
+	# 这里会统一解析 UnitData 与 story，保证 Debug/导出两种环境显示一致。
 	data = _resolve_unit_data(data)
 	if not data:
 		detail_name.text = "未选择"
@@ -421,6 +328,7 @@ func _show_unit_detail(data: UnitData):
 			tag_lines.append("• %s：%s" % [t, desc])
 	var tags_text := "\n".join(tag_lines)
 	if detail_tags is RichTextLabel:
+		# RichTextLabel 用 clear/append_text 更新更稳定，避免某些导出环境刷新异常。
 		detail_tags.clear()
 		detail_tags.append_text(tags_text)
 	else:
@@ -445,6 +353,8 @@ func _get_collected_count(data: UnitData) -> int:
 	return c
 
 func _unit_key(data: UnitData) -> String:
+	# 用于“堆叠统计/拥有数量”的稳定 key。
+	# resource_path 在导出后更可靠；如果对象来自内存/临时创建，可能为空，则用 name 回退。
 	if not data:
 		return ""
 	if not data.resource_path.is_empty():

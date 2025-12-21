@@ -5,11 +5,8 @@
 [ext_resource type="Resource" path="res://Resources/EnemyLevels.tres" id="5_levels"]
 [ext_resource type="Script" uid="uid://u1q5ipdswswu" path="res://Scripts/GridPaint.gd" id="6_8teo4"]
 
-[sub_resource type="StyleBoxLine" id="StyleBoxLine_8teo4"]
-color = Color(0.9685883, 0, 0, 1)
-
-[sub_resource type="StyleBoxLine" id="StyleBoxLine_c5ef4"]
-color = Color(1, 0, 0, 1)
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_red"]
+bg_color = Color(0.9685883, 0, 0, 1)
 
 [node name="Battle" type="Node2D" node_paths=PackedStringArray("left_hp_bar", "right_hp_bar", "manpower_label")]
 script = ExtResource("1_p46lj")
@@ -63,7 +60,7 @@ offset_left = 21.0
 offset_top = 1.0
 offset_right = 321.0
 offset_bottom = 28.0
-theme_override_styles/fill = SubResource("StyleBoxLine_8teo4")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
 mouse_filter = 2
 
 [node name="RightHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
@@ -72,12 +69,13 @@ layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = 810.0
+offset_left = -321.0
 offset_top = 1.0
-offset_right = 1110.0
+offset_right = -21.0
 offset_bottom = 28.0
 grow_horizontal = 0
-theme_override_styles/fill = SubResource("StyleBoxLine_c5ef4")
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
+fill_mode = 1
 mouse_filter = 2
 
 [node name="ResultOverlay" type="Control" parent="CanvasLayer"]
@@ -144,6 +142,13 @@ layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
+[node name="NextLevelButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer"]
+visible = false
+custom_minimum_size = Vector2(160, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "下一关"
+
 [node name="RetryButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer"]
 custom_minimum_size = Vector2(160, 50)
 layout_mode = 2
@@ -195,5 +200,6 @@ offset_bottom = 1000.0
 color = Color(0.77096003, 0, 0.114372455, 1)
 
 [connection signal="pressed" from="CanvasLayer/HUD/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/NextLevelButton" to="." method="_on_next_level_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton" to="." method="_on_retry_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/MenuButton" to="." method="_on_menu_button_pressed"]

@@ -1,5 +1,14 @@
 class_name BattleManager extends Node2D
 
+## 战斗主控脚本。
+## 职责：
+## - 初始化关卡（读取 LevelDatabase，生成敌军）
+## - 管理双方 HP 与“战线红线”推进
+## - 生成玩家单位到备战区，并在开始战斗时通知单位进入状态机循环
+## 约定：
+## - 玩家单位永远挂在 `$Battlefield/FriendlyField/UnitsContainer`
+## - 敌方单位永远挂在 `$Battlefield/EnemyField/UnitsContainer`
+
 # --- UI 引用 (请在编辑器里拖拽赋值) ---
 @export var left_hp_bar: ProgressBar
 @export var right_hp_bar: ProgressBar
@@ -34,6 +43,8 @@ var max_enemy_hp: float = 1000.0
 @onready var result_overlay = $CanvasLayer/ResultOverlay
 @onready var result_title_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/TitleLabel
 @onready var result_detail_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/DetailLabel
+@onready var next_level_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/NextLevelButton
+@onready var retry_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton
 
 var battle_ended: bool = false
 var _has_level_enemies: bool = false
@@ -53,6 +64,8 @@ func _ready():
 	var level: LevelConfig = null
 	if GameState:
 		level_index = GameState.selected_level_index
+	if not level_database and GameState and GameState.has_method("get_level_database"):
+		level_database = GameState.get_level_database()
 	if level_database:
 		level = level_database.get_level(level_index)
 	
@@ -90,12 +103,12 @@ func _ready():
 		if loaded:
 			player_library = loaded
 	if player_library:
-		print("Loaded player library with ", player_library.collected_cards.size(), " cards.")
 		# 只有在游戏开始时，才把库里的卡加进战斗
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
 
 func _apply_layout():
+	# 根据屏幕宽度自动居中摆放左右战场，并更新两条红线的长度。
 	if not battlefield:
 		return
 	var viewport_size: Vector2 = get_viewport_rect().size
@@ -119,13 +132,8 @@ func _apply_layout():
 		enemy_battle_line.size = Vector2(2.0, line_height)
 
 func _input(event):
-	# --- 调试功能：按 D 键随机增加一个兵 ---
-	if event is InputEventKey and event.pressed and event.keycode == KEY_D:
-		_debug_add_random_unit()
-		
-	# --- 调试功能：按 A 键增加一张卡到库里并保存 ---
-	if event is InputEventKey and event.pressed and event.keycode == KEY_A:
-		_debug_add_card_to_library()
+	# 调试功能已移除，依靠游戏循环获取单位。
+	pass
 
 func _debug_add_random_unit() -> UnitData:
 	var random_datas = [
@@ -141,12 +149,11 @@ func _debug_add_random_unit() -> UnitData:
 	]
 	var data = random_datas.pick_random()
 	spawn_unit(data)
-	print("Debug: Added unit ", data.name)
 	return data
 
 func _debug_add_card_to_library():
 	if not player_library:
-		print("Error: No PlayerLibrary assigned to BattleManager!")
+		push_error("No PlayerLibrary assigned to BattleManager.")
 		return
 		
 	# 随机生成一个（这里复用生成逻辑，但不一定非要生成实体）
@@ -173,15 +180,13 @@ func _debug_add_card_to_library():
 		
 	var error = ResourceSaver.save(player_library, save_path)
 	if error == OK:
-		print("Debug: Added ", data.name, " to library and saved to ", save_path)
-		print("Current library size: ", player_library.collected_cards.size())
-		
 		# 顺便也在战场上生成一个，让你看到效果
 		spawn_unit(data)
 	else:
-		print("Error saving library: ", error)
+		push_error("Error saving player library: " + str(error))
 
 func _process(delta):
+	# 战斗循环：推进战线、检测胜负、让超出战线的单位进入死亡状态。
 	if not is_battle_started: return
 	if battle_ended: return
 	if army_hp <= 0:
@@ -255,9 +260,41 @@ func _end_battle(victory: bool):
 		result_overlay.visible = true
 	if result_title_label:
 		result_title_label.text = "胜利" if victory else "失败"
-	if result_detail_label:
-		var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower]
-		result_detail_label.text = detail
+	
+	if victory:
+		# 胜利逻辑
+		var reward_text = ""
+		# 1. 发放奖励
+		var reward_card = _grant_random_reward()
+		if reward_card:
+			reward_text = "\n获得战利品: %s" % reward_card.name
+			
+		# 2. 检查是否有下一关
+		var has_next = false
+		if level_database and level_index + 1 < level_database.levels.size():
+			has_next = true
+		else:
+			reward_text += "\n\n恭喜通关！(Demo结束)"
+			
+		if next_level_button: 
+			next_level_button.visible = has_next
+		if retry_button: 
+			retry_button.visible = false
+			
+		# 3. 保存卡牌收集进度
+		if GameState and player_library:
+			GameState.save_player_library(player_library)
+		
+		if result_detail_label:
+			var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f%s" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower, reward_text]
+			result_detail_label.text = detail
+	else:
+		# 失败逻辑
+		if next_level_button: next_level_button.visible = false
+		if retry_button: retry_button.visible = true
+		if result_detail_label:
+			var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower]
+			result_detail_label.text = detail
 
 # 按钮点击回调
 func _on_start_button_pressed():
@@ -270,6 +307,14 @@ func _on_start_button_pressed():
 	# 告诉所有 Unit 开始 Timer
 	get_tree().call_group("units", "start_battle")
 
+func _on_next_level_button_pressed():
+	if GameState:
+		GameState.selected_level_index += 1
+		GameState.save_progress()
+	
+	get_tree().paused = false
+	get_tree().reload_current_scene()
+
 func _on_retry_button_pressed():
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
@@ -278,7 +323,18 @@ func _on_menu_button_pressed():
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
+func _grant_random_reward() -> UnitData:
+	if not GameState: return null
+	var db = GameState.get_unit_database()
+	if not db or db.units.is_empty(): return null
+	
+	var card = db.units.pick_random()
+	if player_library:
+		player_library.collected_cards.append(card)
+	return card
+
 func _spawn_enemy(spawn: UnitSpawn):
+	# 生成敌方单位并直接部署到敌军网格。
 	if not spawn:
 		return
 	if not spawn.unit_data:
@@ -319,8 +375,8 @@ func _enemy_mark_occupied(data: UnitData, grid_pos: Vector2i):
 		var key = str(cell.x) + "," + str(cell.y)
 		_enemy_occupied[key] = true
 
-# 动态生成单位
-func spawn_unit(data: Resource):
+# 动态生成单位（玩家备战区）
+func spawn_unit(data: UnitData):
 	if not unit_scene:
 		return
 		
@@ -332,6 +388,10 @@ func spawn_unit(data: Resource):
 	
 	if not units_container:
 		units_container = $Battlefield/FriendlyField/UnitsContainer
+	if not units_container:
+		if OS.is_debug_build():
+			push_error("units_container not found in BattleManager.")
+		return
 		
 	units_container.add_child(new_unit)
 	
@@ -342,16 +402,14 @@ func spawn_unit(data: Resource):
 		# 使用 call_deferred 避免在同一帧多次重排造成性能浪费（虽然这里很简单）
 		call_deferred("_arrange_bench")
 
-func _on_button_pressed() -> void:
-	pass # Replace with function body.
-
 func _arrange_bench():
 	# 如果 units_container 没赋值，尝试自己找一下
 	if not units_container:
 		units_container = $Battlefield/FriendlyField/UnitsContainer
 		
 	if not units_container:
-		print("Error: units_container not found in BattleManager")
+		if OS.is_debug_build():
+			push_error("units_container not found in BattleManager.")
 		return
 
 	# 定义备战区的起始位置 (相对于 Battlefield 节点)

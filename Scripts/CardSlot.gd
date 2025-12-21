@@ -1,5 +1,10 @@
 extends Panel
 
+## 单张卡牌 UI（用于图鉴与卡牌列表）。
+## 交互约定：
+## - ClickButton 覆盖整个卡面，统一发射 pressed(UnitData)
+## - setup_stacked 用于显示“xN”堆叠数量
+
 @onready var name_label = $VBoxContainer/NameLabel
 @onready var stats_label = $VBoxContainer/StatsLabel
 @onready var color_rect = $ColorRect
@@ -38,8 +43,3 @@ func setup_stacked(data: UnitData, count: int):
 	if count > 1:
 		count_label.visible = true
 		count_label.text = "x%d" % count
-
-func _gui_input(event):
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		if _unit_data:
-			pressed.emit(_unit_data)
