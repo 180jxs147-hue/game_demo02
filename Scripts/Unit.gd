@@ -357,16 +357,15 @@ func _end_drag():
 	
 	# --- 核心修改开始 ---
 	
-	# 1. 获取鼠标当前的世界坐标
-	# (global_position 是单位当前的绝对位置)
-	var mouse_world_pos = global_position
+	# 优化判定：使用“锚点格子的中心”来判定落点，而不是左上角
+	# 这样用户只要把卡牌的主体部分拖到格子里，就能吸附成功，不再需要精准对齐左上角
+	var center_offset = Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE) / 2.0
+	var mouse_world_pos = global_position + center_offset
 	
 	# 2. 将世界坐标转换为 "UnitsContainer" 内部的本地坐标
-	# UnitsContainer 是 Unit 的父节点
 	var local_pos = get_parent().to_local(mouse_world_pos)
 	
 	# 3. 使用本地坐标去计算它在第几个格子
-	# GridManager 只需要知道 "相对于战场原点" 的位置
 	var drop_grid_pos = GridManager.world_to_grid(local_pos)
 	
 	# --- 核心修改结束 ---

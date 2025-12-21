@@ -72,11 +72,10 @@ func _ready():
 		level_index = GameState.selected_level_index
 	
 	# --- 1. 动态调整战场格子数量 ---
-	# 初始 4 列，每过 1 关增加 1 列，上限为 GameConst.MAP_COLUMNS
-	# 例如: Lvl 0 -> 4, Lvl 1 -> 5, Lvl 2 -> 6...
-	if GridManager:
-		var extra = level_index 
-		GridManager.playable_columns = min(GameConst.MAP_COLUMNS, 4 + extra)
+	# 从存档读取
+	if GridManager and GameState:
+		GridManager.playable_columns = GameState.current_cols
+		GridManager.playable_rows = GameState.current_rows
 		
 	if not level_database and GameState and GameState.has_method("get_level_database"):
 		level_database = GameState.get_level_database()
@@ -380,43 +379,86 @@ func _show_rewards():
 	if not db or db.units.is_empty():
 		return
 		
-	# 随机取3个
-	var pool = db.units.duplicate()
+	# 构建奖励池
+	var pool = []
+	
+	# 1. 加入兵种卡牌
+	for unit in db.units:
+		pool.append({ "type": "unit", "data": unit })
+		
+	# 2. 加入扩充选项 (如果有空间)
+	# 增加出现权重? 简单起见，作为普通项加入，但为了保证出现率，可以加多次，或者保证必出？
+	# 用户说 "包括增加一行或一列"，意味着作为选项之一。
+	
+	if GameState:
+		if GameState.current_rows < GameConst.MAP_ROWS:
+			pool.append({ "type": "upgrade_row", "data": null })
+			# 为了增加抽取几率，可以多加几个，或者不加
+			
+		if GameState.current_cols < GameConst.MAP_COLUMNS:
+			pool.append({ "type": "upgrade_col", "data": null })
+
 	pool.shuffle()
 	var choices = pool.slice(0, 3)
 	
-	for data in choices:
-		_create_reward_card_ui(data)
+	for item in choices:
+		_create_reward_card_ui(item)
 
-func _create_reward_card_ui(data: UnitData):
+func _create_reward_card_ui(item: Dictionary):
 	var btn = Button.new()
 	btn.custom_minimum_size = Vector2(120, 160)
 	
-	# 简单的文本排版
-	var desc = data.name + "\n\n"
-	desc += "ATK: %.0f\nCD: %.1f" % [data.attack_damage, data.cooldown]
-	if not data.tags.is_empty():
-		desc += "\n" + str(data.tags)
+	var desc = ""
+	var type = item.get("type", "unit")
+	
+	if type == "unit":
+		var data = item["data"] as UnitData
+		desc = data.name + "\n\n"
+		desc += "ATK: %.0f\nCD: %.1f" % [data.attack_damage, data.cooldown]
+		if not data.tags.is_empty():
+			desc += "\n" + str(data.tags)
+	elif type == "upgrade_row":
+		desc = "【扩充战线】\n\n增加一行\n(横向)"
+	elif type == "upgrade_col":
+		desc = "【扩充战线】\n\n增加一列\n(纵向)"
 		
 	btn.text = desc
 	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	btn.pressed.connect(func(): _on_reward_selected(data))
+	btn.pressed.connect(func(): _on_reward_selected(item))
 	
 	reward_container.add_child(btn)
 
-func _on_reward_selected(data: UnitData):
-	# 添加到玩家库
-	if player_library:
-		player_library.collected_cards.append(data)
+func _on_reward_selected(item: Dictionary):
+	var type = item.get("type", "unit")
+	var reward_name = ""
+	
+	if type == "unit":
+		var data = item["data"] as UnitData
+		reward_name = data.name
+		# 添加到玩家库
+		if player_library:
+			player_library.collected_cards.append(data)
+			if GameState:
+				GameState.save_player_library(player_library)
+				
+	elif type == "upgrade_row":
+		reward_name = "战线扩充(行)"
 		if GameState:
-			GameState.save_player_library(player_library)
+			GameState.current_rows = min(GameState.current_rows + 1, GameConst.MAP_ROWS)
+			GameState.save_progress()
 			
+	elif type == "upgrade_col":
+		reward_name = "战线扩充(列)"
+		if GameState:
+			GameState.current_cols = min(GameState.current_cols + 1, GameConst.MAP_COLUMNS)
+			GameState.save_progress()
+
 	# 隐藏奖励界面
 	reward_container.visible = false
 	
 	# 更新文本提示
 	if result_detail_label:
-		result_detail_label.text += "\n\n已选择: %s" % data.name
+		result_detail_label.text += "\n\n已选择: %s" % reward_name
 		
 	# 显示下一关按钮 (如果有关卡)
 	var has_next = false

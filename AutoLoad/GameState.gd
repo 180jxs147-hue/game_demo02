@@ -6,6 +6,8 @@ extends Node
 ## - user:// 下的资源用于“玩家存档”（每台机器/每个系统用户独立，可读写）
 
 var selected_level_index: int = 0
+var current_rows: int = 3
+var current_cols: int = 3
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"
@@ -42,6 +44,8 @@ func save_player_library(library: CardLibrary) -> int:
 func save_progress():
 	var config = ConfigFile.new()
 	config.set_value("progress", "level_index", selected_level_index)
+	config.set_value("progress", "current_rows", current_rows)
+	config.set_value("progress", "current_cols", current_cols)
 	config.save(SAVE_GAME_PATH)
 
 func load_progress():
@@ -49,12 +53,18 @@ func load_progress():
 	var err = config.load(SAVE_GAME_PATH)
 	if err == OK:
 		selected_level_index = config.get_value("progress", "level_index", 0)
+		current_rows = config.get_value("progress", "current_rows", 3)
+		current_cols = config.get_value("progress", "current_cols", 3)
 	else:
 		selected_level_index = 0
+		current_rows = 3
+		current_cols = 3
 
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。
 	selected_level_index = 0
+	current_rows = 3
+	current_cols = 3
 	save_progress() # 清空进度文件
 	
 	var lib = load_player_library()
