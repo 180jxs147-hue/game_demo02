@@ -32,7 +32,7 @@ var drag_preview: Node2D = null # 拖拽时的指示器
 # 引用新的 Label 节点
 @onready var status_label = $StatusLabel # 记得在场景里改名
 @onready var name_label = $NameLabel     # 新加的 Label
-var hp_bar: ColorRect # 血条
+# var hp_bar: ColorRect # 血条 (已移除，改用 shader 表现)
 var cooldown_bar: ColorRect # 冷却条
 
 # --- 新增状态变量 ---
@@ -81,7 +81,9 @@ func _ready():
 		status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		status_label.z_index = 20
 	
-	_create_hp_bar(bounds)
+	_create_cooldown_bar(bounds)
+	# 初始化血量显示
+	_update_health_visuals()
 	
 	# 确保计时器没自动开始
 	timer.stop()
@@ -118,33 +120,16 @@ func _ready():
 			is_deployed = false
 			modulate = Color(0.7, 0.7, 0.7, 1)
  
-func _create_hp_bar(bounds: Rect2):
-	# 创建一个简易血条
-	# 修改：宽度不再横跨整个包围盒，而是固定为一个标准格子的宽度 (GameConst.GRID_SIZE - 10)
+func _create_cooldown_bar(bounds: Rect2):
+	# 创建一个简易冷却条 (位于底部)
 	var bar_width = GameConst.GRID_SIZE - 10
-	var bar_height = 6.0
 	
 	# 放在包围盒内部底部，水平居中
 	var bottom_y = bounds.position.y + bounds.size.y
 	var center_x = bounds.position.x + bounds.size.x / 2.0
 	var start_x = center_x - bar_width / 2.0
 	
-	var bg = ColorRect.new()
-	bg.size = Vector2(bar_width, bar_height)
-	bg.position = Vector2(start_x, bottom_y - 14)
-	bg.color = Color(0.2, 0.2, 0.2, 0.8)
-	bg.z_index = 20 # 提高层级
-	add_child(bg)
-	
-	hp_bar = ColorRect.new()
-	hp_bar.size = bg.size
-	hp_bar.color = Color(0, 1, 0, 1) # 绿色
-	bg.add_child(hp_bar)
-	
-	# 记录最大宽度用于更新
-	hp_bar.set_meta("max_width", bar_width)
-	
-	# 创建冷却条 (放在血条下方)
+	# 创建冷却条背景
 	var cd_bg = ColorRect.new()
 	cd_bg.size = Vector2(bar_width, 4.0)
 	cd_bg.position = Vector2(start_x, bottom_y - 6) # 底部留2px
@@ -165,7 +150,7 @@ func take_damage(amount: float):
 	if current_hp <= 0: return
 	
 	current_hp -= amount
-	_update_hp_bar()
+	_update_health_visuals()
 	
 	# 受击闪烁
 	modulate = Color(1, 0.5, 0.5)
@@ -176,21 +161,35 @@ func take_damage(amount: float):
 		current_hp = 0
 		_on_death()
 
-func _update_hp_bar():
-	if not hp_bar: return
+func _update_health_visuals():
 	if not data: return
+	var bounds = _calculate_visual_bounds()
+	var hp_percent = current_hp / data.max_hp
 	
-	var max_w = hp_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
-	var percent = current_hp / data.max_hp
-	hp_bar.size.x = max_w * percent
+	# 计算全局截断点 (相对于 Unit 节点)
+	# 假设从右向左扣血，即显示部分为 [min_x, min_x + width * percent]
+	var total_width = bounds.size.x
+	var visible_width = total_width * hp_percent
+	var global_cutoff_x = bounds.position.x + visible_width
 	
-	# 血量低变红
-	if percent < 0.3:
-		hp_bar.color = Color(1, 0, 0)
-	elif percent < 0.6:
-		hp_bar.color = Color(1, 1, 0)
-	else:
-		hp_bar.color = Color(0, 1, 0)
+	for block in visual_blocks:
+		# 计算该 Block 内部的 progress (0.0 - 1.0)
+		# block.position 是相对于 Unit 的
+		var block_start = block.position.x
+		var block_end = block.position.x + block.size.x
+		var progress = 0.0
+		
+		if global_cutoff_x >= block_end:
+			progress = 1.0 # 完全显示
+		elif global_cutoff_x <= block_start:
+			progress = 0.0 # 完全淡出
+		else:
+			# 部分显示
+			progress = (global_cutoff_x - block_start) / block.size.x
+			
+		# 更新 Shader 参数
+		if block.material:
+			block.material.set_shader_parameter("progress", progress)
 
 func _on_death():
 	# 触发死亡状态机
@@ -448,8 +447,26 @@ func _on_ally_died(unit, _pos):
 				timer.start(current_cooldown)
 			status_label.modulate = Color.RED
 
-# 构建视觉方块 (之前缺失的函数!)
+# 辅助：构建视觉方块
 func _build_visuals():
+	# 定义 Shader 代码
+	var shader_code = """
+	shader_type canvas_item;
+	uniform float progress : hint_range(0.0, 1.0) = 1.0;
+	
+	void fragment() {
+		// UV.x (0..1)
+		// 如果 UV.x > progress，则视为受伤部分
+		// 假设从右向左扣血，即 progress 左边是血，右边是空的
+		if (UV.x > progress) {
+			COLOR.a *= 0.3; // 变透明
+			COLOR.rgb *= 0.5; // 变暗
+		}
+	}
+	"""
+	var shader = Shader.new()
+	shader.code = shader_code
+	
 	for grid_pos in data.grid_shape:
 		var block = ColorRect.new()
 		var size_val = GameConst.GRID_SIZE - GameConst.GRID_PADDING
@@ -460,6 +477,11 @@ func _build_visuals():
 		var offset = Vector2(grid_pos) * GameConst.GRID_SIZE
 		var padding = Vector2(GameConst.GRID_PADDING, GameConst.GRID_PADDING) / 2.0
 		block.position = offset + padding
+		
+		# 创建独立的 ShaderMaterial 实例
+		var mat = ShaderMaterial.new()
+		mat.shader = shader
+		block.material = mat
 		
 		add_child(block)
 		visual_blocks.append(block)
