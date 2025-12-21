@@ -21,6 +21,7 @@ var battle_manager: BattleManager
 var current_cooldown: float
 var visual_blocks: Array[ColorRect] = []
 var _processed_death_ids: Dictionary = {}
+var _last_stand_triggered: bool = false
 
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
@@ -37,6 +38,8 @@ var stored_grid_pos: Vector2i      # 上一次合法的格子坐标（用于手�
 
 # --- 生成控制 ---
 var spawned_via_script: bool = false # 如果是代码生成的，默认不去尝试部署
+
+var _is_hovered: bool = false # 内部状态：是否被鼠标悬停
 
 func _ready():
 	var node = self
@@ -94,6 +97,39 @@ func _ready():
 			is_deployed = false
 			modulate = Color(0.7, 0.7, 0.7, 1)
  
+func _process(delta):
+	if is_dragging or BattleManager.is_battle_started:
+		# 拖拽中或战斗中，不检测悬停（或者你可以选择战斗中也显示）
+		if _is_hovered:
+			_is_hovered = false
+			if battle_manager and battle_manager.has_method("hide_tooltip"):
+				battle_manager.hide_tooltip()
+		return
+
+	# 检测鼠标悬停
+	# 简单的检测逻辑：鼠标位置是否在任一 grid_shape 的矩形内
+	var mouse_pos = get_global_mouse_position()
+	var hovered = false
+	
+	if faction == Faction.FRIENDLY: # 只对我方单位生效
+		for grid_pos in data.grid_shape:
+			var part_pos = global_position + Vector2(grid_pos) * GameConst.GRID_SIZE
+			# 注意：ColorRect 在 _build_visuals 里有 padding，但检测可以粗略一点
+			var part_rect = Rect2(part_pos, Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE))
+			if part_rect.has_point(mouse_pos):
+				hovered = true
+				break
+	
+	if hovered != _is_hovered:
+		_is_hovered = hovered
+		if battle_manager:
+			if _is_hovered:
+				if battle_manager.has_method("show_tooltip"):
+					battle_manager.show_tooltip(data)
+			else:
+				if battle_manager.has_method("hide_tooltip"):
+					battle_manager.hide_tooltip()
+
 # --- 状态机逻辑 ---
 
 # 状态 1: 进入冷却
@@ -159,7 +195,30 @@ func _attack():
 	var manager = battle_manager
 	if not manager:
 		return
+		
+	# 特性: 医者 (medic) - 治疗我方，不造成伤害
+	if faction == Faction.FRIENDLY and "medic" in data.tags:
+		# 治疗量 = 攻击力
+		var heal = data.attack_damage
+		manager.army_hp = min(manager.army_hp + heal, manager.max_army_hp)
+		manager._update_ui() 
+		_pop_text("Heal!")
+		# 消耗民力
+		manager.modify_manpower(-data.manpower_cost)
+		return
+
 	var dmg = data.attack_damage
+	
+	# 特性: 神射手 (sniper) - 距离战线越远伤害越高
+	if faction == Faction.FRIENDLY and "sniper" in data.tags:
+		if manager.battle_line:
+			# 假设战线向右推进，单位在左边。距离 = 战线X - 单位X
+			# 注意：BattleLine 是 FriendlyField 的子节点，global_position 比较稳
+			var dist = abs(global_position.x - manager.battle_line.global_position.x)
+			# 每 100 像素增加 10% 伤害
+			var bonus = (dist / 100.0) * 0.1
+			dmg *= (1.0 + bonus)
+
 	if faction == Faction.ENEMY:
 		manager.deal_damage_to_army(dmg)
 	else:
@@ -194,10 +253,23 @@ func check_burn(line_x: float, burn_from_right: bool = true):
 	# 死亡判定 (发送事件给状态机)
 	if burn_from_right:
 		if global_position.x > line_x:
+			_trigger_last_stand()
 			state_chart.send_event("die")
 	else:
 		if global_position.x < line_x:
+			_trigger_last_stand()
 			state_chart.send_event("die")
+
+func _trigger_last_stand():
+	if _last_stand_triggered: return
+	_last_stand_triggered = true
+	
+	if "last_stand" in data.tags and faction == Faction.FRIENDLY:
+		if battle_manager:
+			# 造成 300% 攻击力的伤害
+			var dmg = data.attack_damage * 3.0
+			battle_manager.deal_damage_to_enemy(dmg)
+			_pop_text("BOOM!")
 
 # 皮洛士机制
 func _on_ally_died(unit, _pos):

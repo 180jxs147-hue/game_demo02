@@ -8,13 +8,16 @@ extends Node
 # 存储格子占用情况: { Vector2i(x,y): UnitNode }
 var grid_occupancy: Dictionary = {}
 
+# 当前关卡允许放置的最大列数 (默认全开，由 BattleManager 控制)
+var playable_columns: int = GameConst.MAP_COLUMNS
+
 # 检查一个单位是否可以放在目标格子 (target_grid_pos 是锚点坐标)
 func can_place_unit(unit_data: UnitData, target_grid_pos: Vector2i) -> bool:
 	for offset in unit_data.grid_shape:
 		var check_pos = target_grid_pos + offset
 		
 		# 1. 检查边界 (是否超出地图)
-		if check_pos.x < 0 or check_pos.x >= GameConst.MAP_COLUMNS:
+		if check_pos.x < 0 or check_pos.x >= playable_columns:
 			return false
 		if check_pos.y < 0 or check_pos.y >= GameConst.MAP_ROWS:
 			return false
@@ -58,5 +61,5 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
 	return Vector2(grid_pos) * GameConst.GRID_SIZE
 
 func is_inside_map(grid_pos: Vector2i) -> bool:
-	return grid_pos.x >= 0 and grid_pos.x < GameConst.MAP_COLUMNS and \
+	return grid_pos.x >= 0 and grid_pos.x < playable_columns and \
 		grid_pos.y >= 0 and grid_pos.y < GameConst.MAP_ROWS

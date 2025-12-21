@@ -46,6 +46,10 @@ var max_enemy_hp: float = 1000.0
 @onready var next_level_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/NextLevelButton
 @onready var retry_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton
 
+var _tooltip_instance: Control
+
+@onready var reward_container = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/RewardContainer
+
 var battle_ended: bool = false
 var _has_level_enemies: bool = false
 var _enemy_occupied: Dictionary = {}
@@ -57,6 +61,8 @@ func _ready():
 	_apply_layout()
 	if result_overlay:
 		result_overlay.visible = false
+	if reward_container:
+		reward_container.visible = false
 	
 	if not units_container:
 		units_container = $Battlefield/FriendlyField/UnitsContainer
@@ -64,6 +70,14 @@ func _ready():
 	var level: LevelConfig = null
 	if GameState:
 		level_index = GameState.selected_level_index
+	
+	# --- 1. 动态调整战场格子数量 ---
+	# 初始 4 列，每过 1 关增加 1 列，上限为 GameConst.MAP_COLUMNS
+	# 例如: Lvl 0 -> 4, Lvl 1 -> 5, Lvl 2 -> 6...
+	if GridManager:
+		var extra = level_index 
+		GridManager.playable_columns = min(GameConst.MAP_COLUMNS, 4 + extra)
+		
 	if not level_database and GameState and GameState.has_method("get_level_database"):
 		level_database = GameState.get_level_database()
 	if level_database:
@@ -96,6 +110,13 @@ func _ready():
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
+	
+	# 初始化提示框
+	var tooltip_scene = load("res://Scenes/Tooltip.tscn")
+	if tooltip_scene:
+		_tooltip_instance = tooltip_scene.instantiate()
+		_tooltip_instance.visible = false
+		$CanvasLayer/HUD.add_child(_tooltip_instance)
 
 	# 自动加载库中的卡牌到初始阵容（如果配置了）
 	if GameState and GameState.has_method("load_player_library"):
@@ -251,6 +272,28 @@ func _update_ui():
 	if left_hp_bar: left_hp_bar.value = army_hp
 	if right_hp_bar: right_hp_bar.value = enemy_hp
 	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
+	
+	# 更新 Tooltip 位置
+	if _tooltip_instance and _tooltip_instance.visible:
+		var mouse_pos = get_global_mouse_position()
+		# HUD 是 CanvasLayer 下的，需要 Viewport 坐标
+		var viewport_mouse = get_viewport().get_mouse_position()
+		
+		# 偏移一点，避免遮挡鼠标
+		var target_pos = viewport_mouse + Vector2(15, 15)
+		
+		# 简单的边界检查 (假设屏幕足够大，先不做复杂的反转)
+		_tooltip_instance.position = target_pos
+
+func show_tooltip(data: UnitData):
+	if _tooltip_instance:
+		_tooltip_instance.update_info(data)
+		_tooltip_instance.visible = true
+		_tooltip_instance.z_index = 100 # 保证在最上层
+
+func hide_tooltip():
+	if _tooltip_instance:
+		_tooltip_instance.visible = false
 
 func _end_battle(victory: bool):
 	if battle_ended:
@@ -266,10 +309,9 @@ func _end_battle(victory: bool):
 	if victory:
 		# 胜利逻辑
 		var reward_text = ""
-		# 1. 发放奖励
-		var reward_card = _grant_random_reward()
-		if reward_card:
-			reward_text = "\n获得战利品: %s" % reward_card.name
+		
+		# 1. 弹出三选一奖励
+		_show_rewards()
 			
 		# 2. 检查是否有下一关
 		var has_next = false
@@ -279,13 +321,9 @@ func _end_battle(victory: bool):
 			reward_text += "\n\n恭喜通关！(Demo结束)"
 			
 		if next_level_button: 
-			next_level_button.visible = has_next
+			next_level_button.visible = false # 等待选择奖励后再显示
 		if retry_button: 
 			retry_button.visible = false
-			
-		# 3. 保存卡牌收集进度
-		if GameState and player_library:
-			GameState.save_player_library(player_library)
 		
 		if result_detail_label:
 			var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f%s" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower, reward_text]
@@ -294,6 +332,7 @@ func _end_battle(victory: bool):
 		# 失败逻辑
 		if next_level_button: next_level_button.visible = false
 		if retry_button: retry_button.visible = true
+		if reward_container: reward_container.visible = false
 		if result_detail_label:
 			var detail := "我方 HP: %.0f / %.0f\n敌方 HP: %.0f / %.0f\n民力: %.1f" % [army_hp, max_army_hp, enemy_hp, max_enemy_hp, current_manpower]
 			result_detail_label.text = detail
@@ -325,7 +364,71 @@ func _on_menu_button_pressed():
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
+# --- 奖励相关 ---
+
+func _show_rewards():
+	if not reward_container: return
+	
+	# 清空旧的
+	for child in reward_container.get_children():
+		child.queue_free()
+		
+	reward_container.visible = true
+	
+	# 读取数据库
+	var db = load("res://Resources/UnitDatabase.tres")
+	if not db or db.units.is_empty():
+		return
+		
+	# 随机取3个
+	var pool = db.units.duplicate()
+	pool.shuffle()
+	var choices = pool.slice(0, 3)
+	
+	for data in choices:
+		_create_reward_card_ui(data)
+
+func _create_reward_card_ui(data: UnitData):
+	var btn = Button.new()
+	btn.custom_minimum_size = Vector2(120, 160)
+	
+	# 简单的文本排版
+	var desc = data.name + "\n\n"
+	desc += "ATK: %.0f\nCD: %.1f" % [data.attack_damage, data.cooldown]
+	if not data.tags.is_empty():
+		desc += "\n" + str(data.tags)
+		
+	btn.text = desc
+	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	btn.pressed.connect(func(): _on_reward_selected(data))
+	
+	reward_container.add_child(btn)
+
+func _on_reward_selected(data: UnitData):
+	# 添加到玩家库
+	if player_library:
+		player_library.collected_cards.append(data)
+		if GameState:
+			GameState.save_player_library(player_library)
+			
+	# 隐藏奖励界面
+	reward_container.visible = false
+	
+	# 更新文本提示
+	if result_detail_label:
+		result_detail_label.text += "\n\n已选择: %s" % data.name
+		
+	# 显示下一关按钮 (如果有关卡)
+	var has_next = false
+	if level_database and level_index + 1 < level_database.levels.size():
+		has_next = true
+	
+	if next_level_button:
+		next_level_button.visible = has_next
+
 func _grant_random_reward() -> UnitData:
+	# 保留此函数以防万一，但逻辑已转移
+	return null
 	if not GameState: return null
 	var db = GameState.get_unit_database()
 	if not db or db.units.is_empty(): return null
