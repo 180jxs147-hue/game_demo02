@@ -1,11 +1,15 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://wkd2p00ti4vh"]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_pytha"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
-script = ExtResource("1_pytha")
+script = ExtResource("1_data")
 name = "士兵"
-color = Color(0.5890956, 0.5890956, 0.5890956, 1)
-attack_damage = 30.0
-story = "无名者，最先踏上战线。\n他们用纪律与队形，把混乱挡在身后。"
-metadata/_custom_type_script = "uid://eret7x2tfet4"
+color = Color(0.7, 0.2, 0.2, 1)
+tags = Array[String]([])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 20.0
+manpower_cost = 1.0
+cooldown = 2.0
+attack_damage = 4.0
+story = "基础步兵，虽然单体弱小，但胜在廉价且守纪律。"

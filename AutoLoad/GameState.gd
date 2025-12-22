@@ -81,7 +81,8 @@ func _add_initial_roster(library: CardLibrary):
 		"res://Resources/DataFiles/soldier.tres",
 		"res://Resources/DataFiles/archer.tres",
 		"res://Resources/DataFiles/spear.tres",
-		"res://Resources/DataFiles/quarter.tres"
+		"res://Resources/DataFiles/camp.tres",
+		"res://Resources/DataFiles/camp.tres"
 	]
 	for path in starters:
 		if ResourceLoader.exists(path):
@@ -108,3 +109,11 @@ func get_level_database() -> LevelDatabase:
 	if db is LevelDatabase:
 		_cached_level_database = db
 	return _cached_level_database
+
+func unlock_all_cards():
+	var db = get_unit_database()
+	var lib = load_player_library()
+	if db and lib:
+		lib.collected_cards.clear()
+		lib.collected_cards.append_array(db.units)
+		save_player_library(lib)

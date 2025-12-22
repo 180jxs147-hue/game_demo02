@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_data")
-name = "重盾兵"
-color = Color(0.4, 0.4, 0.4, 1)
-tags = Array[String]([])
+name = "列奥尼达"
+color = Color(0.6, 0.2, 0.1, 1)
+tags = Array[String](["last_stand"])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
-max_hp = 40.0
-manpower_cost = 2.0
-cooldown = 3.0
-attack_damage = 2.0
-story = "坚实的防线，虽然攻击力低下，但能承受大量伤害。"
+max_hp = 60.0
+manpower_cost = 4.0
+cooldown = 2.5
+attack_damage = 6.0
+story = "斯巴达的怒吼。在温泉关，他们证明了防守也是一种进攻。"

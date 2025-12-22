@@ -13,6 +13,7 @@ class_name BattleManager extends Node2D
 @export var left_hp_bar: ProgressBar
 @export var right_hp_bar: ProgressBar
 @export var manpower_label: Label
+@export var enemy_manpower_label: Label
 @export var units_container: Node2D  # <--- 确保这一行存在，且名字一字不差
 @export var initial_roster: Array[Resource] = [] # 初始自带的卡牌 (在编辑器里填 UnitData)
 @export var player_library: CardLibrary # 玩家拥有的卡牌库（用于持久化存储）
@@ -26,6 +27,10 @@ var unit_scene = preload("res://Scenes/Unit.tscn")
 static var is_battle_started: bool = false
 var current_manpower: float = 10.0
 var max_manpower: float = 50.0
+
+# 敌方民力 (新增)
+var enemy_current_manpower: float = 10.0
+var enemy_max_manpower: float = 50.0
 
 # 我方阵线 (Left HP)
 var army_hp: float = 1000.0 
@@ -299,6 +304,63 @@ func find_target_for(attacker: Node2D) -> Node2D:
 				
 	return best_target
 
+# --- 新增辅助战术函数 ---
+
+func heal_lowest_hp_ally(amount: float, is_friendly: bool):
+	var container = null
+	if is_friendly:
+		if has_node("Battlefield/FriendlyField/UnitsContainer"):
+			container = $Battlefield/FriendlyField/UnitsContainer
+	else:
+		if has_node("Battlefield/EnemyField/UnitsContainer"):
+			container = $Battlefield/EnemyField/UnitsContainer
+	
+	if not container: return
+	
+	var target = null
+	var min_hp_ratio = 1.0
+	var found = false
+	
+	for unit in container.get_children():
+		if is_instance_valid(unit) and not unit.is_queued_for_deletion():
+			if "current_hp" in unit and unit.current_hp > 0 and "data" in unit and unit.data:
+				# 必须是已受伤的
+				if unit.current_hp < unit.data.max_hp:
+					var ratio = unit.current_hp / unit.data.max_hp
+					if ratio <= min_hp_ratio:
+						min_hp_ratio = ratio
+						target = unit
+						found = true
+	
+	if found and target:
+		if target.has_method("heal"):
+			target.heal(amount)
+		else:
+			target.current_hp = min(target.current_hp + amount, target.data.max_hp)
+			if target.has_method("_update_health_visuals"):
+				target._update_health_visuals()
+
+func deal_damage_to_random_enemy(amount: float, is_friendly_attacker: bool):
+	var target_container = null
+	if is_friendly_attacker:
+		if has_node("Battlefield/EnemyField/UnitsContainer"):
+			target_container = $Battlefield/EnemyField/UnitsContainer
+	else:
+		if has_node("Battlefield/FriendlyField/UnitsContainer"):
+			target_container = $Battlefield/FriendlyField/UnitsContainer
+		
+	if not target_container: return
+	
+	var valid_targets = []
+	for unit in target_container.get_children():
+		if _is_valid_target(unit):
+			valid_targets.append(unit)
+			
+	if valid_targets.size() > 0:
+		var target = valid_targets.pick_random()
+		if target.has_method("take_damage"):
+			target.take_damage(amount)
+
 func _is_valid_target(unit: Node2D) -> bool:
 	if not is_instance_valid(unit): return false
 	if unit.is_queued_for_deletion(): return false
@@ -341,6 +403,12 @@ func modify_manpower(amount: float):
 	current_manpower = clampf(current_manpower, 0.0, max_manpower)
 	_update_ui()
 
+# 修改敌方民力
+func modify_enemy_manpower(amount: float):
+	enemy_current_manpower += amount
+	enemy_current_manpower = clampf(enemy_current_manpower, 0.0, enemy_max_manpower)
+	_update_ui()
+
 # 统一更新 UI
 func _update_ui():
 	# 隐藏原来的血条，或者改为显示存活数？
@@ -348,6 +416,7 @@ func _update_ui():
 	if right_hp_bar: right_hp_bar.visible = false
 	
 	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
+	if enemy_manpower_label: enemy_manpower_label.text = "敌方民力: %.1f" % enemy_current_manpower
 	
 	# 更新 Tooltip 位置
 	if _tooltip_instance and _tooltip_instance.visible:
@@ -648,7 +717,7 @@ func _arrange_bench():
 	var start_y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 40.0 # 地图下方 40 像素
 	var gap_x = 85.0 
 	var gap_y = 90.0
-	var cols = 4 # 战场宽度 384，每行放4个比较合适
+	var cols = 7 # 战场宽度允许更多列 (4 -> 7)，适配 1920x1080
 	
 	# 计算起始 X 坐标以居中显示
 	# 整个网格的宽度约为 cols * gap_x
@@ -663,8 +732,10 @@ func _arrange_bench():
 		# 动态调整背景高度
 		var total_h = rows * gap_y + 20
 		bench_rect.position.y = start_y - 20
-		bench_rect.size.x = GameConst.BATTLE_FIELD_WIDTH + 40
-		bench_rect.position.x = -20 
+		
+		# 背景框跟随网格宽度，并居中
+		bench_rect.size.x = grid_width + 40
+		bench_rect.position.x = start_x - 30 
 		bench_rect.size.y = total_h
 
 	# 开始排布

@@ -36,9 +36,6 @@ var _all_units_cache: Array[UnitData] = []
 var _tags_cache: Array[String] = []
 var _current_tag: String = ""
 enum UnitTypeFilter { ALL, CONSUME, PRODUCE }
-var _tag_desc: Dictionary = {
-	"sacrifice": "牺牲：每当有己方单位阵亡时，该单位的行动冷却时间减少 30%（最低降至 0.2 秒）。"
-}
 var _selected_unit: UnitData
 
 func _ready():
@@ -321,11 +318,11 @@ func _show_unit_detail(data: UnitData):
 	
 	var tag_lines: Array[String] = []
 	for t in data.tags:
-		var desc = _tag_desc.get(t, "")
+		var desc = GameConst.TAG_DESCRIPTIONS.get(t, "")
 		if desc == "":
 			tag_lines.append("• %s" % t)
 		else:
-			tag_lines.append("• %s：%s" % [t, desc])
+			tag_lines.append("• %s" % desc)
 	var tags_text := "\n".join(tag_lines)
 	if detail_tags is RichTextLabel:
 		# RichTextLabel 用 clear/append_text 更新更稳定，避免某些导出环境刷新异常。

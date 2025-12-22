@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_data")
-name = "投石车"
-color = Color(0.7, 0.4, 0.0, 1)
-tags = Array[String](["sniper"])
+name = "项羽"
+color = Color(0.7, 0.1, 0.1, 1)
+tags = Array[String](["last_stand"])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
-max_hp = 10.0
-manpower_cost = 4.0
-cooldown = 5.0
-attack_damage = 15.0
-story = "巨石飞过，城墙与意志一起碎裂。每一次装填，都是把未来投向远方。"
+max_hp = 50.0
+manpower_cost = 5.0
+cooldown = 3.0
+attack_damage = 12.0
+story = "力拔山兮气盖世。即便战死，也会对敌人造成毁灭性打击。"

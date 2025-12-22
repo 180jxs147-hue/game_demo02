@@ -4,12 +4,12 @@
 
 [resource]
 script = ExtResource("1_data")
-name = "弓箭手"
-color = Color(0.2, 0.6, 1.0, 1)
-tags = Array[String](["sniper"])
+name = "孙武"
+color = Color(0.8, 0.7, 0.2, 1)
+tags = Array[String](["sacrifice"])
 grid_shape = Array[Vector2i]([Vector2i(0, 0)])
 max_hp = 15.0
-manpower_cost = 2.0
-cooldown = 2.5
-attack_damage = 5.0
-story = "远程打击单位，距离越远伤害越高。注意保护。"
+manpower_cost = 5.0
+cooldown = 1.0
+attack_damage = 4.0
+story = "兵者，国之大事。善于利用局势，将牺牲转化为胜机。"

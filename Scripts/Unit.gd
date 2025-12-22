@@ -255,10 +255,6 @@ func _on_ready_entered():
 	_check_condition()
 
 func _check_condition():
-	if faction == Faction.ENEMY:
-		state_chart.send_event("act")
-		return
-	
 	# A. 产出类单位
 	if data.manpower_cost < 0:
 		state_chart.send_event("act")
@@ -266,7 +262,20 @@ func _check_condition():
 
 	# B. 消耗类单位
 	var manager = battle_manager
-	if manager.current_manpower >= data.manpower_cost:
+	var can_act = false
+	
+	if faction == Faction.FRIENDLY:
+		if manager.current_manpower >= data.manpower_cost:
+			can_act = true
+	else:
+		# 敌人也受民力限制
+		if manager.has_method("modify_enemy_manpower"):
+			if manager.enemy_current_manpower >= data.manpower_cost:
+				can_act = true
+		else:
+			can_act = true # Fallback
+			
+	if can_act:
 		state_chart.send_event("act")
 	else:
 		# 缺气，等待 0.5s 后重试 (停留在 Ready 状态)
@@ -295,13 +304,17 @@ func _on_dead_entered():
 # --- 业务逻辑 ---
 
 func _produce():
-	if faction == Faction.ENEMY:
-		return
 	var manager = battle_manager
 	if not manager:
 		return
 	var amount = absf(data.manpower_cost)
-	manager.modify_manpower(amount)
+	
+	if faction == Faction.FRIENDLY:
+		manager.modify_manpower(amount)
+	else:
+		if manager.has_method("modify_enemy_manpower"):
+			manager.modify_enemy_manpower(amount)
+			
 	_pop_text("+%.1f" % amount)
 
 func _attack():
@@ -309,15 +322,21 @@ func _attack():
 	if not manager:
 		return
 		
-	# 特性: 医者 (medic) - 治疗我方
-	if faction == Faction.FRIENDLY and "medic" in data.tags:
+	# 特性: 医者 (medic) - 治疗友军
+	if "medic" in data.tags:
 		# 治疗量 = 攻击力
-		var heal = data.attack_damage
-		manager.army_hp = min(manager.army_hp + heal, manager.max_army_hp)
-		manager._update_ui() 
+		var heal_val = data.attack_damage
+		# 改为治疗受伤最重的友军
+		if manager.has_method("heal_lowest_hp_ally"):
+			manager.heal_lowest_hp_ally(heal_val, faction == Faction.FRIENDLY)
+		
 		_pop_text("Heal!")
 		# 消耗民力
-		manager.modify_manpower(-data.manpower_cost)
+		if faction == Faction.FRIENDLY:
+			manager.modify_manpower(-data.manpower_cost)
+		else:
+			if manager.has_method("modify_enemy_manpower"):
+				manager.modify_enemy_manpower(-data.manpower_cost)
 		return
 
 	var dmg = data.attack_damage
@@ -359,6 +378,9 @@ func _attack():
 
 	if faction == Faction.FRIENDLY:
 		manager.modify_manpower(-data.manpower_cost)
+	else:
+		if manager.has_method("modify_enemy_manpower"):
+			manager.modify_enemy_manpower(-data.manpower_cost)
 		
 	if target:
 		if target.has_method("take_damage"):
@@ -429,8 +451,21 @@ func _trigger_last_stand():
 		if battle_manager:
 			# 造成 300% 攻击力的伤害
 			var dmg = data.attack_damage * 3.0
-			battle_manager.deal_damage_to_enemy(dmg)
+			# 改为对随机敌人造成伤害
+			if battle_manager.has_method("deal_damage_to_random_enemy"):
+				battle_manager.deal_damage_to_random_enemy(dmg, true)
 			_pop_text("BOOM!")
+
+func heal(amount: float):
+	if current_hp <= 0: return
+	current_hp = min(current_hp + amount, data.max_hp)
+	_update_health_visuals()
+	
+	# 治疗特效
+	var old_mod = modulate
+	modulate = Color(0.5, 1.0, 0.5)
+	var t = create_tween()
+	t.tween_property(self, "modulate", old_mod, 0.2)
 
 # 皮洛士机制
 func _on_ally_died(unit, _pos):

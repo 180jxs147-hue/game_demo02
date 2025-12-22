@@ -16,6 +16,13 @@ func _on_level_select_button_pressed():
 func _on_barracks_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/Barracks.tscn")
 
+func _on_unlock_all_button_pressed():
+	if GameState and GameState.has_method("unlock_all_cards"):
+		GameState.unlock_all_cards()
+	if info_dialog:
+		info_dialog.dialog_text = "已解锁全部卡牌"
+		info_dialog.popup_centered()
+
 func _on_clear_save_button_pressed():
 	if clear_save_dialog:
 		clear_save_dialog.popup_centered()

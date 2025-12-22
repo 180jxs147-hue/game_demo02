@@ -13,11 +13,19 @@ func update_info(data: UnitData):
 	%StatsLabel.text = "生命: %.0f  攻击: %.0f  冷却: %.1fs" % [data.max_hp, data.attack_damage, data.cooldown]
 	
 	var desc = data.story
+	
+	# 追加技能词条说明
+	if not data.tags.is_empty():
+		if not desc.is_empty():
+			desc += "\n\n"
+		
+		var tag_lines = []
+		for t in data.tags:
+			var t_desc = GameConst.TAG_DESCRIPTIONS.get(t, t)
+			tag_lines.append("• " + t_desc)
+		desc += "\n".join(tag_lines)
+	
 	if desc.is_empty():
-		# 如果没有故事，尝试生成一些基于标签的描述
-		if not data.tags.is_empty():
-			desc = "特性: " + ", ".join(data.tags)
-		else:
-			desc = "暂无简介"
+		desc = "暂无简介"
 			
 	%DescLabel.text = desc

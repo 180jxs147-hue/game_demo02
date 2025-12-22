@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://dx5x0b5txntgm"]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
 
-[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_unit_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
-script = ExtResource("1_unit_data")
+script = ExtResource("1_data")
 name = "长枪兵"
-color = Color(0.75, 0.75, 0.9, 1)
+color = Color(0.2, 0.7, 0.3, 1)
+tags = Array[String]([])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
-max_hp = 120.0
-manpower_cost = 2.5
-cooldown = 2.4
-attack_damage = 38.0
-story = "长枪成林，脚步如一。
-他们以长度换取安全，以阵形换取胜利。"
+max_hp = 25.0
+manpower_cost = 2.0
+cooldown = 2.2
+attack_damage = 5.0
+story = "长枪成林，脚步如一。以长度换取安全，以阵形换取胜利。"
