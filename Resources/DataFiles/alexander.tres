@@ -5,7 +5,9 @@
 [resource]
 script = ExtResource("1_data")
 name = "亚历山大"
-color = Color(0.9, 0.8, 0.2, 1)
+civilization = "greek"
+unit_class = "cavalry"
+color = Color(0.1, 0.5, 0.8, 1)
 tags = Array[String]([])
 grid_shape = Array[Vector2i]([Vector2i(1, 0), Vector2i(0, 1), Vector2i(2, 1)])
 max_hp = 40.0

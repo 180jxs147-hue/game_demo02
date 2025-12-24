@@ -25,6 +25,11 @@ extends Control
 @onready var tags_page = $RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage
 @onready var tag_list = $RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage/TagList
 @onready var tags_grid = $RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage/CardList/ScrollContainer/GridContainer
+
+@onready var synergy_page = $RootLayout/Content/ContentVBox/MainArea/Pages/SynergyPage
+@onready var synergy_list = $RootLayout/Content/ContentVBox/MainArea/Pages/SynergyPage/SynergyList
+@onready var synergy_desc = $RootLayout/Content/ContentVBox/MainArea/Pages/SynergyPage/SynergyDesc
+
 @onready var detail_name = $RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox/NameLabel
 @onready var detail_count = $RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox/CountLabel
 @onready var detail_shape = $RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox/ShapePreview
@@ -100,6 +105,7 @@ func _refresh_all():
 	_refresh_collected()
 	_refresh_all_units()
 	_refresh_tags()
+	_refresh_synergy_list()
 
 func _refresh_collected():
 	var entries = _get_stacked_collected()
@@ -123,18 +129,33 @@ func _refresh_tags():
 	var tags = _get_all_tags()
 	tag_list.clear()
 	for t in tags:
-		tag_list.add_item(t)
+		var cn_name = GameConst.TAG_CN_NAMES.get(t, t)
+		tag_list.add_item(cn_name)
+		# 将原始 tag key 存入 metadata
+		tag_list.set_item_metadata(tag_list.get_item_count() - 1, t)
+		
 	if tags.is_empty():
 		_current_tag = ""
 		_fill_grid(tags_grid, [])
 		return
 	if _current_tag.is_empty():
 		_current_tag = tags[0]
-	var idx := tags.find(_current_tag)
+	
+	# 选中当前 tag 对应的项
+	var idx = -1
+	for i in range(tag_list.get_item_count()):
+		if tag_list.get_item_metadata(i) == _current_tag:
+			idx = i
+			break
+			
 	if idx < 0:
 		idx = 0
-		_current_tag = tags[0]
-	tag_list.select(idx)
+		if not tags.is_empty():
+			_current_tag = tags[0]
+			
+	if tag_list.get_item_count() > 0:
+		tag_list.select(idx)
+		
 	_refresh_tag_units()
 
 func _refresh_tag_units():
@@ -277,25 +298,85 @@ func _switch_page(page: String):
 	collected_page.visible = page == "collected"
 	all_page.visible = page == "all"
 	tags_page.visible = page == "tags"
+	synergy_page.visible = page == "synergy"
 	if page == "collected":
 		page_header.text = "已收集"
 	elif page == "all":
 		page_header.text = "全部兵种"
 	elif page == "tags":
 		page_header.text = "标签"
+	elif page == "synergy":
+		page_header.text = "羁绊效果"
 	else:
 		page_header.text = ""
 
 func _on_tag_selected(index: int):
-	var tags = _get_all_tags()
-	if index < 0 or index >= tags.size():
+	if index < 0 or index >= tag_list.get_item_count():
 		return
-	_current_tag = tags[index]
-	_refresh_tag_units()
+	var t = tag_list.get_item_metadata(index)
+	if t:
+		_current_tag = t
+		_refresh_tag_units()
 
 func _on_card_pressed(data: UnitData):
 	_selected_unit = _resolve_unit_data(data)
 	_show_unit_detail(_selected_unit)
+
+func _get_adjacency_desc(data: UnitData) -> String:
+	if not data or not ("adjacency_rules" in data) or data.adjacency_rules.is_empty():
+		return ""
+	
+	var lines: Array[String] = []
+	for rule in data.adjacency_rules:
+		# 解析类型
+		var type_str = ""
+		if rule.get("type") == "give":
+			type_str = "给予"
+		elif rule.get("type") == "receive":
+			type_str = "自身获得"
+		else:
+			continue
+			
+		# 解析条件
+		var req_str = ""
+		var rt = rule.get("req_type", "all")
+		var rv = rule.get("req_value", "")
+		
+		if rt == "all":
+			req_str = "周围所有友军"
+		elif rt == "tag":
+			# 尝试翻译 tag
+			var tag_name = GameConst.TAG_CN_NAMES.get(rv, rv)
+			req_str = "周围[%s]" % tag_name
+		elif rt == "class":
+			req_str = "周围[%s]" % rv
+		elif rt == "civ":
+			req_str = "周围[%s]" % rv
+			
+		# 解析效果
+		var stat_str = ""
+		var es = rule.get("effect_stat", "")
+		if es == "max_hp":
+			stat_str = "生命上限"
+		elif es == "attack_damage":
+			stat_str = "攻击力"
+		elif es == "cooldown_speed":
+			stat_str = "冷却速度"
+		else:
+			stat_str = es
+			
+		var val = rule.get("effect_value", 0)
+		var val_str = "+%s" % val if val >= 0 else "%s" % val
+		
+		# 组合句子: "给予 周围所有友军 生命上限 +10"
+		# 或者 "自身获得 周围[步兵] 攻击力 +5" (这个逻辑稍微有点不同，receive通常是每有一个加多少)
+		
+		if rule.get("type") == "give":
+			lines.append("• %s %s %s %s" % [type_str, req_str, stat_str, val_str])
+		elif rule.get("type") == "receive":
+			lines.append("• %s: 每个%s 提供 %s %s" % [type_str, req_str, stat_str, val_str])
+			
+	return "\n".join(lines)
 
 func _show_unit_detail(data: UnitData):
 	# 右侧详情面板渲染入口。
@@ -317,12 +398,38 @@ func _show_unit_detail(data: UnitData):
 		detail_shape.set_unit_data(data)
 	
 	var tag_lines: Array[String] = []
+	
+	# 1. 基础属性
+	tag_lines.append("[基础属性]")
+	tag_lines.append("• 攻击力: %s" % data.attack_damage)
+	tag_lines.append("• 生命值: %s" % data.max_hp)
+	tag_lines.append("• 冷却: %s秒" % data.cooldown)
+	tag_lines.append("• 民力消耗: %s" % data.manpower_cost)
+	tag_lines.append("")
+
+	# 2. 标签/技能
+	tag_lines.append("[特性]")
 	for t in data.tags:
-		var desc = GameConst.TAG_DESCRIPTIONS.get(t, "")
+		var desc = ""
+		# 特殊处理：贞德的医者标签
+		if data.name == "圣女贞德" and t == "medic":
+			desc = "医者(光环)：不再主动治疗，而是通过光环辅助队友。"
+		else:
+			desc = GameConst.TAG_DESCRIPTIONS.get(t, "")
+
 		if desc == "":
-			tag_lines.append("• %s" % t)
+			var cn = GameConst.TAG_CN_NAMES.get(t, t)
+			tag_lines.append("• %s" % cn)
 		else:
 			tag_lines.append("• %s" % desc)
+	
+	# 3. 邻近加成
+	var adj_text = _get_adjacency_desc(data)
+	if not adj_text.is_empty():
+		tag_lines.append("")
+		tag_lines.append("[阵型羁绊]") # 或者叫 "邻近加成"
+		tag_lines.append(adj_text)
+
 	var tags_text := "\n".join(tag_lines)
 	if detail_tags is RichTextLabel:
 		# RichTextLabel 用 clear/append_text 更新更稳定，避免某些导出环境刷新异常。
@@ -372,3 +479,43 @@ func _on_all_units_button_pressed():
 func _on_tags_button_pressed():
 	_switch_page("tags")
 	_refresh_tags()
+
+func _on_synergy_button_pressed():
+	_switch_page("synergy")
+	_refresh_synergy_list()
+
+func _refresh_synergy_list():
+	if not synergy_list:
+		return
+	synergy_list.clear()
+	# 这里硬编码一些羁绊数据用于展示
+	# 实际项目中建议从 BattleManager 或单独的配置表读取
+	var synergies = [
+		{"name": "汉 (Han)", "desc": "2: 全体+2攻\n4: 全体+5攻"},
+		{"name": "罗马 (Roman)", "desc": "2: 全体+20血"},
+		{"name": "希腊 (Greek)", "desc": "2: 全体+1防\n4: 全体+3防"},
+		{"name": "法兰西 (French)", "desc": "2: 全体移速+10%\n4: 全体移速+20%"},
+		{"name": "步兵 (Infantry)", "desc": "2: 步兵+10血\n4: 步兵+30血"},
+		{"name": "骑兵 (Cavalry)", "desc": "2: 骑兵+2攻\n4: 骑兵+5攻"},
+		{"name": "弓手 (Archer)", "desc": "2: 射程+50\n4: 射程+100"}
+	]
+	
+	for s in synergies:
+		synergy_list.add_item(s.name)
+		# 将描述存储在 item metadata 中，方便点击时获取
+		synergy_list.set_item_metadata(synergy_list.get_item_count() - 1, s.desc)
+	
+	# 如果有列表项，默认选中第一个
+	if synergy_list.get_item_count() > 0:
+		synergy_list.select(0)
+		_on_synergy_selected(0)
+	
+	# 确保信号连接（如果在 _ready 中未连接）
+	if not synergy_list.item_selected.is_connected(_on_synergy_selected):
+		synergy_list.item_selected.connect(_on_synergy_selected)
+
+func _on_synergy_selected(index: int):
+	if not synergy_desc:
+		return
+	var desc = synergy_list.get_item_metadata(index)
+	synergy_desc.text = str(desc)

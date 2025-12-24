@@ -10,6 +10,7 @@ extends Panel
 @onready var color_rect = $ColorRect
 @onready var count_label = $CountLabel
 @onready var click_button = $ClickButton
+@onready var synergy_info_label = $SynergyInfoLabel
 
 signal pressed(data: UnitData)
 
@@ -37,6 +38,20 @@ func setup(data: UnitData):
 	stats_label.text = "%s\n攻: %.0f\nCD: %.1fs" % [manpower_txt, data.attack_damage, data.cooldown]
 	color_rect.color = data.color
 	count_label.visible = false
+	
+	# 显示羁绊信息
+	if synergy_info_label:
+		# 简单的翻译映射 (也可以用 TranslationServer)
+		var civ_map = {
+			"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西"
+		}
+		var cls_map = {
+			"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "枪兵", "civilian": "平民", "siege": "攻城"
+		}
+		
+		var civ_str = civ_map.get(data.civilization, data.civilization)
+		var cls_str = cls_map.get(data.unit_class, data.unit_class)
+		synergy_info_label.text = "%s\n%s" % [civ_str, cls_str]
 
 func setup_stacked(data: UnitData, count: int):
 	setup(data)

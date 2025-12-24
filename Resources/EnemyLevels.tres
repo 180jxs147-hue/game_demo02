@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="LevelDatabase" load_steps=37 format=3 uid="uid://durniktkpk52p"]
+[gd_resource type="Resource" script_class="LevelDatabase" load_steps=32 format=3 uid="uid://durniktkpk52p"]
 
 [ext_resource type="Script" uid="uid://b3jjta8myy3pp" path="res://Resources/LevelDatabase.gd" id="1_db"]
 [ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="2_level"]
 [ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="3_spawn"]
-[ext_resource type="Resource" uid="uid://wkd2p00ti4vh" path="res://Resources/DataFiles/soldier.tres" id="4_soldier"]
-[ext_resource type="Resource" uid="uid://c8ewqmbtabew2" path="res://Resources/DataFiles/Pyrrhus.tres" id="5_pyrrhus"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="6_archer"]
-[ext_resource type="Resource" uid="uid://dx5x0b5txntgm" path="res://Resources/DataFiles/spear.tres" id="7_spear"]
-[ext_resource type="Resource" uid="uid://dfvi4rb81lp52" path="res://Resources/DataFiles/catapult.tres" id="9_catapult"]
-[ext_resource type="Resource" uid="uid://dtkov63hi08cp" path="res://Resources/DataFiles/shield.tres" id="10_shield"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="11_camp"]
+[ext_resource type="Resource" uid="uid://ccrs53oj1bhbd" path="res://Resources/DataFiles/soldier.tres" id="4_soldier"]
+[ext_resource type="Resource" uid="uid://d3ar1fu712kj8" path="res://Resources/DataFiles/Pyrrhus.tres" id="5_pyrrhus"]
+[ext_resource type="Resource" uid="uid://bwbtenllive4" path="res://Resources/DataFiles/archer.tres" id="6_archer"]
+[ext_resource type="Resource" uid="uid://cq8f3un1sh778" path="res://Resources/DataFiles/spear.tres" id="7_spear"]
+[ext_resource type="Resource" uid="uid://jn3gfjnoevr5" path="res://Resources/DataFiles/catapult.tres" id="9_catapult"]
+[ext_resource type="Resource" uid="uid://sg64dk33u0ae" path="res://Resources/DataFiles/shield.tres" id="10_shield"]
+[ext_resource type="Resource" uid="uid://di7a6p1bc0f2c" path="res://Resources/DataFiles/camp.tres" id="11_camp"]
 
 [sub_resource type="Resource" id="UnitSpawn_L1_1"]
 script = ExtResource("3_spawn")

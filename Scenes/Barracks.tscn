@@ -64,6 +64,10 @@ text = "全部兵种"
 layout_mode = 2
 text = "标签"
 
+[node name="SynergyButton" type="Button" parent="RootLayout/Sidebar/SidebarVBox"]
+layout_mode = 2
+text = "羁绊"
+
 [node name="Spacer" type="Control" parent="RootLayout/Sidebar/SidebarVBox"]
 layout_mode = 2
 size_flags_vertical = 3
@@ -187,6 +191,28 @@ theme_override_constants/h_separation = 16
 theme_override_constants/v_separation = 16
 columns = 4
 
+[node name="SynergyPage" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 12
+
+[node name="SynergyList" type="ItemList" parent="RootLayout/Content/ContentVBox/MainArea/Pages/SynergyPage"]
+custom_minimum_size = Vector2(220, 0)
+layout_mode = 2
+
+[node name="SynergyDesc" type="Label" parent="RootLayout/Content/ContentVBox/MainArea/Pages/SynergyPage"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 1
+theme_override_font_sizes/font_size = 24
+text = "选择一个羁绊查看详情"
+autowrap_mode = 2
+
 [node name="Detail" type="PanelContainer" parent="RootLayout/Content/ContentVBox/MainArea"]
 custom_minimum_size = Vector2(340, 0)
 layout_mode = 2
@@ -227,4 +253,5 @@ scroll_active = true
 [connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/CollectedButton" to="." method="_on_collected_button_pressed"]
 [connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/AllUnitsButton" to="." method="_on_all_units_button_pressed"]
 [connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/TagsButton" to="." method="_on_tags_button_pressed"]
+[connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/SynergyButton" to="." method="_on_synergy_button_pressed"]
 [connection signal="pressed" from="RootLayout/Sidebar/SidebarVBox/BackButton" to="." method="_on_back_button_pressed"]

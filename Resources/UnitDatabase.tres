@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="UnitDatabase" load_steps=20 format=3]
+[gd_resource type="Resource" script_class="UnitDatabase" load_steps=19 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitDatabase.gd" id="1_db"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="2_pyrrhus"]
@@ -11,7 +11,6 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="9_soldier"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/spear.tres" id="10_spear"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/xiang_yu.tres" id="11_xiang"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/nobunaga.tres" id="12_nobunaga"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/joan.tres" id="13_joan"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sun_tzu.tres" id="14_sun"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/leonidas.tres" id="15_leo"]
@@ -21,7 +20,7 @@
 
 [resource]
 script = ExtResource("1_db")
-units = Array[Resource]([ExtResource("9_soldier"), ExtResource("10_spear"), ExtResource("3_archer"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("12_nobunaga"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp")])
+units = Array[Resource]([ExtResource("9_soldier"), ExtResource("10_spear"), ExtResource("3_archer"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp")])
 story_by_path = {
 "res://Resources/DataFiles/camp.tres": "军中休憩之所，亦是补给流转的核心。\n源源不断地提供支持，是持久战的关键。",
 "res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",

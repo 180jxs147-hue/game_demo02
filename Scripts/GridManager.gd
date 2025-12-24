@@ -68,3 +68,29 @@ func grid_to_world(grid_pos: Vector2i) -> Vector2:
 func is_inside_map(grid_pos: Vector2i) -> bool:
 	return grid_pos.x >= 0 and grid_pos.x < playable_columns and \
 		grid_pos.y >= 0 and grid_pos.y < playable_rows
+
+func get_neighbors(unit: Node2D) -> Array[Node2D]:
+	var neighbors: Array[Node2D] = []
+	if not unit:
+		return neighbors
+		
+	# 1. 找到单位占据的所有格子
+	var occupied_cells: Array[Vector2i] = []
+	for key in grid_occupancy:
+		if grid_occupancy[key] == unit:
+			occupied_cells.append(key)
+			
+	# 2. 检查这些格子的四周
+	var checked_units = { unit: true } # 排除自己
+	var directions = [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]
+	
+	for cell in occupied_cells:
+		for d in directions:
+			var neighbor_pos = cell + d
+			if grid_occupancy.has(neighbor_pos):
+				var neighbor_unit = grid_occupancy[neighbor_pos]
+				if is_instance_valid(neighbor_unit) and not checked_units.has(neighbor_unit):
+					neighbors.append(neighbor_unit)
+					checked_units[neighbor_unit] = true
+					
+	return neighbors

@@ -2,20 +2,21 @@
 
 [ext_resource type="Script" uid="uid://dv6ra6rxgdm5g" path="res://Scripts/BattleManager.gd" id="1_p46lj"]
 [ext_resource type="Resource" path="res://Resources/PlayerLibrary.tres" id="4_library"]
-[ext_resource type="Resource" path="res://Resources/EnemyLevels.tres" id="5_levels"]
+[ext_resource type="Resource" uid="uid://durniktkpk52p" path="res://Resources/EnemyLevels.tres" id="5_levels"]
 [ext_resource type="Script" uid="uid://u1q5ipdswswu" path="res://Scripts/GridPaint.gd" id="6_8teo4"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_red"]
 bg_color = Color(0.9685883, 0, 0, 1)
 
-[node name="Battle" type="Node2D" node_paths=PackedStringArray("left_hp_bar", "right_hp_bar", "manpower_label")]
+[node name="Battle" type="Node2D" node_paths=PackedStringArray("left_hp_bar", "right_hp_bar", "manpower_label", "enemy_manpower_label", "synergy_label")]
 script = ExtResource("1_p46lj")
 left_hp_bar = NodePath("CanvasLayer/HUD/LeftHPBar")
 right_hp_bar = NodePath("CanvasLayer/HUD/RightHPBar")
 manpower_label = NodePath("CanvasLayer/HUD/ManpowerLabel")
+enemy_manpower_label = NodePath("CanvasLayer/HUD/EnemyManpowerLabel")
+synergy_label = NodePath("CanvasLayer/HUD/SynergyLabel")
 player_library = ExtResource("4_library")
 level_database = ExtResource("5_levels")
-level_index = 0
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -51,7 +52,6 @@ offset_left = 2.0
 offset_top = 35.0
 offset_right = 102.0
 offset_bottom = 58.0
-mouse_filter = 2
 
 [node name="EnemyManpowerLabel" type="Label" parent="CanvasLayer/HUD"]
 clip_contents = true
@@ -65,8 +65,16 @@ offset_top = 35.0
 offset_right = -50.0
 offset_bottom = 58.0
 grow_horizontal = 0
-mouse_filter = 2
 horizontal_alignment = 2
+
+[node name="SynergyLabel" type="Label" parent="CanvasLayer/HUD"]
+layout_mode = 0
+offset_left = 10.0
+offset_top = 80.0
+offset_right = 200.0
+offset_bottom = 400.0
+theme_override_font_sizes/font_size = 14
+text = "当前羁绊:"
 
 [node name="LeftHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
 custom_minimum_size = Vector2(300, 20)
@@ -75,8 +83,8 @@ offset_left = 21.0
 offset_top = 1.0
 offset_right = 321.0
 offset_bottom = 28.0
-theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
 mouse_filter = 2
+theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
 
 [node name="RightHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
 custom_minimum_size = Vector2(300, 20)
@@ -89,9 +97,9 @@ offset_top = 1.0
 offset_right = -21.0
 offset_bottom = 28.0
 grow_horizontal = 0
+mouse_filter = 2
 theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
 fill_mode = 1
-mouse_filter = 2
 
 [node name="TopMenuButton" type="Button" parent="CanvasLayer/HUD"]
 layout_mode = 1
@@ -161,7 +169,6 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 16
-text = ""
 horizontal_alignment = 1
 
 [node name="RewardContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer"]
@@ -220,7 +227,6 @@ mouse_filter = 2
 color = Color(0.5489626, 0.5489626, 0.54896253, 0.4117647)
 
 [node name="EnemyField" type="Node2D" parent="Battlefield"]
-position = Vector2(0, 0)
 
 [node name="GridVisualizer" type="Node2D" parent="Battlefield/EnemyField"]
 script = ExtResource("6_8teo4")

@@ -14,6 +14,7 @@ class_name BattleManager extends Node2D
 @export var right_hp_bar: ProgressBar
 @export var manpower_label: Label
 @export var enemy_manpower_label: Label
+@export var synergy_label: Label
 @export var units_container: Node2D  # <--- 确保这一行存在，且名字一字不差
 @export var initial_roster: Array[Resource] = [] # 初始自带的卡牌 (在编辑器里填 UnitData)
 @export var player_library: CardLibrary # 玩家拥有的卡牌库（用于持久化存储）
@@ -54,6 +55,8 @@ var max_enemy_hp: float = 1000.0
 var _tooltip_instance: Control
 
 @onready var reward_container = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/RewardContainer
+
+var _synergy_update_timer: float = 0.0
 
 var battle_ended: bool = false
 var _has_level_enemies: bool = false
@@ -219,7 +222,12 @@ func _debug_add_card_to_library():
 
 func _process(delta):
 	# 战斗循环：推进战线、检测胜负、让超出战线的单位进入死亡状态。
-	if not is_battle_started: return
+	if not is_battle_started:
+		_synergy_update_timer += delta
+		if _synergy_update_timer > 0.2:
+			_synergy_update_timer = 0.0
+			_check_and_apply_synergies()
+		return
 	if battle_ended: return
 	
 	# 改为检测双方存活单位数量
@@ -482,9 +490,191 @@ func _end_battle(victory: bool):
 			var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f" % [_count_alive_units(true), _count_alive_units(false), current_manpower]
 			result_detail_label.text = detail
 
+# --- 羁绊系统 ---
+func _check_and_apply_synergies():
+	if not units_container: return
+	
+	var civ_counts = {}
+	var class_counts = {}
+	
+	var civ_unique_types = {} # { "han": { "soldier_name": true, ... } }
+	var class_unique_types = {} # { "infantry": { "soldier_name": true, ... } }
+	
+	var deployed_units = []
+	
+	# 1. 统计场上单位
+	for unit in units_container.get_children():
+		# 重置属性 (防止多次点击叠加，虽然目前只点一次)
+		if unit.has_method("reset_stats"):
+			unit.reset_stats() 
+		
+		# 检查是否已部署
+		if unit.get("is_deployed") == true:
+			deployed_units.append(unit)
+			if unit.data:
+				var civ = unit.data.civilization
+				var cls = unit.data.unit_class
+				var u_name = unit.data.name
+				
+				# 初始化字典
+				if not civ_unique_types.has(civ): civ_unique_types[civ] = {}
+				if not class_unique_types.has(cls): class_unique_types[cls] = {}
+				
+				# 记录唯一类型
+				civ_unique_types[civ][u_name] = true
+				class_unique_types[cls][u_name] = true
+
+	# 计算数量
+	for civ in civ_unique_types:
+		civ_counts[civ] = civ_unique_types[civ].size()
+	for cls in class_unique_types:
+		class_counts[cls] = class_unique_types[cls].size()
+	
+	# 2. 定义加成规则 (这里硬编码，也可以配表)
+	
+	# -- 文明羁绊 --
+	# 汉 (Han): 2人 -> +2 ATK; 4人 -> +5 ATK
+	var han_bonus_atk = 0.0
+	if civ_counts.get("han", 0) >= 4: han_bonus_atk = 5.0
+	elif civ_counts.get("han", 0) >= 2: han_bonus_atk = 2.0
+	
+	# 罗马 (Roman): 2人 -> +20 Max HP
+	var roman_bonus_hp = 0.0
+	if civ_counts.get("roman", 0) >= 2: roman_bonus_hp = 20.0
+	
+	# 希腊 (Greek): 2人 -> +10% 冷却缩减 (简单实现为减CD时间)
+	var greek_bonus_cdr = 0.0
+	if civ_counts.get("greek", 0) >= 2: greek_bonus_cdr = 0.2 # 减少0.2秒冷却
+
+	# -- 兵种羁绊 --
+	# 步兵 (Infantry): 2人 -> +10 HP; 4人 -> +30 HP
+	var inf_bonus_hp = 0.0
+	if class_counts.get("infantry", 0) >= 4: inf_bonus_hp = 30.0
+	elif class_counts.get("infantry", 0) >= 2: inf_bonus_hp = 10.0
+	
+	# 弓手 (Archer): 2人 -> +2 ATK
+	var archer_bonus_atk = 0.0
+	if class_counts.get("archer", 0) >= 2: archer_bonus_atk = 2.0
+	
+	# 盾兵 (Shield): 2人 -> +20 HP
+	var shield_bonus_hp = 0.0
+	if class_counts.get("shield", 0) >= 2: shield_bonus_hp = 20.0
+	
+	# 骑兵 (Cavalry): 2人 -> +2 ATK, +5 HP
+	var cav_bonus_atk = 0.0
+	var cav_bonus_hp = 0.0
+	if class_counts.get("cavalry", 0) >= 2:
+		cav_bonus_atk = 2.0
+		cav_bonus_hp = 5.0
+		
+	# 辅助 (Support): 2人 -> +10 HP
+	var sup_bonus_hp = 0.0
+	if class_counts.get("support", 0) >= 2: sup_bonus_hp = 10.0
+
+	# 3. 应用加成
+	for unit in deployed_units:
+		if not unit.data: continue
+		
+		var civ = unit.data.civilization
+		var cls = unit.data.unit_class
+		
+		# 应用文明加成
+		if civ == "han" and han_bonus_atk > 0:
+			unit.apply_synergy_bonus("attack_damage", han_bonus_atk)
+			
+		if civ == "roman" and roman_bonus_hp > 0:
+			unit.apply_synergy_bonus("max_hp", roman_bonus_hp)
+			
+		if civ == "greek" and greek_bonus_cdr > 0:
+			unit.apply_synergy_bonus("cooldown_flat", greek_bonus_cdr)
+			
+		# 应用兵种加成
+		if cls == "infantry" and inf_bonus_hp > 0:
+			unit.apply_synergy_bonus("max_hp", inf_bonus_hp)
+			
+		if cls == "archer" and archer_bonus_atk > 0:
+			unit.apply_synergy_bonus("attack_damage", archer_bonus_atk)
+			
+		if cls == "shield" and shield_bonus_hp > 0:
+			unit.apply_synergy_bonus("max_hp", shield_bonus_hp)
+			
+		if cls == "cavalry":
+			if cav_bonus_atk > 0: unit.apply_synergy_bonus("attack_damage", cav_bonus_atk)
+			if cav_bonus_hp > 0: unit.apply_synergy_bonus("max_hp", cav_bonus_hp)
+			
+		if cls == "support" and sup_bonus_hp > 0:
+			unit.apply_synergy_bonus("max_hp", sup_bonus_hp)
+			
+	# 4. 应用相邻加成 (Adjacency Bonuses)
+	_apply_adjacency_bonuses(deployed_units)
+
+	# (可选) 在UI上显示触发的羁绊
+	_update_synergy_ui(civ_counts, class_counts)
+
+func _apply_adjacency_bonuses(units: Array):
+	if not GridManager: return
+	
+	for unit in units:
+		if not unit.data or unit.data.adjacency_rules.is_empty():
+			continue
+			
+		var neighbors = GridManager.get_neighbors(unit)
+		for rule in unit.data.adjacency_rules:
+			var mode = rule.get("type", "give")
+			var req_type = rule.get("req_type", "all")
+			var req_val = rule.get("req_value", "")
+			var stat = rule.get("effect_stat", "attack_damage")
+			var val = rule.get("effect_value", 0.0)
+			
+			for neighbor in neighbors:
+				if not neighbor.data: continue
+				
+				# Check requirement against the NEIGHBOR
+				var match_req = false
+				if req_type == "all":
+					match_req = true
+				elif req_type == "tag":
+					if neighbor.data.tags.has(req_val): match_req = true
+				elif req_type == "class":
+					if neighbor.data.unit_class == req_val: match_req = true
+				elif req_type == "civ":
+					if neighbor.data.civilization == req_val: match_req = true
+				
+				if match_req:
+					if mode == "give":
+						neighbor.apply_synergy_bonus(stat, val)
+					elif mode == "receive":
+						unit.apply_synergy_bonus(stat, val)
+
+func _update_synergy_ui(civ_counts, class_counts):
+	if not synergy_label: return
+	
+	var text = "当前羁绊:\n"
+	
+	# 文明
+	if civ_counts.get("han", 0) >= 4: text += "[汉] 4: 全体+5攻\n"
+	elif civ_counts.get("han", 0) >= 2: text += "[汉] 2: 全体+2攻\n"
+	
+	if civ_counts.get("roman", 0) >= 2: text += "[罗马] 2: 全体+20血\n"
+	if civ_counts.get("greek", 0) >= 2: text += "[希腊] 2: 全体-0.2s CD\n"
+	
+	# 兵种
+	if class_counts.get("infantry", 0) >= 4: text += "[步兵] 4: 步兵+30血\n"
+	elif class_counts.get("infantry", 0) >= 2: text += "[步兵] 2: 步兵+10血\n"
+	
+	if class_counts.get("archer", 0) >= 2: text += "[弓兵] 2: 弓兵+2攻\n"
+	if class_counts.get("shield", 0) >= 2: text += "[盾兵] 2: 盾兵+20血\n"
+	if class_counts.get("cavalry", 0) >= 2: text += "[骑兵] 2: 骑兵+2攻+5血\n"
+	if class_counts.get("support", 0) >= 2: text += "[辅助] 2: 辅助+10血\n"
+	
+	synergy_label.text = text
+
 # 按钮点击回调
 func _on_start_button_pressed():
 	if is_battle_started: return
+	
+	# 计算羁绊加成
+	_check_and_apply_synergies()
 	
 	is_battle_started = true
 	$CanvasLayer/HUD/StartButton.visible = false # 隐藏按钮

@@ -20,6 +20,12 @@ var battle_manager: BattleManager
 # 动态属性
 var current_cooldown: float
 var current_hp: float
+var current_attack_damage: float # 实际攻击力 (含加成)
+var bonus_max_hp: float = 0.0
+var bonus_attack_damage: float = 0.0
+var bonus_cooldown_speed: float = 0.0
+var bonus_cooldown_flat: float = 0.0
+
 var visual_blocks: Array[ColorRect] = []
 var _processed_death_ids: Dictionary = {}
 var _last_stand_triggered: bool = false
@@ -45,6 +51,40 @@ var spawned_via_script: bool = false # 如果是代码生成的，默认不去�
 
 var _is_hovered: bool = false # 内部状态：是否被鼠标悬停
 
+func get_max_hp() -> float:
+	return data.max_hp + bonus_max_hp
+
+func _recalculate_stats():
+	if not data: return
+	current_attack_damage = data.attack_damage + bonus_attack_damage
+	# 冷却计算: (基础 - 固定减免) / (1 + 速度加成)
+	var base_cd = maxf(0.1, data.cooldown - bonus_cooldown_flat)
+	current_cooldown = base_cd / (1.0 + bonus_cooldown_speed)
+
+func apply_synergy_bonus(type: String, value: float):
+	match type:
+		"max_hp":
+			bonus_max_hp += value
+			# 如果战斗还没开始，顺便把血回满
+			if not BattleManager.is_battle_started:
+				current_hp += value
+		"attack_damage":
+			bonus_attack_damage += value
+		"cooldown_speed":
+			bonus_cooldown_speed += value
+		"cooldown_flat":
+			bonus_cooldown_flat += value
+	_recalculate_stats()
+
+func reset_stats():
+	bonus_max_hp = 0.0
+	bonus_attack_damage = 0.0
+	bonus_cooldown_speed = 0.0
+	bonus_cooldown_flat = 0.0
+	_recalculate_stats()
+	if not BattleManager.is_battle_started:
+		current_hp = get_max_hp()
+
 func _ready():
 	var node = self
 	while node:
@@ -55,8 +95,8 @@ func _ready():
 		
 	if not data: return
 	
-	current_cooldown = data.cooldown
-	current_hp = data.max_hp
+	_recalculate_stats()
+	current_hp = get_max_hp()
 	# 1. 记录初始位置作为"老家" (假设你在编辑器里把它们放在了格子外面)
 	bench_position = position
 	
@@ -164,7 +204,7 @@ func take_damage(amount: float):
 func _update_health_visuals():
 	if not data: return
 	var bounds = _calculate_visual_bounds()
-	var hp_percent = current_hp / data.max_hp
+	var hp_percent = current_hp / get_max_hp()
 	
 	# 计算全局截断点 (相对于 Unit 节点)
 	# 假设从右向左扣血，即显示部分为 [min_x, min_x + width * percent]
@@ -324,22 +364,28 @@ func _attack():
 		
 	# 特性: 医者 (medic) - 治疗友军
 	if "medic" in data.tags:
-		# 治疗量 = 攻击力
-		var heal_val = data.attack_damage
-		# 改为治疗受伤最重的友军
-		if manager.has_method("heal_lowest_hp_ally"):
-			manager.heal_lowest_hp_ally(heal_val, faction == Faction.FRIENDLY)
-		
-		_pop_text("Heal!")
-		# 消耗民力
-		if faction == Faction.FRIENDLY:
-			manager.modify_manpower(-data.manpower_cost)
+		# 贞德已改为光环效果，移除主动治疗逻辑
+		if data.name == "圣女贞德":
+			# 贞德的普通攻击逻辑（或者不攻击只加光环？暂时按普通攻击处理）
+			pass 
 		else:
-			if manager.has_method("modify_enemy_manpower"):
-				manager.modify_enemy_manpower(-data.manpower_cost)
-		return
-
-	var dmg = data.attack_damage
+			# 其他医者保持原样
+			# 治疗量 = 攻击力
+			var heal_val = current_attack_damage
+			# 改为治疗受伤最重的友军
+			if manager.has_method("heal_lowest_hp_ally"):
+				manager.heal_lowest_hp_ally(heal_val, faction == Faction.FRIENDLY)
+			
+			_pop_text("Heal!")
+			# 消耗民力
+			if faction == Faction.FRIENDLY:
+				manager.modify_manpower(-data.manpower_cost)
+			else:
+				if manager.has_method("modify_enemy_manpower"):
+					manager.modify_enemy_manpower(-data.manpower_cost)
+			return
+	
+	var dmg = current_attack_damage
 	var target = manager.find_target_for(self)
 	
 	# --- 攻击表现优化 ---
@@ -450,7 +496,7 @@ func _trigger_last_stand():
 	if "last_stand" in data.tags and faction == Faction.FRIENDLY:
 		if battle_manager:
 			# 造成 300% 攻击力的伤害
-			var dmg = data.attack_damage * 3.0
+			var dmg = current_attack_damage * 3.0
 			# 改为对随机敌人造成伤害
 			if battle_manager.has_method("deal_damage_to_random_enemy"):
 				battle_manager.deal_damage_to_random_enemy(dmg, true)
@@ -458,7 +504,7 @@ func _trigger_last_stand():
 
 func heal(amount: float):
 	if current_hp <= 0: return
-	current_hp = min(current_hp + amount, data.max_hp)
+	current_hp = min(current_hp + amount, get_max_hp())
 	_update_health_visuals()
 	
 	# 治疗特效

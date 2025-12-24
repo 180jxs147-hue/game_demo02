@@ -1,15 +1,13 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://dvppcwqod72a6"]
 
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
 script = ExtResource("1_data")
 name = "农民"
-color = Color(0.6, 0.8, 0.4, 1)
-tags = Array[String]([])
-grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+unit_class = "civilian"
+color = Color(0.5, 0.5, 0.5, 1)
 max_hp = 10.0
 manpower_cost = -2.0
-cooldown = 2.0
 attack_damage = 1.0
 story = "耕作、修补、搬运。他们不站在战线的最前，却撑起了所有人的后方。"

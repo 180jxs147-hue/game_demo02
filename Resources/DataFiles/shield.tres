@@ -1,12 +1,12 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://sg64dk33u0ae"]
 
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
 script = ExtResource("1_data")
-name = "重盾兵"
-color = Color(0.4, 0.4, 0.4, 1)
-tags = Array[String]([])
+name = "盾兵"
+unit_class = "shield"
+color = Color(0.5, 0.5, 0.5, 1)
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 max_hp = 40.0
 manpower_cost = 2.0

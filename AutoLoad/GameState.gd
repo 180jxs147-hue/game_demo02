@@ -53,18 +53,18 @@ func load_progress():
 	var err = config.load(SAVE_GAME_PATH)
 	if err == OK:
 		selected_level_index = config.get_value("progress", "level_index", 0)
-		current_rows = config.get_value("progress", "current_rows", 3)
-		current_cols = config.get_value("progress", "current_cols", 3)
+		current_rows = config.get_value("progress", "current_rows", 4)
+		current_cols = config.get_value("progress", "current_cols", 4)
 	else:
 		selected_level_index = 0
-		current_rows = 3
-		current_cols = 3
+		current_rows = 4
+		current_cols = 4
 
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。
 	selected_level_index = 0
-	current_rows = 3
-	current_cols = 3
+	current_rows = 4
+	current_cols = 4
 	save_progress() # 清空进度文件
 	
 	var lib = load_player_library()
