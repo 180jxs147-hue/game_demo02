@@ -530,19 +530,40 @@ func _on_ally_died(unit, _pos):
 
 # 辅助：构建视觉方块
 func _build_visuals():
+	# 先计算包围盒，用于纹理映射
+	var bounds = _calculate_visual_bounds()
+
 	# 定义 Shader 代码
 	var shader_code = """
 	shader_type canvas_item;
 	uniform float progress : hint_range(0.0, 1.0) = 1.0;
+	uniform sampler2D icon_tex;
+	uniform bool use_icon = false;
+	uniform vec2 uv_scale = vec2(1.0, 1.0);
+	uniform vec2 uv_offset = vec2(0.0, 0.0);
+	uniform vec4 main_color : source_color;
 	
 	void fragment() {
+		vec4 c = main_color;
+		if (use_icon) {
+			vec2 u = uv_offset + UV * uv_scale;
+			c = texture(icon_tex, u);
+			
+			// 如果图片有透明度，混合一下背景色? 
+			// 暂时直接使用图片颜色，但保留 alpha 混合
+			// 如果希望未填充区域显示底色：
+			// c = mix(main_color, c, c.a); 
+		}
+
 		// UV.x (0..1)
 		// 如果 UV.x > progress，则视为受伤部分
 		// 假设从右向左扣血，即 progress 左边是血，右边是空的
 		if (UV.x > progress) {
-			COLOR.a *= 0.3; // 变透明
-			COLOR.rgb *= 0.5; // 变暗
+			c.a *= 0.3; // 变透明
+			c.rgb *= 0.5; // 变暗
 		}
+		
+		COLOR = c;
 	}
 	"""
 	var shader = Shader.new()
@@ -563,6 +584,29 @@ func _build_visuals():
 		var mat = ShaderMaterial.new()
 		mat.shader = shader
 		block.material = mat
+		
+		# 设置 Shader 参数
+		mat.set_shader_parameter("main_color", data.color)
+		
+		if data.icon:
+			mat.set_shader_parameter("use_icon", true)
+			mat.set_shader_parameter("icon_tex", data.icon)
+			
+			# 计算纹理映射
+			# 纹理需要覆盖整个 bounds，而 block 只是其中的一部分
+			# block 在 bounds 中的相对位置
+			var relative_pos = block.position - bounds.position
+			
+			# 计算 UV Offset 和 Scale
+			# block 的 UV(0,0) 对应 texture 的 relative_pos / bounds.size
+			# block 的 UV(1,1) 对应 texture 的 (relative_pos + block.size) / bounds.size
+			var u_off = relative_pos / bounds.size
+			var u_scl = block.size / bounds.size
+			
+			mat.set_shader_parameter("uv_offset", u_off)
+			mat.set_shader_parameter("uv_scale", u_scl)
+		else:
+			mat.set_shader_parameter("use_icon", false)
 		
 		add_child(block)
 		visual_blocks.append(block)

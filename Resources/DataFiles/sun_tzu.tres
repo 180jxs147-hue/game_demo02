@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://dg76ebf7v7bur"]
 
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
@@ -9,7 +9,6 @@ civilization = "han"
 unit_class = "support"
 color = Color(0.75, 0.15, 0.15, 1)
 tags = Array[String](["sacrifice"])
-grid_shape = Array[Vector2i]([Vector2i(0, 0)])
 max_hp = 15.0
 manpower_cost = 5.0
 cooldown = 1.0

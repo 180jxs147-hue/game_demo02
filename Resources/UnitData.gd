@@ -2,6 +2,7 @@ class_name UnitData extends Resource
 
 @export_group("基础信息")
 @export var name: String = "未命名"
+@export var icon: Texture2D
 @export var civilization: String = "neutral" # 文明：han, roman, greek
 @export var unit_class: String = "infantry"  # 兵种：infantry, archer, cavalry, shield
 @export var color: Color = Color.WHITE
