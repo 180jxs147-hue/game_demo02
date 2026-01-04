@@ -14,17 +14,17 @@
 [sub_resource type="Resource" id="UnitSpawn_L1_1"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("4_soldier")
-grid_pos = Vector2i(4, 0)
+grid_pos = Vector2i(2, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_L1_2"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("4_soldier")
-grid_pos = Vector2i(4, 2)
+grid_pos = Vector2i(2, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_L1_3"]
 script = ExtResource("3_spawn")
 unit_data = ExtResource("4_soldier")
-grid_pos = Vector2i(4, 4)
+grid_pos = Vector2i(2, 3)
 
 [sub_resource type="Resource" id="UnitSpawn_L1_Camp1"]
 script = ExtResource("3_spawn")
@@ -72,6 +72,8 @@ script = ExtResource("2_level")
 level_name = "第 2 关 - 坚盾利箭"
 army_hp = 1200.0
 enemy_hp = 1200.0
+grid_width = 5
+grid_height = 5
 enemy_units = Array[ExtResource("3_spawn")]([SubResource("UnitSpawn_L2_1"), SubResource("UnitSpawn_L2_2"), SubResource("UnitSpawn_L2_3"), SubResource("UnitSpawn_L2_Camp1"), SubResource("UnitSpawn_L2_Camp2")])
 
 [sub_resource type="Resource" id="UnitSpawn_L3_1"]
@@ -119,6 +121,8 @@ script = ExtResource("2_level")
 level_name = "第 3 关 - 越王亲征"
 army_hp = 1500.0
 enemy_hp = 2000.0
+grid_width = 7
+grid_height = 5
 enemy_units = Array[ExtResource("3_spawn")]([SubResource("UnitSpawn_L3_1"), SubResource("UnitSpawn_L3_2"), SubResource("UnitSpawn_L3_3"), SubResource("UnitSpawn_L3_4"), SubResource("UnitSpawn_L3_5"), SubResource("UnitSpawn_L3_6"), SubResource("UnitSpawn_L3_Camp1"), SubResource("UnitSpawn_L3_Camp2")])
 
 [resource]

@@ -233,6 +233,7 @@ func _update_health_visuals():
 
 func _on_death():
 	# 触发死亡状态机
+	current_hp = 0 # 确保数值为0
 	$StateChart.send_event("die")
 
 func _process(delta):
@@ -483,10 +484,12 @@ func check_burn(line_x: float, burn_from_right: bool = true):
 	if burn_from_right:
 		if global_position.x > line_x:
 			_trigger_last_stand()
+			current_hp = 0 # 确保数值为0
 			state_chart.send_event("die")
 	else:
 		if global_position.x < line_x:
 			_trigger_last_stand()
+			current_hp = 0 # 确保数值为0
 			state_chart.send_event("die")
 
 func _trigger_last_stand():

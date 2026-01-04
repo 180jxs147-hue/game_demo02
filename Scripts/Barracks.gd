@@ -289,6 +289,7 @@ func _get_all_tags() -> Array[String]:
 func _update_columns():
 	var viewport_w: float = get_viewport_rect().size.x
 	var content_w: float = maxf(320.0, viewport_w - 320.0)
+	# 卡牌改为 140宽，加上间距 16 -> 约 156/160
 	var cols: int = clampi(int(content_w / 160.0), 2, 8)
 	collected_grid.columns = cols
 	all_grid.columns = cols

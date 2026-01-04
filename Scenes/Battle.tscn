@@ -17,6 +17,11 @@ enemy_manpower_label = NodePath("CanvasLayer/HUD/EnemyManpowerLabel")
 synergy_label = NodePath("CanvasLayer/HUD/SynergyLabel")
 player_library = ExtResource("4_library")
 level_database = ExtResource("5_levels")
+layout_scale = 1.2
+battlefield_position = Vector2(200, 100)
+enemy_field_base = Vector2(1400, 0)
+bench_offset = Vector2(-20, 600)
+bench_columns = 8
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -217,14 +222,6 @@ custom_minimum_size = Vector2(2, 1000)
 offset_right = 3.0
 offset_bottom = 1000.0
 color = Color(0.77096003, 0, 0.114372455, 1)
-
-[node name="ColorRect" type="ColorRect" parent="Battlefield/FriendlyField"]
-offset_left = 13.0
-offset_top = 368.0
-offset_right = 741.0
-offset_bottom = 487.0
-mouse_filter = 2
-color = Color(0.5489626, 0.5489626, 0.54896253, 0.4117647)
 
 [node name="EnemyField" type="Node2D" parent="Battlefield"]
 

@@ -12,17 +12,26 @@ func _draw():
 	var cols := GameConst.MAP_COLUMNS
 	var rows := GameConst.MAP_ROWS
 	var size := Vector2(maxf(1.0, self.size.x), maxf(1.0, self.size.y))
-	var cell_w := size.x / float(cols)
-	var cell_h := size.y / float(rows)
+	
+	# 计算正方形网格大小
+	var cell_size = min(size.x / float(cols), size.y / float(rows))
+	
+	# 居中偏移
+	var grid_w = cell_size * cols
+	var grid_h = cell_size * rows
+	var offset_x = (size.x - grid_w) / 2.0
+	var offset_y = (size.y - grid_h) / 2.0
+	var base_offset = Vector2(offset_x, offset_y)
+	
 	var grid_color := Color(1, 1, 1, 0.08)
 	
 	for x in range(cols + 1):
-		var p1 = Vector2(x * cell_w, 0)
-		var p2 = Vector2(x * cell_w, rows * cell_h)
+		var p1 = base_offset + Vector2(x * cell_size, 0)
+		var p2 = base_offset + Vector2(x * cell_size, grid_h)
 		draw_line(p1, p2, grid_color, 1.0)
 	for y in range(rows + 1):
-		var p1 = Vector2(0, y * cell_h)
-		var p2 = Vector2(cols * cell_w, y * cell_h)
+		var p1 = base_offset + Vector2(0, y * cell_size)
+		var p2 = base_offset + Vector2(grid_w, y * cell_size)
 		draw_line(p1, p2, grid_color, 1.0)
 	
 	var fill = unit_data.color
@@ -30,9 +39,9 @@ func _draw():
 	var border = unit_data.color.darkened(0.4)
 	border.a = 0.95
 	for off in unit_data.grid_shape:
-		var rect = Rect2(off.x * cell_w, off.y * cell_h, cell_w, cell_h)
+		var rect = Rect2(base_offset.x + off.x * cell_size, base_offset.y + off.y * cell_size, cell_size, cell_size)
 		draw_rect(rect.grow(-1.0), fill, true)
 		draw_rect(rect.grow(-1.0), border, false, 2.0)
 	
-	var anchor_rect = Rect2(0, 0, cell_w, cell_h)
+	var anchor_rect = Rect2(base_offset.x, base_offset.y, cell_size, cell_size)
 	draw_rect(anchor_rect.grow(-2.0), Color(1, 1, 1, 0.12), false, 2.0)

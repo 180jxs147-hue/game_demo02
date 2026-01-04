@@ -21,6 +21,15 @@ class_name BattleManager extends Node2D
 @export var level_database: LevelDatabase
 @export var level_index: int = 0
 
+# --- 布局配置 (可在编辑器调整) ---
+@export_group("Layout Settings")
+@export var layout_scale: float = 1.35      ## 战场整体缩放比例 (1080p建议 1.3~1.4)
+@export var battlefield_position: Vector2 = Vector2(280, 60) ## 战场的起始位置（屏幕坐标，大致对应左上角）
+@export var friendly_field_base: Vector2 = Vector2(0, 0) ## 我方战场基准点 (左上角，相对于 Battlefield 容器)
+@export var enemy_field_base: Vector2 = Vector2(800, 0) ## 敌方战场基准点 (右上角，相对于 Battlefield 容器)
+@export var bench_offset: Vector2 = Vector2(-20, 460) ## 备战区相对于我方战场左上角的固定位置
+@export var bench_columns: int = 6         ## 备战区每行显示的卡牌数列数
+
 # --- 内部引用 ---
 var unit_scene = preload("res://Scenes/Unit.tscn")
 
@@ -62,10 +71,19 @@ var battle_ended: bool = false
 var _has_level_enemies: bool = false
 var _enemy_occupied: Dictionary = {}
 
+var _adjacency_lines_node: Node2D # 用于绘制连线
+var _visual_update_timer: float = 0.0
+
 func _ready():
 	get_tree().paused = false
 	is_battle_started = false
 	battle_ended = false
+	
+	# 创建用于绘制连线的节点，层级设高一点
+	_adjacency_lines_node = Node2D.new()
+	_adjacency_lines_node.z_index = 100 
+	add_child(_adjacency_lines_node)
+	
 	_apply_layout()
 	if result_overlay:
 		result_overlay.visible = false
@@ -79,17 +97,74 @@ func _ready():
 	if GameState:
 		level_index = GameState.selected_level_index
 	
-	# --- 1. 动态调整战场格子数量 ---
+	# --- 1. 动态调整战场格子数量 (已移至下方合并处理) ---
 	# 从存档读取
-	if GridManager and GameState:
-		GridManager.playable_columns = GameState.current_cols
-		GridManager.playable_rows = GameState.current_rows
+	# if GridManager and GameState:
+	# 	GridManager.playable_columns = GameState.current_cols
+	# 	GridManager.playable_rows = GameState.current_rows
 		
 	if not level_database and GameState and GameState.has_method("get_level_database"):
 		level_database = GameState.get_level_database()
 	if level_database:
 		level = level_database.get_level(level_index)
 	
+	# 1. 先加载玩家存档
+	if GameState and GameState.has_method("load_player_library"):
+		var loaded = GameState.load_player_library()
+		if loaded:
+			player_library = loaded
+
+	# --- 1. 动态调整战场格子数量 ---
+	# 逻辑：取玩家解锁的尺寸与关卡要求尺寸的较大值
+	var final_cols = GameConst.MAP_COLUMNS
+	var final_rows = GameConst.MAP_ROWS
+	
+	if GameState:
+		final_cols = GameState.current_cols
+		final_rows = GameState.current_rows
+		
+	if level:
+		# 如果关卡有特殊尺寸要求（例如敌阵很大），则临时扩大战场
+		# 这样 GridManager 才知道这片区域是合法的
+		if "grid_width" in level and level.grid_width > final_cols:
+			final_cols = level.grid_width
+		if "grid_height" in level and level.grid_height > final_rows:
+			final_rows = level.grid_height
+
+	if GridManager:
+		GridManager.playable_columns = final_cols
+		GridManager.playable_rows = final_rows
+	if GameState and player_library:
+		var has_caesar = false
+		for card in player_library.collected_cards:
+			if card and card.resource_path.ends_with("caesar.tres"):
+				has_caesar = true
+				break
+		
+		# 如果没有凯撒，添加凯撒
+		if not has_caesar:
+			var caesar = load("res://Resources/DataFiles/caesar.tres")
+			if caesar:
+				player_library.collected_cards.append(caesar)
+				GameState.save_player_library(player_library)
+				
+		# 3. 紧急修复：如果因为之前的 Bug 导致存档只剩凯撒，重新发放初始包
+		if player_library.collected_cards.size() <= 1 and has_caesar:
+			# 看起来被误清空了，补发初始包
+			var starters = [
+				"res://Resources/DataFiles/soldier.tres",
+				"res://Resources/DataFiles/soldier.tres",
+				"res://Resources/DataFiles/archer.tres",
+				"res://Resources/DataFiles/spear.tres",
+				"res://Resources/DataFiles/camp.tres",
+				"res://Resources/DataFiles/camp.tres"
+			]
+			for path in starters:
+				var unit = load(path)
+				if unit:
+					player_library.collected_cards.append(unit)
+			GameState.save_player_library(player_library)
+
 	if level:
 		max_army_hp = level.army_hp
 		army_hp = max_army_hp
@@ -128,43 +203,71 @@ func _ready():
 		_tooltip_instance.visible = false
 		$CanvasLayer/HUD.add_child(_tooltip_instance)
 
-	# 自动加载库中的卡牌到初始阵容（如果配置了）
-	if GameState and GameState.has_method("load_player_library"):
-		var loaded = GameState.load_player_library()
-		if loaded:
-			player_library = loaded
 	if player_library:
 		# 只有在游戏开始时，才把库里的卡加进战斗
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
 
 func _apply_layout():
-	# 根据屏幕宽度自动居中摆放左右战场，并更新两条红线的长度。
+	# 根据屏幕宽度摆放战场
+	# 修改：不再动态居中，而是使用固定基准点
 	if not battlefield:
 		return
-	var viewport_size: Vector2 = get_viewport_rect().size
-	var gap: float = 160.0
-	var total_width: float = GameConst.BATTLE_FIELD_WIDTH * 2.0 + gap
-	var origin_x: float = (viewport_size.x - total_width) * 0.5
-	var origin_y: float = 90.0
-	battlefield.position = Vector2(origin_x, origin_y)
 	
+	# --- 适配 1080p: 整体缩放 ---
+	battlefield.scale = Vector2(layout_scale, layout_scale)
+	
+	# 获取当前的实际行数和列数
+	var current_cols = GameConst.MAP_COLUMNS
+	var current_rows = GameConst.MAP_ROWS
+	
+	if GridManager:
+		if GridManager.playable_columns > 0:
+			current_cols = GridManager.playable_columns
+		if GridManager.playable_rows > 0:
+			current_rows = GridManager.playable_rows
+	
+	var battle_field_width_actual = current_cols * GameConst.GRID_SIZE
+	
+	# --- 1. 设置 Battlefield 容器位置 (绝对位置) ---
+	# 直接使用 battlefield_position，不再根据内容宽度自动居中
+	# 这样当网格扩大时，基准点不会移动
+	battlefield.position = battlefield_position
+	
+	# --- 2. 设置 我方战场 (左上角基准) ---
 	if friendly_field:
-		friendly_field.position = Vector2.ZERO
+		# 锚点：Top-Left (Base Point)
+		# 随着网格扩充，向右下延伸，左上角不动
+		friendly_field.position = friendly_field_base
+
+	# --- 3. 设置 敌方战场 (右上角基准) ---
 	if enemy_field:
-		enemy_field.position = Vector2(GameConst.BATTLE_FIELD_WIDTH + gap, 0.0)
+		# 锚点：Top-Right (Base Point)
+		# 随着网格扩充，向左下延伸，右上角不动
+		# Position (Top-Left) = Base (Top-Right) - Width
+		
+		var pos_x = enemy_field_base.x - battle_field_width_actual
+		var pos_y = enemy_field_base.y
+		
+		enemy_field.position = Vector2(pos_x, pos_y)
+
+		# 调整 Enemy Battle Line (红线)
+		if enemy_battle_line:
+			var line_height: float = current_rows * GameConst.GRID_SIZE
+			enemy_battle_line.visible = false
+			enemy_battle_line.custom_minimum_size = Vector2(2.0, line_height)
+			# 敌方红线在敌方战场的左侧 (x=0) = 前线
+			enemy_battle_line.position = Vector2(0.0, 0.0)
+			enemy_battle_line.size = Vector2(2.0, line_height)
 	
-	var line_height: float = GameConst.MAP_ROWS * GameConst.GRID_SIZE
+	# 调整 Friendly Battle Line
 	if battle_line:
-		battle_line.visible = false # 隐藏旧的红线
+		var line_height: float = current_rows * GameConst.GRID_SIZE
+		battle_line.visible = false
 		battle_line.custom_minimum_size = Vector2(2.0, line_height)
-		battle_line.position = Vector2(GameConst.BATTLE_FIELD_WIDTH, 0.0)
+		# 我方战线在右侧边缘
+		battle_line.position = Vector2(battle_field_width_actual, 0.0)
 		battle_line.size = Vector2(2.0, line_height)
-	if enemy_battle_line:
-		enemy_battle_line.visible = false # 隐藏旧的红线
-		enemy_battle_line.custom_minimum_size = Vector2(2.0, line_height)
-		enemy_battle_line.position = Vector2(0.0, 0.0)
-		enemy_battle_line.size = Vector2(2.0, line_height)
 
 func _input(event):
 	# 调试功能已移除，依靠游戏循环获取单位。
@@ -607,9 +710,173 @@ func _check_and_apply_synergies():
 			
 	# 4. 应用相邻加成 (Adjacency Bonuses)
 	_apply_adjacency_bonuses(deployed_units)
+	
+	# 更新相邻连线视觉
+	_update_adjacency_visuals(deployed_units)
 
 	# (可选) 在UI上显示触发的羁绊
 	_update_synergy_ui(civ_counts, class_counts)
+
+func _update_adjacency_visuals(units: Array):
+	if not _adjacency_lines_node: return
+	if not GridManager: return
+	
+	# 1. 收集当前所有有效的边
+	var active_edges = {} # Key: String "x1,y1|x2,y2", Value: { "c1": v2, "c2": v2, "color": Color }
+	
+	for unit in units:
+		if not unit.data or unit.data.adjacency_rules.is_empty():
+			continue
+		# 必须是活着的
+		if "current_hp" in unit and unit.current_hp <= 0:
+			continue
+			
+		var neighbors = GridManager.get_neighbors(unit)
+		for rule in unit.data.adjacency_rules:
+			var mode = rule.get("type", "give")
+			var req_type = rule.get("req_type", "all")
+			var req_val = rule.get("req_value", "")
+			
+			for neighbor in neighbors:
+				if not neighbor.data: continue
+				if "current_hp" in neighbor and neighbor.current_hp <= 0: continue
+				
+				var match_req = false
+				if req_type == "all":
+					match_req = true
+				elif req_type == "tag":
+					if neighbor.data.tags.has(req_val): match_req = true
+				elif req_type == "class":
+					if neighbor.data.unit_class == req_val: match_req = true
+				elif req_type == "civ":
+					if neighbor.data.civilization == req_val: match_req = true
+				
+				if match_req:
+					# 确定颜色
+					var color = Color(0.3, 1.0, 0.3, 1.0) # Green
+					if mode == "receive":
+						color = Color(0.3, 0.7, 1.0, 1.0) # Blue
+						
+					# 计算具体的边线段
+					var cells1 = _get_unit_cells(unit)
+					var cells2 = _get_unit_cells(neighbor)
+					
+					for c1 in cells1:
+						for c2 in cells2:
+							var diff = c2 - c1
+							if diff.length_squared() == 1:
+								var key = _get_edge_key(c1, c2)
+								# 如果同一条边有多个加成，保留一个即可（或者混合颜色？）
+								# 这里简单覆盖
+								active_edges[key] = {
+									"c1": c1, 
+									"direction": diff,
+									"color": color
+								}
+
+	# 2. 清理不再存在的边
+	var current_children = _adjacency_lines_node.get_children()
+	for child in current_children:
+		if child.name not in active_edges:
+			child.queue_free()
+		else:
+			# 如果存在，从 active_edges 移除，避免重复创建
+			# 但我们需要更新颜色吗？如果颜色变了...
+			# 简单起见，如果存在就不动，假设颜色不变。
+			active_edges.erase(child.name)
+	
+	# 3. 创建新增的边
+	for key in active_edges:
+		var data = active_edges[key]
+		_draw_edge_segment(data.c1, data.direction, data.color, key)
+
+func _get_edge_key(c1: Vector2i, c2: Vector2i) -> String:
+	# 保证 Key 唯一且与顺序无关
+	if c1.x < c2.x or (c1.x == c2.x and c1.y < c2.y):
+		return "%d,%d|%d,%d" % [c1.x, c1.y, c2.x, c2.y]
+	else:
+		return "%d,%d|%d,%d" % [c2.x, c2.y, c1.x, c1.y]
+
+func _draw_adjacency_edge(from_unit, to_unit, mode):
+	#此函数已被 _update_adjacency_visuals 的批量逻辑取代，保留为空或删除
+	pass
+
+func _draw_edge_segment(cell_grid_pos: Vector2i, direction: Vector2i, color: Color, key_name: String = ""):
+	var size = GameConst.GRID_SIZE
+	var cell_world_pos = GridManager.grid_to_world(cell_grid_pos)
+	
+	var start_pos = Vector2.ZERO
+	var end_pos = Vector2.ZERO
+	
+	# 根据方向确定边线位置
+	if direction == Vector2i.RIGHT:
+		start_pos = cell_world_pos + Vector2(size, 0)
+		end_pos = cell_world_pos + Vector2(size, size)
+	elif direction == Vector2i.LEFT:
+		start_pos = cell_world_pos
+		end_pos = cell_world_pos + Vector2(0, size)
+	elif direction == Vector2i.DOWN:
+		start_pos = cell_world_pos + Vector2(0, size)
+		end_pos = cell_world_pos + Vector2(size, size)
+	elif direction == Vector2i.UP:
+		start_pos = cell_world_pos
+		end_pos = cell_world_pos + Vector2(size, 0)
+	
+	# 稍微内缩一点点，防止完全重叠
+	var shrink = 2.0
+	if direction.x != 0: # 竖线
+		start_pos.y += shrink
+		end_pos.y -= shrink
+	else: # 横线
+		start_pos.x += shrink
+		end_pos.x -= shrink
+		
+	# 关键修复：先转 Global，再转 Local
+	# 因为 start_pos 是相对于 units_container 的
+	if not units_container: return
+
+	var p1 = _adjacency_lines_node.to_local(units_container.to_global(start_pos))
+	var p2 = _adjacency_lines_node.to_local(units_container.to_global(end_pos))
+	
+	var line = Line2D.new()
+	if key_name != "":
+		line.name = key_name
+	
+	line.width = 4.0
+	line.default_color = color
+	line.add_point(p1)
+	line.add_point(p2)
+	_adjacency_lines_node.add_child(line)
+	
+	# 呼吸动画
+	var tw = create_tween().set_loops()
+	tw.tween_property(line, "width", 2.0, 1.0).from(4.0)
+	tw.tween_property(line, "width", 4.0, 1.0)
+	
+	var tw_alpha = create_tween().set_loops()
+	tw_alpha.tween_property(line, "modulate:a", 0.5, 1.5)
+	tw_alpha.tween_property(line, "modulate:a", 1.0, 1.5)
+
+func _get_unit_cells(unit) -> Array:
+	var cells = []
+	var anchor = Vector2i.ZERO
+	
+	if "stored_grid_pos" in unit:
+		anchor = unit.stored_grid_pos
+	else:
+		anchor = GridManager.world_to_grid(unit.position)
+		
+	if unit.data and unit.data.grid_shape:
+		for offset in unit.data.grid_shape:
+			cells.append(anchor + offset)
+	else:
+		cells.append(anchor)
+	return cells
+
+func _get_unit_center_offset(unit) -> Vector2:
+	# 简单取第一个格子的中心，或者计算整个形状的中心
+	# 这里取 GridSize/2 比较稳妥 (锚点格中心)
+	return Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE) / 2.0
 
 func _apply_adjacency_bonuses(units: Array):
 	if not GridManager: return
@@ -839,6 +1106,16 @@ func _spawn_enemy(spawn: UnitSpawn):
 		new_unit.position = GridManager.grid_to_world(spawn.grid_pos)
 		new_unit.is_deployed = true
 		new_unit.stored_grid_pos = spawn.grid_pos
+		# 确保单位状态正常
+		new_unit.modulate = Color.WHITE
+	else:
+		push_error("Failed to place enemy unit at " + str(spawn.grid_pos))
+		# 放置失败也设为 deployed 只是为了测试，或者应该删除？
+		# 暂时强制设为 deployed 以免无敌
+		new_unit.is_deployed = true
+		new_unit.position = GridManager.grid_to_world(spawn.grid_pos) # 强行放置
+		new_unit.stored_grid_pos = spawn.grid_pos
+		new_unit.modulate = Color.WHITE
 
 func _enemy_can_place(data: UnitData, grid_pos: Vector2i) -> bool:
 	for part in data.grid_shape:
@@ -904,26 +1181,28 @@ func _arrange_bench():
 		visible_cards.append(unit)
 
 	# 布局配置
-	var start_y = GameConst.MAP_ROWS * GameConst.GRID_SIZE + 40.0 # 地图下方 40 像素
+	# 修改：备战区位置改为固定值，不随战场大小变化
+	
+	# 注意：bench_offset 现在是相对于 friendly_field 左上角的绝对坐标
+	var start_y = bench_offset.y
 	var gap_x = 85.0 
 	var gap_y = 90.0
-	var cols = 7 # 战场宽度允许更多列 (4 -> 7)，适配 1920x1080
+	var cols = bench_columns
 	
-	# 计算起始 X 坐标以居中显示
-	# 整个网格的宽度约为 cols * gap_x
-	var grid_width = cols * gap_x
-	var start_x = (GameConst.BATTLE_FIELD_WIDTH - grid_width) / 2.0 + 10.0 # 微调居中
+	# 起始 X 坐标也改为固定
+	var start_x = bench_offset.x
 
 	# 调整背景框
 	var bench_rect = $Battlefield/FriendlyField/ColorRect
 	if bench_rect:
+		var grid_width = cols * gap_x
 		var rows = ceil(visible_cards.size() / float(cols))
 		if rows < 1: rows = 1
 		# 动态调整背景高度
 		var total_h = rows * gap_y + 20
 		bench_rect.position.y = start_y - 20
 		
-		# 背景框跟随网格宽度，并居中
+		# 背景框跟随网格宽度
 		bench_rect.size.x = grid_width + 40
 		bench_rect.position.x = start_x - 30 
 		bench_rect.size.y = total_h

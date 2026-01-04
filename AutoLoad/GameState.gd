@@ -82,7 +82,8 @@ func _add_initial_roster(library: CardLibrary):
 		"res://Resources/DataFiles/archer.tres",
 		"res://Resources/DataFiles/spear.tres",
 		"res://Resources/DataFiles/camp.tres",
-		"res://Resources/DataFiles/camp.tres"
+		"res://Resources/DataFiles/camp.tres",
+		"res://Resources/DataFiles/caesar.tres"
 	]
 	for path in starters:
 		if ResourceLoader.exists(path):
