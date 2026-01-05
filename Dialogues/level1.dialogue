@@ -1,0 +1,10 @@
+~ start
+
+Commander: 士兵们，准备迎敌！ [#bg:battle_bg,#pos:right]
+Soldier: 是，将军！ [#pos:left]
+- 进攻！
+	Commander: 全军出击！ [#pos:right]
+- 防守！
+	Commander: 坚守阵地！ [#pos:right]
+
+=> END

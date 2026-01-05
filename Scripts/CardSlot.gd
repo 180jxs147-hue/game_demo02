@@ -7,7 +7,6 @@ extends Panel
 
 @onready var name_label = $VBoxContainer/NameLabel
 @onready var stats_label = $VBoxContainer/StatsLabel
-@onready var color_rect = $ColorRect
 @onready var icon_texture = $IconTexture # <--- 新增
 @onready var count_label = $CountLabel
 @onready var click_button = $ClickButton
@@ -37,7 +36,7 @@ func setup(data: UnitData):
 	else:
 		manpower_txt = "耗: %.1f" % data.manpower_cost
 	stats_label.text = "%s\n攻: %.0f\nCD: %.1fs" % [manpower_txt, data.attack_damage, data.cooldown]
-	color_rect.color = data.color
+	# 已移除对 ColorRect 的依赖
 	
 	if icon_texture:
 		icon_texture.texture = data.icon

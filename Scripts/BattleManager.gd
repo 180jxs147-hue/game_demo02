@@ -269,9 +269,21 @@ func _apply_layout():
 		battle_line.position = Vector2(battle_field_width_actual, 0.0)
 		battle_line.size = Vector2(2.0, line_height)
 
+	# --- 调试：按 F2 测试对话 ---
+	print("按 F2 测试对话功能")
+
 func _input(event):
-	# 调试功能已移除，依靠游戏循环获取单位。
-	pass
+	if event is InputEventKey and event.pressed and not event.echo:
+		if event.keycode == KEY_F2:
+			test_dialogue()
+
+func test_dialogue():
+	var resource = load("res://Dialogues/level1.dialogue")
+	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+	if resource and balloon_scene:
+		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [])
+	else:
+		push_error("Dialogue resource or Balloon scene not found!")
 
 func _debug_add_random_unit() -> UnitData:
 	var random_datas = [
@@ -1193,19 +1205,7 @@ func _arrange_bench():
 	var start_x = bench_offset.x
 
 	# 调整背景框
-	var bench_rect = $Battlefield/FriendlyField/ColorRect
-	if bench_rect:
-		var grid_width = cols * gap_x
-		var rows = ceil(visible_cards.size() / float(cols))
-		if rows < 1: rows = 1
-		# 动态调整背景高度
-		var total_h = rows * gap_y + 20
-		bench_rect.position.y = start_y - 20
-		
-		# 背景框跟随网格宽度
-		bench_rect.size.x = grid_width + 40
-		bench_rect.position.x = start_x - 30 
-		bench_rect.size.y = total_h
+	# 已移除对 ColorRect 的依赖
 
 	# 开始排布
 	for i in range(visible_cards.size()):
