@@ -236,7 +236,7 @@ func _on_death():
 	current_hp = 0 # 确保数值为0
 	$StateChart.send_event("die")
 
-func _process(delta):
+func _process(_delta):
 	if is_dragging or BattleManager.is_battle_started:
 		# 更新冷却条
 		if cooldown_bar and current_cooldown > 0:
@@ -392,7 +392,6 @@ func _attack():
 	# --- 攻击表现优化 ---
 	
 	# 1. 冲撞动画
-	var original_pos = position # 注意这里用的是局部 position (相对于 Container)
 	# 为了防止 Tween 冲突，最好操作 visual_blocks 的父级或整体偏移
 	# 这里简单起见，我们做一个 visual_blocks 的整体震动
 	var punch_dir = Vector2.RIGHT if faction == Faction.FRIENDLY else Vector2.LEFT

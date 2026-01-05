@@ -72,7 +72,6 @@ var _has_level_enemies: bool = false
 var _enemy_occupied: Dictionary = {}
 
 var _adjacency_lines_node: Node2D # 用于绘制连线
-var _visual_update_timer: float = 0.0
 
 func _ready():
 	get_tree().paused = false
@@ -335,10 +334,10 @@ func _debug_add_card_to_library():
 	else:
 		push_error("Error saving player library: " + str(error))
 
-func _process(delta):
+func _process(_delta):
 	# 战斗循环：推进战线、检测胜负、让超出战线的单位进入死亡状态。
 	if not is_battle_started:
-		_synergy_update_timer += delta
+		_synergy_update_timer += _delta
 		if _synergy_update_timer > 0.2:
 			_synergy_update_timer = 0.0
 			_check_and_apply_synergies()
@@ -1086,14 +1085,6 @@ func _on_reward_selected(item: Dictionary):
 func _grant_random_reward() -> UnitData:
 	# 保留此函数以防万一，但逻辑已转移
 	return null
-	if not GameState: return null
-	var db = GameState.get_unit_database()
-	if not db or db.units.is_empty(): return null
-	
-	var card = db.units.pick_random()
-	if player_library:
-		player_library.collected_cards.append(card)
-	return card
 
 func _spawn_enemy(spawn: UnitSpawn):
 	# 生成敌方单位并直接部署到敌军网格。
@@ -1210,7 +1201,7 @@ func _arrange_bench():
 	# 开始排布
 	for i in range(visible_cards.size()):
 		var unit = visible_cards[i]
-		var row = i / cols
+		var row = int(i / cols)
 		var col = i % cols
 		
 		var x = start_x + (col * gap_x)

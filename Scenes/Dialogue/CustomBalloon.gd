@@ -218,23 +218,23 @@ func apply_dialogue_line() -> void:
 			texture = _load_texture_any(portrait_path)
 		
 		var is_right = dialogue_line.tags.has("pos:right") or dialogue_line.tags.has("right")
-		var offset := _parse_offset_tag("portrait_offset:", dialogue_line.tags)
-		var scale := _parse_float_tag("portrait_scale:", dialogue_line.tags)
+		var portrait_offset := _parse_offset_tag("portrait_offset:", dialogue_line.tags)
+		var portrait_scale := _parse_float_tag("portrait_scale:", dialogue_line.tags)
 		
 		if is_right:
 			if texture:
 				right_portrait.texture = texture
 				right_portrait.visible = true
-			right_portrait.position = _right_base_pos + offset
-			right_portrait.scale = Vector2(scale, scale)
+			right_portrait.position = _right_base_pos + portrait_offset
+			right_portrait.scale = Vector2(portrait_scale, portrait_scale)
 			right_portrait.modulate = Color(1, 1, 1, 1)      # Highlight
 			left_portrait.modulate = Color(0.5, 0.5, 0.5, 1) # Dim
 		else:
 			if texture:
 				left_portrait.texture = texture
 				left_portrait.visible = true
-			left_portrait.position = _left_base_pos + offset
-			left_portrait.scale = Vector2(scale, scale)
+			left_portrait.position = _left_base_pos + portrait_offset
+			left_portrait.scale = Vector2(portrait_scale, portrait_scale)
 			left_portrait.modulate = Color(1, 1, 1, 1)       # Highlight
 			right_portrait.modulate = Color(0.5, 0.5, 0.5, 1)# Dim
 

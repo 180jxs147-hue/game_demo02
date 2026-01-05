@@ -1,10 +1,11 @@
 ~ start
 
-Commander: 士兵们，准备迎敌！ [#bg:battle_bg,#pos:right]
-Soldier: 是，将军！ [#pos:left]
-- 进攻！
-	Commander: 全军出击！ [#pos:right]
-- 防守！
-	Commander: 坚守阵地！ [#pos:right]
-
+YTArmy_soliders: 哪里来的贼子，黄天的子民们，准备迎敌！ [#bg:battle_bg,#pos:right]
+Player01: 等等，我们不是敌人。 [#pos:left]
+YTArmy_soliders: 少说废话，官军的走狗们，多少兄弟死在你们手里，别想再耍诈了！ [#bg:battle_bg,#pos:right]	
+Player01: 可恶，只好出击了。 [#pos:left]
+- 摧枯拉朽
+	Player01: 全军听令，全力反击！ [#pos:left]
+- 手下留情
+	Player01: 全军听令，制服对方！ [#pos:left]
 => END
