@@ -1,5 +1,8 @@
 extends Node2D
 
+var override_cols: int = -1
+var override_rows: int = -1
+
 func _draw():
 	var color = Color(1, 1, 1, 0.1) # 半透明白线
 	
@@ -7,15 +10,16 @@ func _draw():
 	var cols = GameConst.MAP_COLUMNS
 	var rows = GameConst.MAP_ROWS
 	
-	# 判断是否需要动态调整行列
-	if GridManager:
-		# 无论是 FriendlyField 还是 EnemyField，都暂时跟随 GridManager 的动态行列
-		# 这样能保证视觉上的一致性，且如果 EnemyGrid 需要扩充，也能通过 GridManager 控制
-		# (未来如果需要敌我不同步，可以再加判定)
-		if GridManager.playable_columns > 0:
-			cols = GridManager.playable_columns
-		if GridManager.playable_rows > 0:
-			rows = GridManager.playable_rows
+	# 优先使用重写值（如果已设置）
+	if override_cols > 0:
+		cols = override_cols
+	elif GridManager and GridManager.playable_columns > 0:
+		cols = GridManager.playable_columns
+		
+	if override_rows > 0:
+		rows = override_rows
+	elif GridManager and GridManager.playable_rows > 0:
+		rows = GridManager.playable_rows
 	
 	# 画竖线
 	for x in range(cols + 1):

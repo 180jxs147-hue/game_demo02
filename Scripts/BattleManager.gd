@@ -55,6 +55,10 @@ var max_enemy_hp: float = 1000.0
 @onready var enemy_field = $Battlefield/EnemyField
 @onready var battle_line = $Battlefield/FriendlyField/BattleLine
 @onready var enemy_battle_line = $Battlefield/EnemyField/BattleLine
+
+@onready var friendly_grid_vis = $Battlefield/FriendlyField/GridVisualizer
+@onready var enemy_grid_vis = $Battlefield/EnemyField/GridVisualizer
+
 @onready var result_overlay = $CanvasLayer/ResultOverlay
 @onready var result_title_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/TitleLabel
 @onready var result_detail_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/DetailLabel
@@ -72,6 +76,10 @@ var _has_level_enemies: bool = false
 var _enemy_occupied: Dictionary = {}
 
 var _adjacency_lines_node: Node2D # 用于绘制连线
+
+# 存储当前的敌人网格尺寸，供 _apply_layout 使用
+var current_enemy_cols: int = GameConst.MAP_COLUMNS
+var current_enemy_rows: int = GameConst.MAP_ROWS
 
 func _ready():
 	get_tree().paused = false
@@ -194,6 +202,7 @@ func _ready():
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
+	call_deferred("start_intro_dialogue")
 	
 	# 初始化提示框
 	var tooltip_scene = load("res://Scenes/Tooltip.tscn")
@@ -206,6 +215,96 @@ func _ready():
 		# 只有在游戏开始时，才把库里的卡加进战斗
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
+
+func start_level(index: int):
+	print("Switching to level: ", index)
+	
+	if GameState:
+		GameState.selected_level_index = index
+	level_index = index
+	
+	var level = null
+	if level_database:
+		level = level_database.get_level(level_index)
+	
+	if not level:
+		push_error("Level not found: " + str(index))
+		return
+
+	# 1. 清理现有敌人
+	if enemy_field:
+		var enemy_units_container = $Battlefield/EnemyField/UnitsContainer
+		if enemy_units_container:
+			for child in enemy_units_container.get_children():
+				child.queue_free()
+	
+	_enemy_occupied.clear()
+	
+	# 2. 设置数值
+	max_army_hp = level.army_hp
+	army_hp = max_army_hp
+	max_enemy_hp = level.enemy_hp
+	enemy_hp = max_enemy_hp
+	
+	# 3. 调整格子大小 (分别设置)
+	# 玩家格子大小：只受 GameState 影响
+	var player_cols = GameState.current_cols if GameState else GameConst.MAP_COLUMNS
+	var player_rows = GameState.current_rows if GameState else GameConst.MAP_ROWS
+	
+	# 敌人格子大小：受关卡配置影响
+	var enemy_cols = GameConst.MAP_COLUMNS
+	var enemy_rows = GameConst.MAP_ROWS
+	
+	if "grid_width" in level and level.grid_width > enemy_cols:
+		enemy_cols = level.grid_width
+	if "grid_height" in level and level.grid_height > enemy_rows:
+		enemy_rows = level.grid_height
+
+	# 更新成员变量
+	current_enemy_cols = enemy_cols
+	current_enemy_rows = enemy_rows
+
+	if GridManager:
+		# GridManager 主要服务于玩家操作（拖拽、放置），所以使用玩家的尺寸
+		GridManager.playable_columns = player_cols
+		GridManager.playable_rows = player_rows
+		GridManager.clear_all()
+		if units_container:
+			for unit in units_container.get_children():
+				if unit.is_deployed and "stored_grid_pos" in unit:
+					GridManager.mark_occupied(unit.stored_grid_pos, unit)
+	
+	# 刷新网格显示并应用尺寸
+	if friendly_grid_vis:
+		friendly_grid_vis.override_cols = player_cols
+		friendly_grid_vis.override_rows = player_rows
+		friendly_grid_vis.queue_redraw()
+		
+	if enemy_grid_vis:
+		enemy_grid_vis.override_cols = enemy_cols
+		enemy_grid_vis.override_rows = enemy_rows
+		enemy_grid_vis.queue_redraw()
+	
+	# 4. 生成新敌人
+	_has_level_enemies = false
+	if units_container:
+		for spawn in level.enemy_units:
+			# 使用 enemy_cols 进行边界检查
+			_spawn_enemy(spawn, enemy_cols, enemy_rows)
+		_has_level_enemies = level.enemy_units.size() > 0
+	
+	# 5. 更新 UI
+	if left_hp_bar: left_hp_bar.max_value = max_army_hp
+	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
+	_update_ui()
+	
+	# 6. 重置战斗状态
+	is_battle_started = false
+	battle_ended = false
+	if result_overlay: result_overlay.visible = false
+
+	call_deferred("_arrange_bench")
+	call_deferred("_apply_layout")
 
 func _apply_layout():
 	# 根据屏幕宽度摆放战场
@@ -245,14 +344,17 @@ func _apply_layout():
 		# 随着网格扩充，向左下延伸，右上角不动
 		# Position (Top-Left) = Base (Top-Right) - Width
 		
-		var pos_x = enemy_field_base.x - battle_field_width_actual
+		# 使用敌人自己的列数计算宽度
+		var enemy_width_actual = current_enemy_cols * GameConst.GRID_SIZE
+		
+		var pos_x = enemy_field_base.x - enemy_width_actual
 		var pos_y = enemy_field_base.y
 		
 		enemy_field.position = Vector2(pos_x, pos_y)
 
 		# 调整 Enemy Battle Line (红线)
 		if enemy_battle_line:
-			var line_height: float = current_rows * GameConst.GRID_SIZE
+			var line_height: float = current_enemy_rows * GameConst.GRID_SIZE
 			enemy_battle_line.visible = false
 			enemy_battle_line.custom_minimum_size = Vector2(2.0, line_height)
 			# 敌方红线在敌方战场的左侧 (x=0) = 前线
@@ -274,13 +376,14 @@ func _apply_layout():
 func _input(event):
 	if event is InputEventKey and event.pressed and not event.echo:
 		if event.keycode == KEY_F2:
-			test_dialogue()
+			start_intro_dialogue()
 
-func test_dialogue():
+func start_intro_dialogue():
 	var resource = load("res://Dialogues/level1.dialogue")
 	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
 	if resource and balloon_scene:
-		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [])
+		# 传入 [self] 以便在对话中调用 start_level
+		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
 	else:
 		push_error("Dialogue resource or Balloon scene not found!")
 
@@ -1086,7 +1189,7 @@ func _grant_random_reward() -> UnitData:
 	# 保留此函数以防万一，但逻辑已转移
 	return null
 
-func _spawn_enemy(spawn: UnitSpawn):
+func _spawn_enemy(spawn: UnitSpawn, map_cols: int = -1, map_rows: int = -1):
 	# 生成敌方单位并直接部署到敌军网格。
 	if not spawn:
 		return
@@ -1095,37 +1198,42 @@ func _spawn_enemy(spawn: UnitSpawn):
 	if not enemy_field:
 		return
 	var enemy_units_container = $Battlefield/EnemyField/UnitsContainer
-	if not enemy_units_container:
-		return
-	
-	var new_unit = unit_scene.instantiate()
-	new_unit.data = spawn.unit_data
-	new_unit.spawned_via_script = true
-	new_unit.faction = new_unit.Faction.ENEMY
-	enemy_units_container.add_child(new_unit)
-	
-	if _enemy_can_place(spawn.unit_data, spawn.grid_pos):
-		_enemy_mark_occupied(spawn.unit_data, spawn.grid_pos)
-		new_unit.position = GridManager.grid_to_world(spawn.grid_pos)
-		new_unit.is_deployed = true
-		new_unit.stored_grid_pos = spawn.grid_pos
-		# 确保单位状态正常
-		new_unit.modulate = Color.WHITE
-	else:
-		push_error("Failed to place enemy unit at " + str(spawn.grid_pos))
-		# 放置失败也设为 deployed 只是为了测试，或者应该删除？
-		# 暂时强制设为 deployed 以免无敌
-		new_unit.is_deployed = true
-		new_unit.position = GridManager.grid_to_world(spawn.grid_pos) # 强行放置
-		new_unit.stored_grid_pos = spawn.grid_pos
-		new_unit.modulate = Color.WHITE
+	if enemy_units_container:
+		if not enemy_units_container:
+			return
+		
+		var new_unit = unit_scene.instantiate()
+		new_unit.data = spawn.unit_data
+		new_unit.spawned_via_script = true
+		new_unit.faction = new_unit.Faction.ENEMY
+		enemy_units_container.add_child(new_unit)
+		
+		# 使用传入的尺寸或默认尺寸
+		var check_cols = map_cols if map_cols > 0 else GameConst.MAP_COLUMNS
+		var check_rows = map_rows if map_rows > 0 else GameConst.MAP_ROWS
+		
+		if _enemy_can_place(spawn.unit_data, spawn.grid_pos, check_cols, check_rows):
+			_enemy_mark_occupied(spawn.unit_data, spawn.grid_pos)
+			new_unit.position = GridManager.grid_to_world(spawn.grid_pos)
+			new_unit.is_deployed = true
+			new_unit.stored_grid_pos = spawn.grid_pos
+			# 确保单位状态正常
+			new_unit.modulate = Color.WHITE
+		else:
+			push_error("Failed to place enemy unit at " + str(spawn.grid_pos))
+			# 放置失败也设为 deployed 只是为了测试，或者应该删除？
+			# 暂时强制设为 deployed 以免无敌
+			new_unit.is_deployed = true
+			new_unit.position = GridManager.grid_to_world(spawn.grid_pos) # 强行放置
+			new_unit.stored_grid_pos = spawn.grid_pos
+			new_unit.modulate = Color.WHITE
 
-func _enemy_can_place(data: UnitData, grid_pos: Vector2i) -> bool:
+func _enemy_can_place(data: UnitData, grid_pos: Vector2i, max_cols: int, max_rows: int) -> bool:
 	for part in data.grid_shape:
 		var cell = grid_pos + part
-		if cell.x < 0 or cell.x >= GameConst.MAP_COLUMNS:
+		if cell.x < 0 or cell.x >= max_cols:
 			return false
-		if cell.y < 0 or cell.y >= GameConst.MAP_ROWS:
+		if cell.y < 0 or cell.y >= max_rows:
 			return false
 		var key = str(cell.x) + "," + str(cell.y)
 		if _enemy_occupied.has(key):
