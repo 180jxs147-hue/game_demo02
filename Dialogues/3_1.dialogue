@@ -1,0 +1,4 @@
+~ start
+Player01: 敌军防线已破，我们赢了！ [#pos:left]
+do show_victory_screen()
+=> END

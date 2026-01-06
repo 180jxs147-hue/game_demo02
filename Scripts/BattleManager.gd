@@ -10,8 +10,6 @@ class_name BattleManager extends Node2D
 ## - 敌方单位永远挂在 `$Battlefield/EnemyField/UnitsContainer`
 
 # --- UI 引用 (请在编辑器里拖拽赋值) ---
-@export var left_hp_bar: ProgressBar
-@export var right_hp_bar: ProgressBar
 @export var manpower_label: Label
 @export var enemy_manpower_label: Label
 @export var synergy_label: Label
@@ -23,12 +21,12 @@ class_name BattleManager extends Node2D
 
 # --- 布局配置 (可在编辑器调整) ---
 @export_group("Layout Settings")
-@export var layout_scale: float = 1.35      ## 战场整体缩放比例 (1080p建议 1.3~1.4)
-@export var battlefield_position: Vector2 = Vector2(280, 60) ## 战场的起始位置（屏幕坐标，大致对应左上角）
+@export var layout_scale: float = 1.2      ## 战场整体缩放比例 (1080p建议 1.3~1.4)
+@export var battlefield_position: Vector2 = Vector2(200, 100) ## 战场的起始位置（屏幕坐标，大致对应左上角）
 @export var friendly_field_base: Vector2 = Vector2(0, 0) ## 我方战场基准点 (左上角，相对于 Battlefield 容器)
-@export var enemy_field_base: Vector2 = Vector2(800, 0) ## 敌方战场基准点 (右上角，相对于 Battlefield 容器)
-@export var bench_offset: Vector2 = Vector2(-20, 460) ## 备战区相对于我方战场左上角的固定位置
-@export var bench_columns: int = 6         ## 备战区每行显示的卡牌数列数
+@export var enemy_field_base: Vector2 = Vector2(1400, 0) ## 敌方战场基准点 (右上角，相对于 Battlefield 容器)
+@export var bench_offset: Vector2 = Vector2(-20, 600) ## 备战区相对于我方战场左上角的固定位置
+@export var bench_columns: int = 8         ## 备战区每行显示的卡牌数列数
 
 # --- 内部引用 ---
 var unit_scene = preload("res://Scenes/Unit.tscn")
@@ -41,14 +39,6 @@ var max_manpower: float = 50.0
 # 敌方民力 (新增)
 var enemy_current_manpower: float = 10.0
 var enemy_max_manpower: float = 50.0
-
-# 我方阵线 (Left HP)
-var army_hp: float = 1000.0 
-var max_army_hp: float = 1000.0
-
-# 敌方 Boss (Right HP) <--- 新增
-var enemy_hp: float = 1000.0 
-var max_enemy_hp: float = 1000.0
 
 @onready var battlefield = $Battlefield
 @onready var friendly_field = $Battlefield/FriendlyField
@@ -80,6 +70,9 @@ var _adjacency_lines_node: Node2D # 用于绘制连线
 # 存储当前的敌人网格尺寸，供 _apply_layout 使用
 var current_enemy_cols: int = GameConst.MAP_COLUMNS
 var current_enemy_rows: int = GameConst.MAP_ROWS
+
+# 当前关卡配置引用
+var current_level_config: LevelConfig
 
 func _ready():
 	get_tree().paused = false
@@ -114,6 +107,25 @@ func _ready():
 		level_database = GameState.get_level_database()
 	if level_database:
 		level = level_database.get_level(level_index)
+		current_level_config = level
+	
+	# --- 设定敌方网格尺寸 ---
+	var enemy_cols = GameConst.MAP_COLUMNS
+	var enemy_rows = GameConst.MAP_ROWS
+	
+	if level:
+		if "grid_width" in level and level.grid_width > enemy_cols:
+			enemy_cols = level.grid_width
+		if "grid_height" in level and level.grid_height > enemy_rows:
+			enemy_rows = level.grid_height
+	
+	current_enemy_cols = enemy_cols
+	current_enemy_rows = enemy_rows
+	
+	if enemy_grid_vis:
+		enemy_grid_vis.override_cols = enemy_cols
+		enemy_grid_vis.override_rows = enemy_rows
+		enemy_grid_vis.queue_redraw()
 	
 	# 1. 先加载玩家存档
 	if GameState and GameState.has_method("load_player_library"):
@@ -123,6 +135,9 @@ func _ready():
 
 	# --- 1. 动态调整战场格子数量 ---
 	# 逻辑：取玩家解锁的尺寸与关卡要求尺寸的较大值
+	# 修正：玩家战场尺寸只应该由 GameState 决定，不应该受关卡敌军规模影响
+	# 敌军规模（grid_width/grid_height）只影响敌军战场的生成
+	
 	var final_cols = GameConst.MAP_COLUMNS
 	var final_rows = GameConst.MAP_ROWS
 	
@@ -130,13 +145,21 @@ func _ready():
 		final_cols = GameState.current_cols
 		final_rows = GameState.current_rows
 		
-	if level:
-		# 如果关卡有特殊尺寸要求（例如敌阵很大），则临时扩大战场
-		# 这样 GridManager 才知道这片区域是合法的
-		if "grid_width" in level and level.grid_width > final_cols:
-			final_cols = level.grid_width
-		if "grid_height" in level and level.grid_height > final_rows:
-			final_rows = level.grid_height
+	# 注意：GridManager 的 playable_area 实际上是定义了“可以拖拽放置的区域”
+	# 如果我们把 playable_area 设大了，玩家就可以把兵拖到更远的地方
+	# 但现在的需求是“我方军阵格子数量是重要资源，为什么每关数量不一样”
+	# 这意味着 final_cols/rows 必须严格等于 GameState 的值，不能因为关卡大就变大
+	
+	# 下面的代码曾经尝试把关卡尺寸合并进来，这导致了如果关卡很大，玩家的可操作区域也变大了
+	# 我们现在移除这部分逻辑
+	
+	# if level:
+	# 	# 如果关卡有特殊尺寸要求（例如敌阵很大），则临时扩大战场
+	# 	# 这样 GridManager 才知道这片区域是合法的
+	# 	if "grid_width" in level and level.grid_width > final_cols:
+	# 		final_cols = level.grid_width
+	# 	if "grid_height" in level and level.grid_height > final_rows:
+	# 		final_rows = level.grid_height
 
 	if GridManager:
 		GridManager.playable_columns = final_cols
@@ -173,19 +196,11 @@ func _ready():
 			GameState.save_player_library(player_library)
 
 	if level:
-		max_army_hp = level.army_hp
-		army_hp = max_army_hp
-		max_enemy_hp = level.enemy_hp
-		enemy_hp = max_enemy_hp
-		
 		if units_container:
 			for spawn in level.enemy_units:
-				_spawn_enemy(spawn)
+				_spawn_enemy(spawn, current_enemy_cols, current_enemy_rows)
 			_has_level_enemies = level.enemy_units.size() > 0
 
-	# 初始化血条最大值
-	if left_hp_bar: left_hp_bar.max_value = max_army_hp
-	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
 	_update_ui()
 
 	# --- 清理残留的 Grid 占用 (防止重开游戏时格子被锁) ---
@@ -241,10 +256,6 @@ func start_level(index: int):
 	_enemy_occupied.clear()
 	
 	# 2. 设置数值
-	max_army_hp = level.army_hp
-	army_hp = max_army_hp
-	max_enemy_hp = level.enemy_hp
-	enemy_hp = max_enemy_hp
 	
 	# 3. 调整格子大小 (分别设置)
 	# 玩家格子大小：只受 GameState 影响
@@ -294,8 +305,6 @@ func start_level(index: int):
 		_has_level_enemies = level.enemy_units.size() > 0
 	
 	# 5. 更新 UI
-	if left_hp_bar: left_hp_bar.max_value = max_army_hp
-	if right_hp_bar: right_hp_bar.max_value = max_enemy_hp
 	_update_ui()
 	
 	# 6. 重置战斗状态
@@ -305,6 +314,14 @@ func start_level(index: int):
 
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
+
+func start_level_id(id: String):
+	var idx = level_index
+	if level_database:
+		var found = level_database.get_index_by_id(id)
+		if found >= 0:
+			idx = found
+	start_level(idx)
 
 func _apply_layout():
 	# 根据屏幕宽度摆放战场
@@ -347,8 +364,46 @@ func _apply_layout():
 		# 使用敌人自己的列数计算宽度
 		var enemy_width_actual = current_enemy_cols * GameConst.GRID_SIZE
 		
-		var pos_x = enemy_field_base.x - enemy_width_actual
-		var pos_y = enemy_field_base.y
+		# 修正：用户反馈第三四关敌方阵线到了屏幕右侧（超出画面）。
+		# 原因是之前的逻辑 pos_x = enemy_field_base.x - enemy_width_actual 是正确的“定右算左”逻辑，
+		# 但是 enemy_field_base.x 的值（比如 1000）是相对于 Battlefield 容器的。
+		# Battlefield 容器本身在屏幕上有偏移（battlefield_position = 280）且有缩放（1.35）。
+		# 屏幕 X = 280 + (BaseX - Width) * 1.35
+		# 右边界屏幕 X = 280 + BaseX * 1.35
+		
+		# 如果 BaseX = 1000，Scale = 1.35 -> 右边界 = 280 + 1350 = 1630 (在 1920 屏幕内)
+		# 如果 BaseX = 800，Scale = 1.35 -> 右边界 = 280 + 1080 = 1360 (在 1920 屏幕内)
+		
+		# 那为什么用户说“第三四关会到屏幕右侧”？
+		# 第三四关通常 enemy_width_actual 很大（比如 9列 = 990）。
+		# 如果 BaseX = 1000，Width = 990 -> PosX = 10.
+		# 左边界屏幕 X = 280 + 10 * 1.35 = 293.5
+		# 右边界屏幕 X = 1630.
+		# 这看起来完全正常。
+		
+		# 但是！如果用户之前的体验是 BaseX 比较小（比如为了让小地图居中），
+		# 此时突然变大，他可能会觉得“偏右了”。
+		# 或者，用户所谓的“屏幕右侧”是指**超出了**屏幕右侧？
+		# 用户原话：“为什么第三四关会到屏幕右侧。”
+		# 结合之前的“右侧已经超出画面”，可能是指虽然理论计算在内，但视觉上太靠右了，或者甚至出去了。
+		
+		# 让我们回退到用户认可的逻辑：
+		# “敌方阵线是以右上角为基准点，基准点位置固定，不与任何其他要素相关”
+		# 这意味着 BaseX 必须是一个常数，不能变。
+		# 我们现在的代码 BaseX 就是常数 (enemy_field_base)。
+		
+		# 唯一的变量是 current_enemy_cols。
+		# 如果 cols 变大，width 变大，pos_x 变小（向左延伸）。
+		# 右边界始终是 BaseX。
+		
+		var base_pos = enemy_field_base
+		
+		# 如果有关卡特定的偏移配置，应用它
+		if current_level_config and "position_offset" in current_level_config:
+			base_pos += current_level_config.position_offset
+		
+		var pos_x = base_pos.x - enemy_width_actual
+		var pos_y = base_pos.y
 		
 		enemy_field.position = Vector2(pos_x, pos_y)
 
@@ -379,6 +434,10 @@ func _input(event):
 			start_intro_dialogue()
 
 func start_intro_dialogue():
+	# 只有在第一关（index 0）时才播放开场剧情
+	if level_index != 0:
+		return
+
 	var resource = load("res://Dialogues/level1.dialogue")
 	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
 	if resource and balloon_scene:
@@ -451,13 +510,15 @@ func _process(_delta):
 	var friendly_alive = _count_alive_units(true)
 	var enemy_alive = _count_alive_units(false)
 	
-	if enemy_alive == 0:
-		_end_battle(true)
-		return
-		
+	# 如果双方同时死光，优先判负
 	if friendly_alive == 0:
 		_end_battle(false)
 		return
+	
+	if enemy_alive == 0:
+		_end_battle(true)
+		return
+
 	
 	_update_ui() # 每帧更新血条有点浪费，实际可优化，原型先这样
 
@@ -475,9 +536,10 @@ func _count_alive_units(is_friendly: bool) -> int:
 		if is_instance_valid(unit) and not unit.is_queued_for_deletion():
 			# 必须是存活的 (假设 Unit 有 current_hp)
 			if "current_hp" in unit and unit.current_hp > 0:
-				# 对于玩家，备战区的也算活着；对于敌人，必须是部署了的
-				# 或者简化：只要在容器里就算
-				count += 1
+				# 修正：只计算已部署的单位 (is_deployed == true)
+				# 备战区的单位不计入存活数
+				if unit.get("is_deployed") == true:
+					count += 1
 	return count
 
 # --- 供 Unit 调用的接口 ---
@@ -613,13 +675,9 @@ func _get_unit_occupied_rows(unit: Node2D) -> Array:
 
 # 对敌人造成伤害 (新增)
 func deal_damage_to_enemy(_amount: float):
-	# enemy_hp -= amount
-	# 现改为只依赖单位存活数判负，此处不再扣除 Boss 血量
 	pass
 
 func deal_damage_to_army(_amount: float):
-	# army_hp -= amount
-	# 现改为只依赖单位存活数判负
 	pass
 
 # 修改民力
@@ -636,10 +694,6 @@ func modify_enemy_manpower(amount: float):
 
 # 统一更新 UI
 func _update_ui():
-	# 隐藏原来的血条，或者改为显示存活数？
-	if left_hp_bar: left_hp_bar.visible = false
-	if right_hp_bar: right_hp_bar.visible = false
-	
 	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
 	if enemy_manpower_label: enemy_manpower_label.text = "敌方民力: %.1f" % enemy_current_manpower
 	
@@ -670,42 +724,89 @@ func _end_battle(victory: bool):
 		return
 	battle_ended = true
 	is_battle_started = false
+	
+	if victory:
+		# 胜利：先播放剧情，剧情结束后由对话调用 show_victory_screen
+		show_victory_dialogue()
+	else:
+		# 失败：直接显示结算
+		get_tree().paused = true
+		_show_defeat_screen()
+
+func show_victory_dialogue():
+	var dialogue_path = ""
+	# Level 0 -> 1_1.dialogue
+	if level_index == 0:
+		dialogue_path = "res://Dialogues/1_1.dialogue"
+	# Level 1 -> 2_1.dialogue
+	elif level_index == 1:
+		dialogue_path = "res://Dialogues/2_1.dialogue"
+	# Level 2 -> 3_1.dialogue
+	elif level_index == 2:
+		dialogue_path = "res://Dialogues/3_1.dialogue"
+	
+	# 如果没有对应的剧情文件，直接显示结算
+	if dialogue_path == "":
+		show_victory_screen()
+		return
+
+	var resource = load(dialogue_path)
+	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+	
+	if resource and balloon_scene:
+		# 传入 [self] 以便在对话中调用 show_victory_screen
+		# 既然是独立文件，默认从 ~ start 开始
+		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
+	else:
+		# 如果加载失败，直接显示结算
+		show_victory_screen()
+
+# 供对话调用的接口
+func show_victory_screen():
 	get_tree().paused = true
 	if result_overlay:
 		result_overlay.visible = true
 	if result_title_label:
-		result_title_label.text = "胜利" if victory else "失败"
+		result_title_label.text = "胜利"
 	
-	if victory:
-		# 胜利逻辑
-		var reward_text = ""
+	# 胜利逻辑
+	var reward_text = ""
+	
+	# 1. 弹出三选一奖励
+	_show_rewards()
 		
-		# 1. 弹出三选一奖励
-		_show_rewards()
-			
-		# 2. 检查是否有下一关
-		var has_next = false
-		if level_database and level_index + 1 < level_database.levels.size():
-			has_next = true
-		else:
-			reward_text += "\n\n恭喜通关！(Demo结束)"
-			
-		if next_level_button: 
-			next_level_button.visible = false # 等待选择奖励后再显示
-		if retry_button: 
-			retry_button.visible = false
-		
-		if result_detail_label:
-			var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f%s" % [_count_alive_units(true), _count_alive_units(false), current_manpower, reward_text]
-			result_detail_label.text = detail
+	# 2. 检查是否有下一关
+	var has_next = false
+	if level_database and level_index + 1 < level_database.levels.size():
+		has_next = true
 	else:
-		# 失败逻辑
-		if next_level_button: next_level_button.visible = false
-		if retry_button: retry_button.visible = true
-		if reward_container: reward_container.visible = false
-		if result_detail_label:
-			var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f" % [_count_alive_units(true), _count_alive_units(false), current_manpower]
-			result_detail_label.text = detail
+		reward_text += "\n\n恭喜通关！(Demo结束)"
+		
+	if next_level_button: 
+		next_level_button.visible = false # 等待选择奖励后再显示
+	if retry_button: 
+		retry_button.visible = false
+	
+	if result_detail_label:
+		var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f%s" % [_count_alive_units(true), _count_alive_units(false), current_manpower, reward_text]
+		result_detail_label.text = detail
+
+func _show_defeat_screen():
+	# 确保胜利窗口不会同时出现
+	if result_title_label and result_title_label.text == "胜利" and result_overlay.visible:
+		return
+		
+	if result_overlay:
+		result_overlay.visible = true
+	if result_title_label:
+		result_title_label.text = "失败"
+		
+	if next_level_button: next_level_button.visible = false
+	if retry_button: retry_button.visible = true
+	if reward_container: reward_container.visible = false
+	if result_detail_label:
+		var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f" % [_count_alive_units(true), _count_alive_units(false), current_manpower]
+		result_detail_label.text = detail
 
 # --- 羁绊系统 ---
 func _check_and_apply_synergies():
@@ -1066,7 +1167,11 @@ func _on_start_button_pressed():
 
 func _on_next_level_button_pressed():
 	if GameState:
-		GameState.selected_level_index += 1
+		# 先保存当前进度（例如已通关的关卡索引）
+		# 这里的逻辑是：如果我通关了第 0 关，现在应该去第 1 关
+		# GameState.selected_level_index 是在进入场景时读取的
+		# 所以我们在这里增加它
+		GameState.selected_level_index = level_index + 1
 		GameState.save_progress()
 	
 	get_tree().paused = false

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=10 format=3]
+
+[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="3_soldier"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="4_camp"]
+
+[sub_resource type="Resource" id="UnitSpawn_1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("3_soldier")
+grid_pos = Vector2i(2, 0)
+
+[resource]
+script = ExtResource("1_level")
+level_id = "1_1_1"
+level_name = "第 1 关 - 初阵"
+grid_width = 4
+grid_height = 4
+position_offset = Vector2(0, 0)
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1")])

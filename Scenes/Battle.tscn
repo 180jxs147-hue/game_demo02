@@ -8,10 +8,8 @@
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_red"]
 bg_color = Color(0.9685883, 0, 0, 1)
 
-[node name="Battle" type="Node2D" node_paths=PackedStringArray("left_hp_bar", "right_hp_bar", "manpower_label", "enemy_manpower_label", "synergy_label")]
+[node name="Battle" type="Node2D" node_paths=PackedStringArray("manpower_label", "enemy_manpower_label", "synergy_label")]
 script = ExtResource("1_p46lj")
-left_hp_bar = NodePath("CanvasLayer/HUD/LeftHPBar")
-right_hp_bar = NodePath("CanvasLayer/HUD/RightHPBar")
 manpower_label = NodePath("CanvasLayer/HUD/ManpowerLabel")
 enemy_manpower_label = NodePath("CanvasLayer/HUD/EnemyManpowerLabel")
 synergy_label = NodePath("CanvasLayer/HUD/SynergyLabel")
@@ -80,31 +78,6 @@ offset_right = 200.0
 offset_bottom = 400.0
 theme_override_font_sizes/font_size = 14
 text = "当前羁绊:"
-
-[node name="LeftHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
-custom_minimum_size = Vector2(300, 20)
-layout_mode = 1
-offset_left = 21.0
-offset_top = 1.0
-offset_right = 321.0
-offset_bottom = 28.0
-mouse_filter = 2
-theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
-
-[node name="RightHPBar" type="ProgressBar" parent="CanvasLayer/HUD"]
-custom_minimum_size = Vector2(300, 20)
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -321.0
-offset_top = 1.0
-offset_right = -21.0
-offset_bottom = 28.0
-grow_horizontal = 0
-mouse_filter = 2
-theme_override_styles/fill = SubResource("StyleBoxFlat_hp_red")
-fill_mode = 1
 
 [node name="TopMenuButton" type="Button" parent="CanvasLayer/HUD"]
 layout_mode = 1

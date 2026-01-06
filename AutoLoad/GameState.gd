@@ -6,8 +6,8 @@ extends Node
 ## - user:// 下的资源用于“玩家存档”（每台机器/每个系统用户独立，可读写）
 
 var selected_level_index: int = 0
-var current_rows: int = 3
-var current_cols: int = 3
+var current_rows: int = 4
+var current_cols: int = 4
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"

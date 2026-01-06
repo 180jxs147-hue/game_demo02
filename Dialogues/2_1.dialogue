@@ -1,0 +1,4 @@
+~ start
+Player01: 敌军已被制服，停止攻击。我们赢了。 [#bg:battle_bg,#pos:left]
+do show_victory_screen()
+=> END
