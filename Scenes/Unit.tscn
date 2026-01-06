@@ -33,6 +33,13 @@ event = &"die"
 delay_in_seconds = "0.0"
 metadata/_custom_type_script = "uid://cf1nsco3w0mf6"
 
+[node name="ToIdle" type="Node" parent="StateChart/Root"]
+script = ExtResource("4_20lhf")
+to = NodePath("../Idle")
+event = &"reset"
+delay_in_seconds = "0.0"
+metadata/_custom_type_script = "uid://cf1nsco3w0mf6"
+
 [node name="Idle" type="Node" parent="StateChart/Root"]
 script = ExtResource("5_uqujc")
 metadata/_custom_type_script = "uid://cytafq8i1y8qm"

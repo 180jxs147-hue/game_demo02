@@ -233,6 +233,7 @@ func _ready():
 
 func start_level(index: int):
 	print("Switching to level: ", index)
+	get_tree().paused = false
 	
 	if GameState:
 		GameState.selected_level_index = index
@@ -241,6 +242,8 @@ func start_level(index: int):
 	var level = null
 	if level_database:
 		level = level_database.get_level(level_index)
+	
+	current_level_config = level
 	
 	if not level:
 		push_error("Level not found: " + str(index))
@@ -280,10 +283,19 @@ func start_level(index: int):
 		GridManager.playable_columns = player_cols
 		GridManager.playable_rows = player_rows
 		GridManager.clear_all()
+		
+		# Reset player units state
 		if units_container:
 			for unit in units_container.get_children():
+				if unit.is_queued_for_deletion(): continue
+				
+				# 重置状态机和数值
+				if unit.has_method("reset_state"):
+					unit.reset_state()
+				
+				# 确保重新注册到 GridManager
 				if unit.is_deployed and "stored_grid_pos" in unit:
-					GridManager.mark_occupied(unit.stored_grid_pos, unit)
+					GridManager.place_unit(unit, unit.stored_grid_pos)
 	
 	# 刷新网格显示并应用尺寸
 	if friendly_grid_vis:
@@ -311,6 +323,12 @@ func start_level(index: int):
 	is_battle_started = false
 	battle_ended = false
 	if result_overlay: result_overlay.visible = false
+	
+	# Ensure Start Button is visible
+	if has_node("CanvasLayer/HUD/StartButton"):
+		var start_btn = $CanvasLayer/HUD/StartButton
+		start_btn.visible = true
+		start_btn.disabled = false
 
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
@@ -726,8 +744,8 @@ func _end_battle(victory: bool):
 	is_battle_started = false
 	
 	if victory:
-		# 胜利：先播放剧情，剧情结束后由对话调用 show_victory_screen
-		show_victory_dialogue()
+		# 胜利：直接显示结算（奖励界面），点击下一关后再播放剧情
+		show_victory_screen()
 	else:
 		# 失败：直接显示结算
 		get_tree().paused = true
@@ -735,19 +753,30 @@ func _end_battle(victory: bool):
 
 func show_victory_dialogue():
 	var dialogue_path = ""
-	# Level 0 -> 1_1.dialogue
-	if level_index == 0:
-		dialogue_path = "res://Dialogues/1_1.dialogue"
-	# Level 1 -> 2_1.dialogue
-	elif level_index == 1:
-		dialogue_path = "res://Dialogues/2_1.dialogue"
-	# Level 2 -> 3_1.dialogue
-	elif level_index == 2:
-		dialogue_path = "res://Dialogues/3_1.dialogue"
 	
-	# 如果没有对应的剧情文件，直接显示结算
+	# 根据当前关卡的 level_id 决定播放哪个剧情
+	if current_level_config:
+		var id = current_level_config.level_id
+		
+		# 1_1_1 -> 1_1_1.dialogue
+		if id == "1_1_1":
+			dialogue_path = "res://Dialogues/1_1_1.dialogue"
+		# 1_1_2 -> 1_1_2.dialogue
+		elif id == "1_1_2":
+			dialogue_path = "res://Dialogues/1_1_2.dialogue"
+		# 1_1_3 -> 1_1_3.dialogue
+		elif id == "1_1_3":
+			dialogue_path = "res://Dialogues/1_1_3.dialogue"
+		# 1_1_4 -> 暂无后续剧情
+		elif id == "1_1_4":
+			pass
+		# 1_2_1 -> 暂无
+		elif id == "1_2_1":
+			pass
+			
+	# 如果没有对应的剧情文件，直接进入下一关
 	if dialogue_path == "":
-		show_victory_screen()
+		_proceed_to_next_level_direct()
 		return
 
 	var resource = load(dialogue_path)
@@ -758,11 +787,18 @@ func show_victory_dialogue():
 		# 既然是独立文件，默认从 ~ start 开始
 		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
 	else:
-		# 如果加载失败，直接显示结算
-		show_victory_screen()
+		# 如果加载失败，直接进入下一关
+		_proceed_to_next_level_direct()
+
+func _proceed_to_next_level_direct():
+	if level_database and current_level_config:
+		var current_idx = level_database.get_index_by_id(current_level_config.level_id)
+		if current_idx != -1 and current_idx + 1 < level_database.levels.size():
+			start_level(current_idx + 1)
 
 # 供对话调用的接口
 func show_victory_screen():
+	print("DEBUG: show_victory_screen called")
 	get_tree().paused = true
 	if result_overlay:
 		result_overlay.visible = true
@@ -777,9 +813,25 @@ func show_victory_screen():
 		
 	# 2. 检查是否有下一关
 	var has_next = false
-	if level_database and level_index + 1 < level_database.levels.size():
-		has_next = true
+	
+	# 如果 level_database 在运行时丢失（例如编辑器直接运行导致未从 GameState 获取），尝试重新获取
+	if not level_database and GameState:
+		level_database = GameState.get_level_database()
+	
+	var current_idx = -1
+	if level_database and current_level_config:
+		current_idx = level_database.get_index_by_id(current_level_config.level_id)
+		print("DEBUG: current_level_id=", current_level_config.level_id, " index=", current_idx)
 	else:
+		print("DEBUG: Missing level_database or current_level_config")
+		if not level_database: print("DEBUG: level_database is null")
+		if not current_level_config: print("DEBUG: current_level_config is null")
+		
+	if current_idx != -1 and level_database and current_idx + 1 < level_database.levels.size():
+		has_next = true
+		print("DEBUG: has_next=true. Next index=", current_idx + 1)
+	else:
+		print("DEBUG: has_next=false. levels.size=", level_database.levels.size() if level_database else "null")
 		reward_text += "\n\n恭喜通关！(Demo结束)"
 		
 	if next_level_button: 
@@ -1166,16 +1218,10 @@ func _on_start_button_pressed():
 	get_tree().call_group("units", "start_battle")
 
 func _on_next_level_button_pressed():
-	if GameState:
-		# 先保存当前进度（例如已通关的关卡索引）
-		# 这里的逻辑是：如果我通关了第 0 关，现在应该去第 1 关
-		# GameState.selected_level_index 是在进入场景时读取的
-		# 所以我们在这里增加它
-		GameState.selected_level_index = level_index + 1
-		GameState.save_progress()
-	
-	get_tree().paused = false
-	get_tree().reload_current_scene()
+	# 点击下一关按钮时，尝试播放剧情
+	# 如果有剧情，剧情里会负责跳转
+	# 如果无剧情，show_victory_dialogue 会回退到直接进入下一关
+	show_victory_dialogue()
 
 func _on_retry_button_pressed():
 	get_tree().paused = false
@@ -1190,23 +1236,33 @@ func _on_menu_button_pressed():
 func _show_rewards():
 	if not reward_container: return
 	
+	print("DEBUG: _show_rewards called")
+	
 	# 清空旧的
 	for child in reward_container.get_children():
 		child.queue_free()
 		
-	reward_container.visible = true
-	
 	# 读取数据库
 	var db = load("res://Resources/UnitDatabase.tres")
-	if not db or db.units.is_empty():
+	if not db:
+		print("DEBUG: Failed to load UnitDatabase")
 		return
+		
+	if db.units.is_empty():
+		print("DEBUG: UnitDatabase is empty")
+		return
+		
+	reward_container.visible = true
 		
 	# 构建奖励池
 	var pool = []
 	
 	# 1. 加入兵种卡牌
 	for unit in db.units:
-		pool.append({ "type": "unit", "data": unit })
+		if unit:
+			pool.append({ "type": "unit", "data": unit })
+		else:
+			print("DEBUG: Found null unit in database")
 		
 	# 2. 加入扩充选项 (如果有空间)
 	# 增加出现权重? 简单起见，作为普通项加入，但为了保证出现率，可以加多次，或者保证必出？
@@ -1284,7 +1340,12 @@ func _on_reward_selected(item: Dictionary):
 		
 	# 显示下一关按钮 (如果有关卡)
 	var has_next = false
-	if level_database and level_index + 1 < level_database.levels.size():
+	
+	var current_idx = -1
+	if level_database and current_level_config:
+		current_idx = level_database.get_index_by_id(current_level_config.level_id)
+		
+	if current_idx != -1 and level_database and current_idx + 1 < level_database.levels.size():
 		has_next = true
 	
 	if next_level_button:

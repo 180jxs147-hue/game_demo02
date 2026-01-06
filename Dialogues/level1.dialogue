@@ -8,6 +8,6 @@ Player01: 可恶，只好出击了。 [#pos:left]
 	do start_level_id("1_1_1")
 	Player01: 全军听令，全力反击！ [#pos:left]
 - 手下留情
-	do start_level_id("1_1_2")
+	do start_level_id("1_2_1")
 	Player01: 全军听令，制服对方！ [#pos:left]
 => END

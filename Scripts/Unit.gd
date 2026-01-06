@@ -464,6 +464,18 @@ func start_battle():
 	if not is_deployed: return # <--- 加锁
 	state_chart.send_event("battle_started")
 
+func reset_state():
+	state_chart.send_event("reset")
+	timer.stop()
+	reset_stats()
+	current_hp = get_max_hp()
+	modulate = Color.WHITE
+	_update_health_visuals()
+	if cooldown_bar:
+		var max_w = cooldown_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
+		cooldown_bar.size.x = max_w
+
+
 # 战线判定 (由 BattleManager 调用)
 func check_burn(line_x: float, burn_from_right: bool = true):
 	if not is_deployed: return # <--- 加锁，备战区不会被烧死

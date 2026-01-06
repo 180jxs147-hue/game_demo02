@@ -1,41 +1,58 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="3_shield"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="4_archer"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="5_camp"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="3_pyrrhus"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="4_shield"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/spear.tres" id="5_spear"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/catapult.tres" id="6_catapult"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="7_camp"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_shield")
-grid_pos = Vector2i(2, 2)
+unit_data = ExtResource("3_pyrrhus")
+grid_pos = Vector2i(4, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_2"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_archer")
-grid_pos = Vector2i(4, 1)
+unit_data = ExtResource("4_shield")
+grid_pos = Vector2i(6, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_3"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_archer")
-grid_pos = Vector2i(4, 3)
+unit_data = ExtResource("5_spear")
+grid_pos = Vector2i(4, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_4"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("5_camp")
-grid_pos = Vector2i(3, 0)
+unit_data = ExtResource("5_spear")
+grid_pos = Vector2i(4, 3)
 
 [sub_resource type="Resource" id="UnitSpawn_5"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("5_camp")
-grid_pos = Vector2i(3, 4)
+unit_data = ExtResource("6_catapult")
+grid_pos = Vector2i(2, 0)
+
+[sub_resource type="Resource" id="UnitSpawn_6"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("6_catapult")
+grid_pos = Vector2i(2, 3)
+
+[sub_resource type="Resource" id="UnitSpawn_7"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("7_camp")
+grid_pos = Vector2i(5, 0)
+
+[sub_resource type="Resource" id="UnitSpawn_8"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("7_camp")
+grid_pos = Vector2i(5, 4)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_1_2"
-level_name = "第 2 关 - 坚盾利箭"
-grid_width = 6
+level_name = "第 2 关 - 越王亲征"
+grid_width = 8
 grid_height = 5
 position_offset = Vector2(0, 0)
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5")])
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5"), SubResource("UnitSpawn_6"), SubResource("UnitSpawn_7"), SubResource("UnitSpawn_8")])
