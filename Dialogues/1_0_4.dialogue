@@ -4,9 +4,9 @@ Guide: 汉室衰微，黄巾起义。你将何去何从？
 
 - 投身汉军，匡扶社稷
 	Guide: 你选择了守护秩序。前往汉军营地。
-	do start_level_id("1_1_1")
+	do play_level_intro("1_1_1")
 - 加入黄巾，苍天已死
 	Guide: 你选择了变革。前往黄巾阵地。
-	do start_level_id("1_2_1")
+	do play_level_intro("1_2_1")
 
 => END

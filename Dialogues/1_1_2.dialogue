@@ -8,5 +8,5 @@ Player01: 皇甫嵩将军危矣。我必须尽快赶到广宗。
 System: 【关键情报：皇甫嵩已被混沌污染】 
 Player01: 朱儁将军，希望你能保持清醒。 
 - 奔赴宛城
-	do start_level_id("1_1_3")
+	do start_level_id("1_1_2")
 => END

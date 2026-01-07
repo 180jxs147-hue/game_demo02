@@ -1,5 +1,5 @@
 ~ start
 ZhangJiao: 苍天已死，黄天当立！[#bg:battle_bg,#pos:left]
 ZhangJiao: 最后的决战，为了天下苍生！
-do start_level_id("1_3_1")
+do start_level_id("1_2_4")
 => END

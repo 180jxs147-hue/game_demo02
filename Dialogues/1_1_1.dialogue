@@ -7,5 +7,5 @@ Huangfusong: 去，查清后方宦官内应！
 Player01: (心中警觉) 他似乎在刻意转移我的注意力。 
 System: 【任务：清除宦官内应】 
 - 前往任务地点
-	do start_level_id("1_1_2")
+	do start_level_id("1_1_1")
 => END

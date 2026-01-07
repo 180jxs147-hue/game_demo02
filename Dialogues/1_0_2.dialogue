@@ -1,5 +1,5 @@
 ~ start
 Guide: 敌人的攻势越来越猛烈了。[#bg:battle_bg,#pos:left]
 Guide: 必须在此阻击他们。
-do start_level_id("1_0_3")
+do start_level_id("1_0_2")
 => END

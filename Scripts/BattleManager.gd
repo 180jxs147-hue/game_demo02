@@ -217,7 +217,7 @@ func _ready():
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
-	call_deferred("start_intro_dialogue")
+	# call_deferred("start_intro_dialogue") # 移除了自动播放，改为在菜单/选关界面播放
 	
 	# 初始化提示框
 	var tooltip_scene = load("res://Scenes/Tooltip.tscn")
@@ -751,33 +751,70 @@ func _end_battle(victory: bool):
 		get_tree().paused = true
 		_show_defeat_screen()
 
+static func get_dialogue_path_by_id(id: String) -> String:
+	var dialogue_path = ""
+	# 线性前置
+	if id == "1_0_1": dialogue_path = "res://Dialogues/1_0_1.dialogue"
+	elif id == "1_0_2": dialogue_path = "res://Dialogues/1_0_2.dialogue"
+	elif id == "1_0_3": dialogue_path = "res://Dialogues/1_0_3.dialogue"
+	# 1_0_4 的剧情是战后分支选择，不作为战前剧情
+	# elif id == "1_0_4": dialogue_path = "res://Dialogues/1_0_4.dialogue"
+	elif id == "branch_selection": dialogue_path = "res://Dialogues/1_0_4.dialogue"
+	
+	# 汉军线
+	elif id == "1_1_1": dialogue_path = "res://Dialogues/1_1_1.dialogue"
+	elif id == "1_1_2": dialogue_path = "res://Dialogues/1_1_2.dialogue"
+	elif id == "1_1_3": dialogue_path = "res://Dialogues/1_1_3.dialogue"
+	elif id == "1_1_4": dialogue_path = "res://Dialogues/1_1_4.dialogue"
+	
+	# 黄巾线
+	elif id == "1_2_1": dialogue_path = "res://Dialogues/1_2_1.dialogue"
+	elif id == "1_2_2": dialogue_path = "res://Dialogues/1_2_2.dialogue"
+	elif id == "1_2_3": dialogue_path = "res://Dialogues/1_2_3.dialogue"
+	elif id == "1_2_4": dialogue_path = "res://Dialogues/1_2_4.dialogue"
+	
+	# 终章
+	elif id == "1_3_1": dialogue_path = "res://Dialogues/1_3_1.dialogue"
+	
+	return dialogue_path
+
+func get_next_level_id() -> String:
+	if level_database and current_level_config:
+		var current_idx = level_database.get_index_by_id(current_level_config.level_id)
+		if current_idx != -1 and current_idx + 1 < level_database.levels.size():
+			return level_database.levels[current_idx + 1].level_id
+	return ""
+
+# 供对话调用的接口：播放指定关卡的开场剧情，如果没有则直接开始战斗
+func play_level_intro(id: String):
+	var dialogue_path = BattleManager.get_dialogue_path_by_id(id)
+	if dialogue_path != "":
+		var resource = load(dialogue_path)
+		var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+		if resource and balloon_scene:
+			DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
+			return
+	
+	# 如果没有剧情，直接开始关卡
+	start_level_id(id)
+
 func show_victory_dialogue():
 	var dialogue_path = ""
 	
-	# 根据当前关卡的 level_id 决定播放哪个剧情
 	if current_level_config:
-		var id = current_level_config.level_id
+		var current_id = current_level_config.level_id
 		
-		# 线性前置
-		if id == "1_0_1": dialogue_path = "res://Dialogues/1_0_1.dialogue"
-		elif id == "1_0_2": dialogue_path = "res://Dialogues/1_0_2.dialogue"
-		elif id == "1_0_3": dialogue_path = "res://Dialogues/1_0_3.dialogue"
-		elif id == "1_0_4": dialogue_path = "res://Dialogues/1_0_4.dialogue"
-		
-		# 汉军线
-		elif id == "1_1_1": dialogue_path = "res://Dialogues/1_1_1.dialogue"
-		elif id == "1_1_2": dialogue_path = "res://Dialogues/1_1_2.dialogue"
-		elif id == "1_1_3": dialogue_path = "res://Dialogues/1_1_3.dialogue"
-		elif id == "1_1_4": dialogue_path = "res://Dialogues/1_1_4.dialogue"
-		
-		# 黄巾线
-		elif id == "1_2_1": dialogue_path = "res://Dialogues/1_2_1.dialogue"
-		elif id == "1_2_2": dialogue_path = "res://Dialogues/1_2_2.dialogue"
-		elif id == "1_2_3": dialogue_path = "res://Dialogues/1_2_3.dialogue"
-		elif id == "1_2_4": dialogue_path = "res://Dialogues/1_2_4.dialogue"
-		
-		# 终章
-		elif id == "1_3_1": dialogue_path = "res://Dialogues/1_3_1.dialogue"
+		# 特殊处理：1_0_4 结束后播放分支选择
+		if current_id == "1_0_4":
+			dialogue_path = BattleManager.get_dialogue_path_by_id("branch_selection")
+		# 特殊处理：汉军线/黄巾线 最后一关结束后，跳转到终章 1_3_1
+		elif current_id == "1_1_4" or current_id == "1_2_4":
+			dialogue_path = BattleManager.get_dialogue_path_by_id("1_3_1")
+		else:
+			# 其他关卡：获取下一关的 ID，播放下一关的开场剧情
+			var next_id = get_next_level_id()
+			if next_id != "":
+				dialogue_path = BattleManager.get_dialogue_path_by_id(next_id)
 			
 	# 如果没有对应的剧情文件，直接进入下一关
 	if dialogue_path == "":

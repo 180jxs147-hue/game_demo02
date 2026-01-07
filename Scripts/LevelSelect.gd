@@ -32,6 +32,16 @@ func _build_list():
 		btn.text = level.level_name
 		btn.custom_minimum_size = Vector2(0, 50)
 		btn.pressed.connect(func():
+			# 尝试获取剧情路径
+			var dialogue_path = BattleManager.get_dialogue_path_by_id(level.level_id)
+			if dialogue_path != "":
+				var resource = load(dialogue_path)
+				var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+				if resource and balloon_scene:
+					# 传入 self 以便响应 start_level_id
+					DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
+					return
+			
 			GameState.selected_level_index = i
 			get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 		)
@@ -39,3 +49,13 @@ func _build_list():
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
+
+func start_level_id(id: String):
+	if not level_database: return
+	
+	var idx = level_database.get_index_by_id(id)
+	if idx != -1:
+		GameState.selected_level_index = idx
+		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+	else:
+		push_error("Level ID not found: " + id)

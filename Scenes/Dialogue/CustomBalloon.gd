@@ -96,46 +96,23 @@ func _parse_float_tag(prefix: String, tags: PackedStringArray) -> float:
 
 
 func _find_texture_path(dir: String, base: String) -> String:
-	var exts = ["png", "jpg", "jpeg", "webp"]
-	var base_norm = base.to_lower().replace(" ", "").replace("-", "").replace("_", "")
-	var d = DirAccess.open(dir)
-	if d:
-		d.list_dir_begin()
-		var f = d.get_next()
-		while f != "":
-			if not d.current_is_dir():
-				var lower = f.to_lower()
-				var name_no_ext = lower.rsplit(".", false, 1)[0]
-				var name_norm = name_no_ext.replace(" ", "").replace("-", "").replace("_", "")
-				for ext in exts:
-					if lower == (base + "." + ext).to_lower() or name_norm == base_norm or name_norm.find(base_norm) != -1:
-						d.list_dir_end()
-						return dir + f
-			f = d.get_next()
-		d.list_dir_end()
+	# 优先尝试直接加载 (假设 base 已经包含扩展名，或者不包含)
+	var exts = ["", ".png", ".jpg", ".jpeg", ".webp", ".tga"]
 	for ext in exts:
-		var path = dir + base + "." + ext
+		var path = dir + base + ext
 		if ResourceLoader.exists(path):
 			return path
+	
+	# 如果找不到，尝试不区分大小写的匹配（仅限调试模式或非导出包，导出后 ResourceLoader.exists 通常大小写敏感）
+	# 在导出项目中，强烈建议文件名和代码中引用名保持完全一致（包括大小写）
 	return ""
 
 func _load_texture_any(path: String) -> Texture2D:
-	if not FileAccess.file_exists(path):
-		return null
-	var bytes: PackedByteArray = FileAccess.get_file_as_bytes(path)
-	if bytes.size() == 0:
-		return null
-	var image := Image.new()
-	var ok := false
-	if bytes.size() >= 8 and bytes[0] == 0x89 and bytes[1] == 0x50 and bytes[2] == 0x4E and bytes[3] == 0x47:
-		ok = image.load_png_from_buffer(bytes) == OK
-	elif bytes.size() >= 3 and bytes[0] == 0xFF and bytes[1] == 0xD8 and bytes[2] == 0xFF:
-		ok = image.load_jpg_from_buffer(bytes) == OK
-	elif bytes.size() >= 12 and bytes[0] == 0x52 and bytes[1] == 0x49 and bytes[2] == 0x46 and bytes[3] == 0x46 and bytes[8] == 0x57 and bytes[9] == 0x45 and bytes[10] == 0x42 and bytes[11] == 0x50:
-		ok = image.load_webp_from_buffer(bytes) == OK
-	if not ok:
-		return null
-	return ImageTexture.create_from_image(image)
+	if ResourceLoader.exists(path):
+		var tex = load(path)
+		if tex is Texture2D:
+			return tex
+	return null
 
 
 func _ready() -> void:

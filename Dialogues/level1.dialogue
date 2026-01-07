@@ -7,4 +7,5 @@ Narrator: 现在，进行你的净化测试。证明你能驾驭这股力量。
 Player01: (一股力量涌入军阵) 我明白。 
 Narrator: 乱世的大幕已经拉开。
 Narrator: 去吧，在战火中寻找你的答案。
+do start_level_id("1_0_1")
 => END

@@ -1,4 +1,5 @@
 ~ start
 Narrator: 最终的宿命，在此终结。[#bg:battle_bg,#pos:left]
 Narrator: 历史的车轮滚滚向前，你的选择，改变了什么？
+do start_level_id("1_3_1")
 => END

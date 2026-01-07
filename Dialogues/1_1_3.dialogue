@@ -7,5 +7,5 @@ Player01: 我来开路，必须在混沌爆发前阻止他。
 ZhuJun: 好！拜托你了，异人！ 
 System: 【暂行指引】下一关占位为广宗战。 
 - 继续推进（占位：跳转至广宗线）
-	do start_level_id("1_2_1")
+	do start_level_id("1_1_3")
 => END

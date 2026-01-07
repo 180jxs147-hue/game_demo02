@@ -1,5 +1,5 @@
 ~ start
 Guide: 乱世已至，苍生涂炭。[#bg:battle_bg,#pos:left]
 Guide: 你将作为一个见证者，踏入这段历史。
-do start_level_id("1_0_2")
+do start_level_id("1_0_1")
 => END

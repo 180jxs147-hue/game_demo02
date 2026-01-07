@@ -8,6 +8,24 @@ extends Control
 func _on_start_button_pressed():
 	if GameState:
 		GameState.load_progress()
+	
+	# 播放开场剧情
+	var resource = load("res://Dialogues/level1.dialogue")
+	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+	if resource and balloon_scene:
+		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
+	else:
+		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+
+func start_level_id(id: String):
+	var level_database = load("res://Resources/EnemyLevels.tres")
+	var idx = 0
+	if level_database:
+		var found = level_database.get_index_by_id(id)
+		if found != -1: idx = found
+	
+	if GameState:
+		GameState.selected_level_index = idx
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 
 func _on_level_select_button_pressed():

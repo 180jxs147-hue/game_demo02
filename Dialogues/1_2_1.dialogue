@@ -7,4 +7,4 @@ Player01: 我明白。我将清除这些污秽。 [#pos:left]
 System: 【任务：清除黄巾军中的极端混沌】 
 ZhangJue: 去吧…我的时间不多了… 
 - 净化之战开始
-	do END
+	do start_level_id("1_2_1")

@@ -1,5 +1,5 @@
 ~ start
 HanGeneral: 广宗之战，在此一举！[#bg:battle_bg,#pos:left]
 HanGeneral: 击败张角，平定叛乱！
-do start_level_id("1_3_1")
+do start_level_id("1_1_4")
 => END
