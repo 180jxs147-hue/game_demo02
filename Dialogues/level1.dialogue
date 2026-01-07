@@ -1,13 +1,10 @@
 ~ start
 
-YTArmy_soliders: 哪里来的贼子，黄天的子民们，准备迎敌！ [#bg:battle_bg,#pos:right]
-Player01: 等等，我们不是敌人。 [#pos:left]
-YTArmy_soliders: 少说废话，官军的走狗们，多少兄弟死在你们手里，别想再耍诈了！ [#bg:battle_bg,#pos:right]	
-Player01: 可恶，只好出击了。 [#pos:left]
-- 摧枯拉朽
-	do start_level_id("1_1_1")
-	Player01: 全军听令，全力反击！ [#pos:left]
-- 手下留情
-	do start_level_id("1_2_1")
-	Player01: 全军听令，制服对方！ [#pos:left]
+Narrator: 你，被召唤而来。你承载着历史的记忆，人类的渴望。 [#bg:battle_bg]
+Narrator: 你所见的世界，是一块被“混沌”侵蚀的历史碎片。 
+Narrator: 你的心智是清明的，但你的力量需要被验证。 
+Narrator: 现在，进行你的净化测试。证明你能驾驭这股力量。 
+Player01: (一股力量涌入军阵) 我明白。 
+Narrator: 乱世的大幕已经拉开。
+Narrator: 去吧，在战火中寻找你的答案。
 => END

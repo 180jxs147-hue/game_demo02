@@ -1,11 +1,20 @@
-[gd_resource type="Resource" script_class="LevelDatabase" load_steps=6 format=3 uid="uid://durniktkpk52p"]
+[gd_resource type="Resource" script_class="LevelDatabase" load_steps=15 format=3 uid="uid://durniktkpk52p"]
 
 [ext_resource type="Script" uid="uid://b3jjta8myy3pp" path="res://Resources/LevelDatabase.gd" id="1_db"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_1_1.tres" id="2_l1"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_1_2.tres" id="3_l2"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_1_3.tres" id="4_l3"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_2_1.tres" id="5_l5"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_0_1.tres" id="6_pre1"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_0_2.tres" id="7_pre2"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_0_3.tres" id="8_pre3"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_0_4.tres" id="9_pre4"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_4.tres" id="10_han4"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_2_2.tres" id="11_yel2"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_2_3.tres" id="12_yel3"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_2_4.tres" id="13_yel4"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_3_1.tres" id="14_final"]
 
 [resource]
 script = ExtResource("1_db")
-levels = Array[Resource]([ExtResource("2_l1"), ExtResource("3_l2"), ExtResource("4_l3"), ExtResource("5_l5")])
+levels = Array[Resource]([ExtResource("6_pre1"), ExtResource("7_pre2"), ExtResource("8_pre3"), ExtResource("9_pre4"), ExtResource("2_l1"), ExtResource("3_l2"), ExtResource("4_l3"), ExtResource("10_han4"), ExtResource("5_l5"), ExtResource("11_yel2"), ExtResource("12_yel3"), ExtResource("13_yel4"), ExtResource("14_final")])

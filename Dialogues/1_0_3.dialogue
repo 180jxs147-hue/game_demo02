@@ -1,0 +1,5 @@
+~ start
+Guide: 深入敌阵，危险重重。[#bg:battle_bg,#pos:left]
+Guide: 但我们别无选择。
+do start_level_id("1_0_4")
+=> END

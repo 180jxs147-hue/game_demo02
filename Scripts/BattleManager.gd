@@ -758,21 +758,26 @@ func show_victory_dialogue():
 	if current_level_config:
 		var id = current_level_config.level_id
 		
-		# 1_1_1 -> 1_1_1.dialogue
-		if id == "1_1_1":
-			dialogue_path = "res://Dialogues/1_1_1.dialogue"
-		# 1_1_2 -> 1_1_2.dialogue
-		elif id == "1_1_2":
-			dialogue_path = "res://Dialogues/1_1_2.dialogue"
-		# 1_1_3 -> 1_1_3.dialogue
-		elif id == "1_1_3":
-			dialogue_path = "res://Dialogues/1_1_3.dialogue"
-		# 1_1_4 -> 暂无后续剧情
-		elif id == "1_1_4":
-			pass
-		# 1_2_1 -> 暂无
-		elif id == "1_2_1":
-			pass
+		# 线性前置
+		if id == "1_0_1": dialogue_path = "res://Dialogues/1_0_1.dialogue"
+		elif id == "1_0_2": dialogue_path = "res://Dialogues/1_0_2.dialogue"
+		elif id == "1_0_3": dialogue_path = "res://Dialogues/1_0_3.dialogue"
+		elif id == "1_0_4": dialogue_path = "res://Dialogues/1_0_4.dialogue"
+		
+		# 汉军线
+		elif id == "1_1_1": dialogue_path = "res://Dialogues/1_1_1.dialogue"
+		elif id == "1_1_2": dialogue_path = "res://Dialogues/1_1_2.dialogue"
+		elif id == "1_1_3": dialogue_path = "res://Dialogues/1_1_3.dialogue"
+		elif id == "1_1_4": dialogue_path = "res://Dialogues/1_1_4.dialogue"
+		
+		# 黄巾线
+		elif id == "1_2_1": dialogue_path = "res://Dialogues/1_2_1.dialogue"
+		elif id == "1_2_2": dialogue_path = "res://Dialogues/1_2_2.dialogue"
+		elif id == "1_2_3": dialogue_path = "res://Dialogues/1_2_3.dialogue"
+		elif id == "1_2_4": dialogue_path = "res://Dialogues/1_2_4.dialogue"
+		
+		# 终章
+		elif id == "1_3_1": dialogue_path = "res://Dialogues/1_3_1.dialogue"
 			
 	# 如果没有对应的剧情文件，直接进入下一关
 	if dialogue_path == "":

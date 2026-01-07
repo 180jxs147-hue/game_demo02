@@ -1,0 +1,5 @@
+~ start
+ZhangLiang: 我们被包围了！[#bg:battle_bg,#pos:left]
+ZhangLiang: 必须杀出一条血路！
+do start_level_id("1_2_4")
+=> END

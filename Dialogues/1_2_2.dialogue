@@ -1,0 +1,5 @@
+~ start
+ZhangBao: 必须净化这些被污染的土地。[#bg:battle_bg,#pos:left]
+ZhangBao: 为了太平道！
+do start_level_id("1_2_3")
+=> END

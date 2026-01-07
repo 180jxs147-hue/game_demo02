@@ -1,4 +1,11 @@
 ~ start
-Player01: 敌军防线已破，我们赢了！ [#pos:left]
-do start_level_id("1_2_1")
+ZhuJun: 皇甫将军的战术越来越激进，甚至将伤兵作为先锋… [#bg:battle_bg,#pos:right]
+Player01: 我发现证据，他可能已被混沌侵蚀。 [#pos:left]
+ZhuJun: 他的命令中充满毁灭的欲望。我们必须尽快攻下宛城。 
+ZhuJun: 然后去广宗，不能看他毁掉自己与汉军的荣耀。 
+Player01: 我来开路，必须在混沌爆发前阻止他。 
+ZhuJun: 好！拜托你了，异人！ 
+System: 【暂行指引】下一关占位为广宗战。 
+- 继续推进（占位：跳转至广宗线）
+	do start_level_id("1_2_1")
 => END
