@@ -15,6 +15,76 @@ const UNIT_DATABASE_PATH := "res://Resources/UnitDatabase.tres"
 const LEVEL_DATABASE_PATH := "res://Resources/EnemyLevels.tres"
 const SAVE_GAME_PATH := "user://savegame.cfg"
 
+# --- UI 样式常量与缓存 ---
+const UI_COLOR_BG_DARK = Color("1a1a1d") # 深灰黑背景
+const UI_COLOR_BG_PANEL = Color("2d2d30") # 面板背景
+const UI_COLOR_ACCENT_GOLD = Color("f0a500") # 金色强调
+const UI_COLOR_ACCENT_BLUE = Color("00adb5") # 蓝色科技感
+const UI_COLOR_TEXT_PRIMARY = Color("eeeeee") # 主要文字
+const UI_COLOR_TEXT_SECONDARY = Color("cf7500") # 次要文字（暗金）
+
+var _ui_style_cache = {}
+
+func get_ui_style(name: String) -> StyleBoxFlat:
+	if _ui_style_cache.has(name):
+		return _ui_style_cache[name]
+		
+	var style = StyleBoxFlat.new()
+	match name:
+		"panel":
+			style.bg_color = UI_COLOR_BG_PANEL
+			style.corner_radius_top_left = 8
+			style.corner_radius_top_right = 8
+			style.corner_radius_bottom_left = 8
+			style.corner_radius_bottom_right = 8
+			style.border_width_left = 2
+			style.border_width_top = 2
+			style.border_width_right = 2
+			style.border_width_bottom = 2
+			style.border_color = Color("3e3e42")
+		"button_normal":
+			style.bg_color = Color("393e46")
+			style.border_width_bottom = 4
+			style.border_color = Color("222831")
+			style.set_corner_radius_all(4)
+			style.content_margin_left = 12
+			style.content_margin_right = 12
+			style.content_margin_top = 8
+			style.content_margin_bottom = 8
+		"button_hover":
+			style = get_ui_style("button_normal").duplicate()
+			style.bg_color = Color("4b525e")
+			style.border_color = UI_COLOR_ACCENT_BLUE
+		"button_pressed":
+			style = get_ui_style("button_normal").duplicate()
+			style.bg_color = Color("222831")
+			style.border_width_bottom = 0
+			style.border_width_top = 4
+			style.border_color = Color("1a1a1d")
+		"card_bg":
+			style.bg_color = Color("252526")
+			style.border_width_left = 1
+			style.border_width_top = 1
+			style.border_width_right = 1
+			style.border_width_bottom = 3
+			style.border_color = Color("333333")
+			style.set_corner_radius_all(6)
+			style.shadow_color = Color(0, 0, 0, 0.3)
+			style.shadow_size = 4
+			style.shadow_offset = Vector2(0, 2)
+			
+	_ui_style_cache[name] = style
+	return style
+
+func apply_button_style(btn: Button):
+	if not btn: return
+	btn.add_theme_stylebox_override("normal", get_ui_style("button_normal"))
+	btn.add_theme_stylebox_override("hover", get_ui_style("button_hover"))
+	btn.add_theme_stylebox_override("pressed", get_ui_style("button_pressed"))
+	btn.add_theme_color_override("font_color", UI_COLOR_TEXT_PRIMARY)
+	btn.add_theme_color_override("font_hover_color", Color.WHITE)
+	btn.add_theme_color_override("font_pressed_color", Color.GRAY)
+
 var _cached_unit_database: UnitDatabase
 var _cached_level_database: LevelDatabase
 

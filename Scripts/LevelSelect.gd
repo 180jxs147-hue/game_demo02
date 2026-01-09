@@ -8,7 +8,26 @@ extends Control
 @onready var list_container = $ScrollContainer/VBoxContainer
 
 func _ready():
+	_apply_theme()
 	_build_list()
+
+func _apply_theme():
+	if not GameState: return
+	
+	# 添加背景
+	if not has_node("BgLayer"):
+		var bg = ColorRect.new()
+		bg.name = "BgLayer"
+		bg.color = GameState.UI_COLOR_BG_DARK
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.show_behind_parent = true
+		add_child(bg)
+		move_child(bg, 0)
+		
+	# 返回按钮样式
+	var back_btn = find_child("BackButton", true, false)
+	if back_btn:
+		GameState.apply_button_style(back_btn)
 
 func _build_list():
 	if not level_database:
@@ -20,6 +39,9 @@ func _build_list():
 	for child in list_container.get_children():
 		child.queue_free()
 	
+	# 增加间距
+	list_container.add_theme_constant_override("separation", 10)
+	
 	if not level_database or level_database.levels.is_empty():
 		var label = Label.new()
 		label.text = "没有关卡配置"
@@ -28,24 +50,35 @@ func _build_list():
 	
 	for i in range(level_database.levels.size()):
 		var level: LevelConfig = level_database.levels[i]
+		
+		# 使用 PanelContainer 制作卡片背景
+		var card = PanelContainer.new()
+		if GameState:
+			card.add_theme_stylebox_override("panel", GameState.get_ui_style("card_bg"))
+		
+		var vbox = VBoxContainer.new()
+		card.add_child(vbox)
+		
+		# 关卡标题
+		var title_label = Label.new()
+		title_label.text = level.level_name
+		title_label.add_theme_color_override("font_color", GameState.UI_COLOR_ACCENT_GOLD if GameState else Color.GOLD)
+		title_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		vbox.add_child(title_label)
+		
+		# 开始按钮
 		var btn = Button.new()
-		btn.text = level.level_name
-		btn.custom_minimum_size = Vector2(0, 50)
-		btn.pressed.connect(func():
-			# 尝试获取剧情路径
-			var dialogue_path = BattleManager.get_dialogue_path_by_id(level.level_id)
-			if dialogue_path != "":
-				var resource = load(dialogue_path)
-				var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
-				if resource and balloon_scene:
-					# 传入 self 以便响应 start_level_id
-					DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
-					return
+		btn.text = "出征"
+		btn.custom_minimum_size = Vector2(0, 40)
+		if GameState:
+			GameState.apply_button_style(btn)
 			
-			GameState.selected_level_index = i
-			get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+		btn.pressed.connect(func():
+			play_level_intro(level.level_id)
 		)
-		list_container.add_child(btn)
+		vbox.add_child(btn)
+		
+		list_container.add_child(card)
 
 func _on_back_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")

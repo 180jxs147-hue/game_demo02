@@ -75,6 +75,8 @@ var current_enemy_rows: int = GameConst.MAP_ROWS
 var current_level_config: LevelConfig
 
 func _ready():
+	_apply_theme()
+	
 	get_tree().paused = false
 	is_battle_started = false
 	battle_ended = false
@@ -96,6 +98,8 @@ func _ready():
 	var level: LevelConfig = null
 	if GameState:
 		level_index = GameState.selected_level_index
+
+
 	
 	# --- 1. 动态调整战场格子数量 (已移至下方合并处理) ---
 	# 从存档读取
@@ -1321,28 +1325,77 @@ func _show_rewards():
 		_create_reward_card_ui(item)
 
 func _create_reward_card_ui(item: Dictionary):
-	var btn = Button.new()
-	btn.custom_minimum_size = Vector2(120, 160)
+	# 创建卡片容器
+	var card = PanelContainer.new()
+	card.custom_minimum_size = Vector2(140, 200)
+	if GameState:
+		card.add_theme_stylebox_override("panel", GameState.get_ui_style("card_bg"))
 	
-	var desc = ""
+	var vbox = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 8)
+	card.add_child(vbox)
+	
+	# 内容解析
+	var title_text = ""
+	var desc_text = ""
+	var color = Color.WHITE
+	
 	var type = item.get("type", "unit")
-	
 	if type == "unit":
 		var data = item["data"] as UnitData
-		desc = data.name + "\n\n"
-		desc += "ATK: %.0f\nCD: %.1f" % [data.attack_damage, data.cooldown]
+		title_text = data.name
+		desc_text = "ATK: %.0f\nCD: %.1f s" % [data.attack_damage, data.cooldown]
 		if not data.tags.is_empty():
-			desc += "\n" + str(data.tags)
-	elif type == "upgrade_row":
-		desc = "【扩充战线】\n\n增加一行\n(横向)"
-	elif type == "upgrade_col":
-		desc = "【扩充战线】\n\n增加一列\n(纵向)"
+			# 简化的标签显示
+			var tags_str = ""
+			for tag in data.tags:
+				if GameConst.TAG_CN_NAMES.has(tag):
+					tags_str += GameConst.TAG_CN_NAMES[tag] + " "
+				else:
+					tags_str += tag + " "
+			desc_text += "\n\n" + tags_str
+		color = GameState.UI_COLOR_TEXT_PRIMARY
 		
-	btn.text = desc
-	btn.alignment = HORIZONTAL_ALIGNMENT_CENTER
-	btn.pressed.connect(func(): _on_reward_selected(item))
+	elif type == "upgrade_row":
+		title_text = "战线扩充"
+		desc_text = "战场容量 +1 行\n(横向)"
+		color = GameState.UI_COLOR_ACCENT_GOLD
+		
+	elif type == "upgrade_col":
+		title_text = "战线扩充"
+		desc_text = "战场容量 +1 列\n(纵向)"
+		color = GameState.UI_COLOR_ACCENT_GOLD
 	
-	reward_container.add_child(btn)
+	# 标题
+	var lbl_title = Label.new()
+	lbl_title.text = title_text
+	lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_title.add_theme_color_override("font_color", color)
+	lbl_title.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(lbl_title)
+	
+	# 分隔线
+	var sep = HSeparator.new()
+	vbox.add_child(sep)
+	
+	# 描述
+	var lbl_desc = Label.new()
+	lbl_desc.text = desc_text
+	lbl_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lbl_desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	lbl_desc.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
+	vbox.add_child(lbl_desc)
+	
+	# 选择按钮
+	var btn = Button.new()
+	btn.text = "选择"
+	if GameState:
+		GameState.apply_button_style(btn)
+	btn.pressed.connect(func(): _on_reward_selected(item))
+	vbox.add_child(btn)
+	
+	reward_container.add_child(card)
 
 func _on_reward_selected(item: Dictionary):
 	var type = item.get("type", "unit")
@@ -1525,3 +1578,21 @@ func _arrange_bench():
 		if unit.has_method("update_bench_pos"):
 			# 有的话，就调用它，把目标坐标传过去
 			unit.update_bench_pos(target_pos)
+
+func _apply_theme():
+	if not GameState: return
+	
+	# 应用样式到现有按钮
+	for node in find_children("", "Button", true, false):
+		if node is Button:
+			GameState.apply_button_style(node)
+	
+	# 胜利/失败面板背景
+	if result_overlay:
+		var panel = result_overlay.get_node_or_null("Panel")
+		if panel and panel is Panel:
+			# 使用半透明黑底
+			var style = StyleBoxFlat.new()
+			style.bg_color = Color(0, 0, 0, 0.85)
+			style.set_corner_radius_all(12)
+			panel.add_theme_stylebox_override("panel", style)

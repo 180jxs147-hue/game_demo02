@@ -5,6 +5,27 @@ extends Control
 @onready var clear_save_dialog = $ClearSaveDialog
 @onready var info_dialog = $InfoDialog
 
+func _ready():
+	_apply_theme()
+
+func _apply_theme():
+	if not GameState: return
+	
+	# 添加深色背景 (如果还没有)
+	if not has_node("BgLayer"):
+		var bg = ColorRect.new()
+		bg.name = "BgLayer"
+		bg.color = GameState.UI_COLOR_BG_DARK
+		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
+		bg.show_behind_parent = true
+		add_child(bg)
+		move_child(bg, 0)
+	
+	# 应用样式到所有按钮
+	for node in find_children("", "Button", true, false):
+		if node is Button:
+			GameState.apply_button_style(node)
+
 func _on_start_button_pressed():
 	if GameState:
 		GameState.load_progress()
