@@ -45,7 +45,7 @@ grid_pos = Vector2i(3, 3)
 [resource]
 script = ExtResource("1_level")
 level_id = "1_1_3"
-level_name = "汉军线 第 3 关 - 广宗前夜"
+level_name = "汉军线 第 3 关 - 宛城之战与疯狂战术"
 grid_width = 9
 grid_height = 6
 position_offset = Vector2(0, 0)

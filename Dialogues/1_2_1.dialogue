@@ -1,10 +1,9 @@
 ~ start
-ZhangBao: 你就是大哥说的异人？快！大哥病重，汉军围攻在即！ [#bg:battle_bg,#pos:right]
-ZhangJue: (气息微弱) 我看到了你身上的净化之光… [#pos:right]
-ZhangJue: 黄天当立，但人心中的混沌，比汉室腐败更可怕。 
-ZhangJue: 我已命张宝截击汉军主力。你去查清谁在散布极端杀戮思想。 
-Player01: 我明白。我将清除这些污秽。 [#pos:left]
+ZhangBao: 你就是大哥说的异人？快！大哥病重，但汉军围攻在即，他需要你的力量。 [#bg:battle_bg,#pos:right]
+ZhangJue: (气息微弱) 你来了…我看到了你身上的净化之光。 [#pos:right]
+ZhangJue: 黄天当立，但人心中的混沌…比汉室的腐败更可怕。 
+ZhangJue: 我已命张宝去截击汉军主力。你帮我查清，谁在黄巾军中散布极端的杀戮思想？那不是我的教义！ 
+Player01: 我明白了。我将为您清除这些污秽。 [#pos:left]
 System: 【任务：清除黄巾军中的极端混沌】 
-ZhangJue: 去吧…我的时间不多了… 
-- 净化之战开始
-	do start_level_id("1_2_1")
+ZhangJue: 去吧，我的时间不多了… 
+do start_level_id("1_2_1")

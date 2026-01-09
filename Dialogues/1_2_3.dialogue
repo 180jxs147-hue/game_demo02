@@ -1,5 +1,10 @@
 ~ start
-ZhangLiang: 我们被包围了！[#bg:battle_bg,#pos:left]
-ZhangLiang: 必须杀出一条血路！
+ZhangJue: 我…我的时间不多了。你看到了混沌…它不会因为我的死而停止。[#bg:battle_bg,#pos:right]
+ZhangJue: 我的兄弟们有信仰，但缺乏你的清明。这本《太平要术》，蕴含真正的净化之力，我将它托付给你。 
+ZhangJue: 从现在起，你就是黄巾军的领袖。去广宗！去阻止那股力量！ 
+ZhangBao: 大哥的遗命，我等遵从。但…有人不服！ [#pos:left]
+RebelGeneral: 凭什么让一个外人当领袖！我才是黄巾军的元老！ 
+Player01: 现在不是内讧的时候！我将用力量证明，谁才能带领黄巾军走向黄天！ 
+System: 【获得装备卡牌：太平要术】【身份变更：黄巾军领袖】 
 do start_level_id("1_2_3")
 => END

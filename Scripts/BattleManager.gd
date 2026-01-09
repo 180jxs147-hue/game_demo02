@@ -757,9 +757,7 @@ static func get_dialogue_path_by_id(id: String) -> String:
 	if id == "1_0_1": dialogue_path = "res://Dialogues/1_0_1.dialogue"
 	elif id == "1_0_2": dialogue_path = "res://Dialogues/1_0_2.dialogue"
 	elif id == "1_0_3": dialogue_path = "res://Dialogues/1_0_3.dialogue"
-	# 1_0_4 的剧情是战后分支选择，不作为战前剧情
-	# elif id == "1_0_4": dialogue_path = "res://Dialogues/1_0_4.dialogue"
-	elif id == "branch_selection": dialogue_path = "res://Dialogues/1_0_4.dialogue"
+	elif id == "1_0_4": dialogue_path = "res://Dialogues/1_0_4.dialogue"
 	
 	# 汉军线
 	elif id == "1_1_1": dialogue_path = "res://Dialogues/1_1_1.dialogue"
@@ -804,11 +802,8 @@ func show_victory_dialogue():
 	if current_level_config:
 		var current_id = current_level_config.level_id
 		
-		# 特殊处理：1_0_4 结束后播放分支选择
-		if current_id == "1_0_4":
-			dialogue_path = BattleManager.get_dialogue_path_by_id("branch_selection")
 		# 特殊处理：汉军线/黄巾线 最后一关结束后，跳转到终章 1_3_1
-		elif current_id == "1_1_4" or current_id == "1_2_4":
+		if current_id == "1_1_4" or current_id == "1_2_4":
 			dialogue_path = BattleManager.get_dialogue_path_by_id("1_3_1")
 		else:
 			# 其他关卡：获取下一关的 ID，播放下一关的开场剧情
@@ -1260,10 +1255,11 @@ func _on_start_button_pressed():
 	get_tree().call_group("units", "start_battle")
 
 func _on_next_level_button_pressed():
-	# 点击下一关按钮时，尝试播放剧情
-	# 如果有剧情，剧情里会负责跳转
-	# 如果无剧情，show_victory_dialogue 会回退到直接进入下一关
-	show_victory_dialogue()
+	var next_id = get_next_level_id()
+	if next_id != "":
+		play_level_intro(next_id)
+	else:
+		_proceed_to_next_level_direct()
 
 func _on_retry_button_pressed():
 	get_tree().paused = false

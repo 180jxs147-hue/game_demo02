@@ -1,5 +1,10 @@
 ~ start
-HanGeneral: 广宗之战，在此一举！[#bg:battle_bg,#pos:left]
-HanGeneral: 击败张角，平定叛乱！
+Huangfusong: 朱儁！你太慢了！张角已死！但这还不够！[#bg:battle_bg,#pos:right]
+Huangfusong: 混沌告诉我，只有将所有人都拖入泥潭，才能实现真正的秩序！ 
+ZhuJun: 皇甫将军！你清醒一点！你已被混沌控制了！ [#pos:left]
+Huangfusong: 控制？不！这是解放！你看到了吗？张角的尸体…它在动！它在为我而战！ 
+Player01: 张角已死，但他的英灵被混沌利用了。这才是真正的天谴！ 
+Player01: 我必须净化它！这是我的使命！ 
+System: 【进入最终战：1_3_1】 
 do start_level_id("1_1_4")
 => END

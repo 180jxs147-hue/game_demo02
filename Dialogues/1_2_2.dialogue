@@ -1,5 +1,10 @@
 ~ start
-ZhangBao: 必须净化这些被污染的土地。[#bg:battle_bg,#pos:left]
-ZhangBao: 为了太平道！
+YellowTurbanGeneral: 杀！杀光所有汉人！烧光所有土地！只有毁灭，才能迎来新生！张角太软弱了！[#bg:battle_bg,#pos:right]
+Player01: 你不是为黄天而战，你只是混沌的傀儡！你的教义已被污染！ [#pos:left]
+YellowTurbanGeneral: (被击败后，恢复一丝清明) 我…我做了什么…我看到了…皇甫嵩…他也被那股力量盯上了… 
+Player01: (取出黑色晶体) 混沌之种…它在两边同时散播。我必须尽快告诉张角。 
+Player01: 如果皇甫嵩也被污染，那广宗之战将是一场灾难。 
+Player01: 我必须赶回张角身边，他需要知道这个情报。 
+System: 【关键情报：皇甫嵩已被混沌污染】 
 do start_level_id("1_2_2")
 => END

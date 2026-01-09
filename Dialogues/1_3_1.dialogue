@@ -1,5 +1,6 @@
 ~ start
-Narrator: 最终的宿命，在此终结。[#bg:battle_bg,#pos:left]
-Narrator: 历史的车轮滚滚向前，你的选择，改变了什么？
+Narrator: 混沌的核心就在眼前。[#bg:battle_bg,#pos:left]
+Narrator: 无论你选择了哪条道路，所有的因果都汇聚于此。
+Narrator: 击败它，净化这片历史的碎片！
 do start_level_id("1_3_1")
 => END

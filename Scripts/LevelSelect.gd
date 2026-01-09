@@ -59,3 +59,13 @@ func start_level_id(id: String):
 		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 	else:
 		push_error("Level ID not found: " + id)
+	
+func play_level_intro(id: String):
+	var dialogue_path = BattleManager.get_dialogue_path_by_id(id)
+	if dialogue_path != "":
+		var resource = load(dialogue_path)
+		var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+		if resource and balloon_scene:
+			DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
+			return
+	start_level_id(id)

@@ -51,7 +51,7 @@ grid_pos = Vector2i(5, 4)
 [resource]
 script = ExtResource("1_level")
 level_id = "1_1_2"
-level_name = "汉军线 第 2 关 - 清浊"
+level_name = "汉军线 第 2 关 - 清除内应与混沌之种"
 grid_width = 8
 grid_height = 5
 position_offset = Vector2(0, 0)

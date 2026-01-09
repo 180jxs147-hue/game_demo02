@@ -12,7 +12,7 @@ grid_pos = Vector2i(2, 0)
 [resource]
 script = ExtResource("1_level")
 level_id = "1_2_4"
-level_name = "黄巾线 第 4 关 - 绝境"
+level_name = "黄巾线 第 4 关 - 广宗城下：皇甫嵩的疯狂"
 grid_width = 4
 grid_height = 4
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1")])

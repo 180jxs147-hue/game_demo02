@@ -1,5 +1,11 @@
 ~ start
-Guide: 深入敌阵，危险重重。[#bg:battle_bg,#pos:left]
-Guide: 但我们别无选择。
+HanScout: 救…救命！前面有黄巾军！他们像疯了一样，连自己人都杀！[#bg:battle_bg,#pos:right]
+Player01: 你受伤了。告诉我，发生了什么？那股力量是什么？ [#pos:left]
+HanScout: 我不知道！我奉命去联络皇甫嵩将军，但被截击。他们还喊着苍天已死！ 
+HanScout: 他们的眼神没有信仰，只有疯狂，甚至攻击了他们的同伴！ 
+Player01: 混沌…它已经开始影响双方了。 
+HanScout: 你必须做出选择，是为汉室效力，还是加入他们？ 
+HanScout: 我已将汉军主帅的行军路线告知你。现在，你的选择是什么？ 
+Player01: 我的选择，将决定这片历史碎片的命运。 
 do start_level_id("1_0_3")
 => END

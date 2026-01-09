@@ -1,11 +1,11 @@
 ~ start
 Huangfusong: 你就是那名异人？很好。乱世之中需要你的身手。 [#bg:battle_bg,#pos:right]
-Huangfusong: 黄巾贼不过乌合之众。速战速决，所有反抗者，格杀勿论！ 
+Huangfusong: 黄巾贼不过是一群乌合之众。速战速决，所有反抗者，格杀勿论！ 
 Player01: 将军，是否过于急躁？这不符合您的用兵之道。 [#pos:left]
 Huangfusong: 用兵之道？现在是乱世！你只需执行命令！ 
-Huangfusong: 去，查清后方宦官内应！ 
-Player01: (心中警觉) 他似乎在刻意转移我的注意力。 
+Huangfusong: 去！查清后方捣鬼的宦官内应！ 
+Player01: (心中警觉) 他似乎在刻意转移我的注意力。但我必须先完成任务。 
 System: 【任务：清除宦官内应】 
-- 前往任务地点
-	do start_level_id("1_1_1")
+Huangfusong: 去吧，别让我失望。 
+do start_level_id("1_1_1")
 => END

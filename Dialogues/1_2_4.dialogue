@@ -1,5 +1,9 @@
 ~ start
-ZhangJiao: 苍天已死，黄天当立！[#bg:battle_bg,#pos:left]
-ZhangJiao: 最后的决战，为了天下苍生！
+ZhangBao: 领袖！汉军的主帅皇甫嵩…他疯了！他竟下令屠杀俘虏！他身上散发着混沌气息！[#bg:battle_bg,#pos:left]
+Player01: 正如张角所预言的。混沌已经彻底吞噬了皇甫嵩。 
+ZhangLiang: 他要毁掉广宗！我们必须阻止他，为大哥，为黄天！ 
+Player01: 他已是混沌的傀儡！我们必须阻止他！广宗之战，是净化之战！ 
+Player01: 用太平要术的力量，净化他！ 
+System: 【进入最终战：1_3_1】 
 do start_level_id("1_2_4")
 => END
