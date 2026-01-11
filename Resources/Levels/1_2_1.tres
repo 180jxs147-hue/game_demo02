@@ -1,10 +1,8 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=5 format=3 uid="uid://1ujpsjc8qaeb"]
 
-[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="3_shield"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="4_archer"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="5_camp"]
+[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" uid="uid://sg64dk33u0ae" path="res://Resources/DataFiles/shield.tres" id="3_shield"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
@@ -15,7 +13,5 @@ grid_pos = Vector2i(2, 2)
 script = ExtResource("1_level")
 level_id = "1_2_1"
 level_name = "黄巾线 第 1 关 - 拜见与重病"
-grid_width = 4
 grid_height = 5
-position_offset = Vector2(0, 0)
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1")])

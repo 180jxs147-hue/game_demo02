@@ -16,71 +16,125 @@ const LEVEL_DATABASE_PATH := "res://Resources/EnemyLevels.tres"
 const SAVE_GAME_PATH := "user://savegame.cfg"
 
 # --- UI 样式常量与缓存 ---
-const UI_COLOR_BG_DARK = Color("1a1a1d") # 深灰黑背景
-const UI_COLOR_BG_PANEL = Color("2d2d30") # 面板背景
-const UI_COLOR_ACCENT_GOLD = Color("f0a500") # 金色强调
-const UI_COLOR_ACCENT_BLUE = Color("00adb5") # 蓝色科技感
-const UI_COLOR_TEXT_PRIMARY = Color("eeeeee") # 主要文字
-const UI_COLOR_TEXT_SECONDARY = Color("cf7500") # 次要文字（暗金）
+const UI_COLOR_BG_DARK = Color("1a1a1d")
+const UI_COLOR_BG_PANEL = Color("2d2d30")
+const UI_COLOR_ACCENT_GOLD = Color("f0a500")
+const UI_COLOR_ACCENT_BLUE = Color("00adb5")
+const UI_COLOR_TEXT_PRIMARY = Color("eeeeee")
+const UI_COLOR_TEXT_SECONDARY = Color("cf7500")
 
 var _ui_style_cache = {}
 
-func get_ui_style(name: String) -> StyleBoxFlat:
+func _crop_center_to_aspect(tex: Texture2D, target_aspect: float) -> Texture2D:
+	if not tex:
+		return null
+	if target_aspect <= 0.0:
+		return tex
+	var w := float(tex.get_width())
+	var h := float(tex.get_height())
+	if w <= 0.0 or h <= 0.0:
+		return tex
+	var region_w := w
+	var region_h := w / target_aspect
+	if region_h > h:
+		region_h = h
+		region_w = h * target_aspect
+	region_w = clampf(region_w, 1.0, w)
+	region_h = clampf(region_h, 1.0, h)
+	var x := (w - region_w) * 0.5
+	var y := (h - region_h) * 0.5
+	var atlas := AtlasTexture.new()
+	atlas.atlas = tex
+	atlas.region = Rect2(x, y, region_w, region_h)
+	return atlas
+
+func _make_texture_style(path: String, margins: Vector4, target_aspect: float = 0.0) -> StyleBoxTexture:
+	if not ResourceLoader.exists(path):
+		return null
+	var tex = load(path)
+	if not tex:
+		return null
+	tex = _crop_center_to_aspect(tex, target_aspect)
+	var s = StyleBoxTexture.new()
+	s.texture = tex
+	s.content_margin_left = margins.x
+	s.content_margin_top = margins.y
+	s.content_margin_right = margins.z
+	s.content_margin_bottom = margins.w
+	return s
+
+func get_ui_style(name: String) -> StyleBox:
 	if _ui_style_cache.has(name):
 		return _ui_style_cache[name]
 		
-	var style = StyleBoxFlat.new()
+	var style = null
 	match name:
 		"panel":
-			style.bg_color = UI_COLOR_BG_PANEL
-			style.corner_radius_top_left = 8
-			style.corner_radius_top_right = 8
-			style.corner_radius_bottom_left = 8
-			style.corner_radius_bottom_right = 8
-			style.border_width_left = 2
-			style.border_width_top = 2
-			style.border_width_right = 2
-			style.border_width_bottom = 2
-			style.border_color = Color("3e3e42")
+			style = _make_texture_style("res://Assets/UI/panel_bg.png", Vector4(20, 16, 20, 16))
+			if not style:
+				var f = StyleBoxFlat.new()
+				f.bg_color = UI_COLOR_BG_PANEL
+				f.corner_radius_top_left = 8
+				f.corner_radius_top_right = 8
+				f.corner_radius_bottom_left = 8
+				f.corner_radius_bottom_right = 8
+				f.border_width_left = 2
+				f.border_width_top = 2
+				f.border_width_right = 2
+				f.border_width_bottom = 2
+				f.border_color = Color("3e3e42")
+				style = f
 		"button_normal":
-			style.bg_color = Color("393e46")
-			style.border_width_bottom = 4
-			style.border_color = Color("222831")
-			style.set_corner_radius_all(4)
-			style.content_margin_left = 12
-			style.content_margin_right = 12
-			style.content_margin_top = 8
-			style.content_margin_bottom = 8
+			style = _make_texture_style("res://Assets/UI/button_normal.png", Vector4(12, 8, 12, 8), 3.2)
+			if not style:
+				var f = StyleBoxFlat.new()
+				f.bg_color = Color("393e46")
+				f.border_width_bottom = 4
+				f.border_color = Color("222831")
+				f.set_corner_radius_all(4)
+				f.content_margin_left = 12
+				f.content_margin_right = 12
+				f.content_margin_top = 8
+				f.content_margin_bottom = 8
+				style = f
 		"button_hover":
 			style = get_ui_style("button_normal").duplicate()
-			style.bg_color = Color("4b525e")
-			style.border_color = UI_COLOR_ACCENT_BLUE
 		"button_pressed":
 			style = get_ui_style("button_normal").duplicate()
-			style.bg_color = Color("222831")
-			style.border_width_bottom = 0
-			style.border_width_top = 4
-			style.border_color = Color("1a1a1d")
+		"level_card_bg":
+			style = _make_texture_style("res://Assets/UI/level_card_bg.png", Vector4(18, 14, 18, 14), 5.5)
+			if not style:
+				var f = StyleBoxFlat.new()
+				f.bg_color = Color("252526")
+				f.border_width_left = 1
+				f.border_width_top = 1
+				f.border_width_right = 1
+				f.border_width_bottom = 3
+				f.border_color = Color("333333")
+				f.set_corner_radius_all(6)
+				f.shadow_color = Color(0, 0, 0, 0.3)
+				f.shadow_size = 4
+				f.shadow_offset = Vector2(0, 2)
+				style = f
+		"reward_card_bg":
+			style = _make_texture_style("res://Assets/UI/reward_card_bg.png", Vector4(12, 12, 12, 12), 0.7)
+			if not style:
+				var f = get_ui_style("level_card_bg").duplicate()
+				style = f
 		"card_bg":
-			style.bg_color = Color("252526")
-			style.border_width_left = 1
-			style.border_width_top = 1
-			style.border_width_right = 1
-			style.border_width_bottom = 3
-			style.border_color = Color("333333")
-			style.set_corner_radius_all(6)
-			style.shadow_color = Color(0, 0, 0, 0.3)
-			style.shadow_size = 4
-			style.shadow_offset = Vector2(0, 2)
+			style = get_ui_style("reward_card_bg")
 			
 	_ui_style_cache[name] = style
 	return style
 
 func apply_button_style(btn: Button):
 	if not btn: return
-	btn.add_theme_stylebox_override("normal", get_ui_style("button_normal"))
-	btn.add_theme_stylebox_override("hover", get_ui_style("button_hover"))
-	btn.add_theme_stylebox_override("pressed", get_ui_style("button_pressed"))
+	var base_style: StyleBox = get_ui_style("button_normal")
+	btn.add_theme_stylebox_override("normal", base_style)
+	btn.add_theme_stylebox_override("hover", base_style)
+	btn.add_theme_stylebox_override("pressed", base_style)
+	btn.add_theme_stylebox_override("focus", base_style)
+	btn.add_theme_stylebox_override("disabled", base_style)
 	btn.add_theme_color_override("font_color", UI_COLOR_TEXT_PRIMARY)
 	btn.add_theme_color_override("font_hover_color", Color.WHITE)
 	btn.add_theme_color_override("font_pressed_color", Color.GRAY)
@@ -150,7 +204,7 @@ func _add_initial_roster(library: CardLibrary):
 		"res://Resources/DataFiles/soldier.tres",
 		"res://Resources/DataFiles/soldier.tres",
 		"res://Resources/DataFiles/archer.tres",
-		"res://Resources/DataFiles/spear.tres",
+		"res://Resources/DataFiles/han_caiguan.tres",
 		"res://Resources/DataFiles/camp.tres",
 		"res://Resources/DataFiles/camp.tres",
 		"res://Resources/DataFiles/caesar.tres"

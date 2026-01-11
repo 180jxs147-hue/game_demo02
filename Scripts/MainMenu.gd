@@ -11,15 +11,17 @@ func _ready():
 func _apply_theme():
 	if not GameState: return
 	
-	# 添加深色背景 (如果还没有)
-	if not has_node("BgLayer"):
-		var bg = ColorRect.new()
-		bg.name = "BgLayer"
-		bg.color = GameState.UI_COLOR_BG_DARK
-		bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-		bg.show_behind_parent = true
-		add_child(bg)
-		move_child(bg, 0)
+	# 尝试加载背景图
+	if has_node("Background"):
+		var bg_node = $Background
+		var bg_path = "res://Assets/Backgrounds/main_menu_bg.png"
+		if ResourceLoader.exists(bg_path):
+			var tex = load(bg_path)
+			if tex:
+				bg_node.texture = tex
+				# 如果有背景图，半透明遮罩可以淡一点
+				if has_node("ColorRect"):
+					$ColorRect.color = Color(0, 0, 0, 0.3)
 	
 	# 应用样式到所有按钮
 	for node in find_children("", "Button", true, false):

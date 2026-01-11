@@ -59,6 +59,9 @@ var _tooltip_instance: Control
 
 @onready var reward_container = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/RewardContainer
 
+@onready var bench_panel = $CanvasLayer/HUD/BenchPanel
+@onready var bench_grid = $CanvasLayer/HUD/BenchPanel/VBox/Scroll/Grid
+
 var _synergy_update_timer: float = 0.0
 
 var battle_ended: bool = false
@@ -66,6 +69,8 @@ var _has_level_enemies: bool = false
 var _enemy_occupied: Dictionary = {}
 
 var _adjacency_lines_node: Node2D # 用于绘制连线
+
+var _card_slot_scene = preload("res://Scenes/CardSlot.tscn")
 
 # 存储当前的敌人网格尺寸，供 _apply_layout 使用
 var current_enemy_cols: int = GameConst.MAP_COLUMNS
@@ -76,6 +81,7 @@ var current_level_config: LevelConfig
 
 func _ready():
 	_apply_theme()
+	_setup_bench_ui()
 	
 	get_tree().paused = false
 	is_battle_started = false
@@ -189,7 +195,7 @@ func _ready():
 				"res://Resources/DataFiles/soldier.tres",
 				"res://Resources/DataFiles/soldier.tres",
 				"res://Resources/DataFiles/archer.tres",
-				"res://Resources/DataFiles/spear.tres",
+				"res://Resources/DataFiles/han_caiguan.tres",
 				"res://Resources/DataFiles/camp.tres",
 				"res://Resources/DataFiles/camp.tres"
 			]
@@ -234,6 +240,7 @@ func _ready():
 		# 只有在游戏开始时，才把库里的卡加进战斗
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
+	_refresh_bench_ui()
 
 func start_level(index: int):
 	print("Switching to level: ", index)
@@ -474,7 +481,7 @@ func _debug_add_random_unit() -> UnitData:
 		preload("res://Resources/DataFiles/Pyrrhus.tres"),
 		preload("res://Resources/DataFiles/quarter.tres"),
 		preload("res://Resources/DataFiles/archer.tres"),
-		preload("res://Resources/DataFiles/spear.tres"),
+		preload("res://Resources/DataFiles/han_caiguan.tres"),
 		preload("res://Resources/DataFiles/cavalry.tres"),
 		preload("res://Resources/DataFiles/catapult.tres"),
 		preload("res://Resources/DataFiles/shield.tres"),
@@ -495,7 +502,7 @@ func _debug_add_card_to_library():
 		preload("res://Resources/DataFiles/Pyrrhus.tres"),
 		preload("res://Resources/DataFiles/quarter.tres"),
 		preload("res://Resources/DataFiles/archer.tres"),
-		preload("res://Resources/DataFiles/spear.tres"),
+		preload("res://Resources/DataFiles/han_caiguan.tres"),
 		preload("res://Resources/DataFiles/cavalry.tres"),
 		preload("res://Resources/DataFiles/catapult.tres"),
 		preload("res://Resources/DataFiles/shield.tres"),
@@ -1329,7 +1336,7 @@ func _create_reward_card_ui(item: Dictionary):
 	var card = PanelContainer.new()
 	card.custom_minimum_size = Vector2(140, 200)
 	if GameState:
-		card.add_theme_stylebox_override("panel", GameState.get_ui_style("card_bg"))
+		card.add_theme_stylebox_override("panel", GameState.get_ui_style("reward_card_bg"))
 	
 	var vbox = VBoxContainer.new()
 	vbox.add_theme_constant_override("separation", 8)
@@ -1373,6 +1380,16 @@ func _create_reward_card_ui(item: Dictionary):
 	lbl_title.add_theme_color_override("font_color", color)
 	lbl_title.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(lbl_title)
+	
+	if type == "unit":
+		var fp = Control.new()
+		fp.custom_minimum_size = Vector2(60, 60)
+		var fp_script = load("res://Scripts/FootprintPreview.gd")
+		if fp_script:
+			fp.set_script(fp_script)
+			fp.set("unit_data", item["data"])
+			fp.queue_redraw()
+		vbox.add_child(fp)
 	
 	# 分隔线
 	var sep = HSeparator.new()
@@ -1540,44 +1557,83 @@ func _arrange_bench():
 			push_error("units_container not found in BattleManager.")
 		return
 
-	# 获取所有未部署的单位
-	var visible_cards = []
 	for unit in units_container.get_children():
-		# 只有那些没有部署在格子里的单位，才需要排队
+		if unit.get("is_deployed") == true:
+			if unit.has_method("set_bench_hidden"):
+				unit.set_bench_hidden(false)
+			continue
+		if unit.get("in_hand") == true:
+			continue
+		if unit.has_method("update_bench_pos"):
+			unit.update_bench_pos(Vector2(-99999, -99999))
+		if unit.has_method("set_bench_hidden"):
+			unit.set_bench_hidden(true)
+	_refresh_bench_ui()
+
+func _setup_bench_ui():
+	if bench_panel and bench_panel is PanelContainer:
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0, 0, 0, 0.55)
+		sb.border_color = Color(1, 1, 1, 0.08)
+		sb.border_width_left = 1
+		sb.border_width_top = 1
+		sb.border_width_right = 1
+		sb.border_width_bottom = 1
+		sb.set_corner_radius_all(12)
+		bench_panel.add_theme_stylebox_override("panel", sb)
+	if EventBus and EventBus.has_signal("unit_deploy_state_changed"):
+		EventBus.unit_deploy_state_changed.connect(func(_u):
+			call_deferred("_refresh_bench_ui")
+		)
+	if bench_grid and bench_grid is GridContainer:
+		bench_grid.columns = bench_columns
+
+func _refresh_bench_ui():
+	if not bench_grid:
+		return
+	for child in bench_grid.get_children():
+		child.queue_free()
+	if not units_container:
+		return
+	var groups: Dictionary = {}
+	for unit in units_container.get_children():
 		if unit.get("is_deployed") == true:
 			continue
-		visible_cards.append(unit)
+		if unit.get("in_hand") == true:
+			continue
+		if not ("data" in unit):
+			continue
+		var data_obj = unit.get("data")
+		if not (data_obj is UnitData):
+			continue
+		var data: UnitData = data_obj
+		var key = data.resource_path if data.resource_path != "" else data.name
+		if not groups.has(key):
+			groups[key] = { "data": data, "units": [] }
+		groups[key]["units"].append(unit)
 
-	# 布局配置
-	# 修改：备战区位置改为固定值，不随战场大小变化
-	
-	# 注意：bench_offset 现在是相对于 friendly_field 左上角的绝对坐标
-	var start_y = bench_offset.y
-	var gap_x = 85.0 
-	var gap_y = 90.0
-	var cols = bench_columns
-	
-	# 起始 X 坐标也改为固定
-	var start_x = bench_offset.x
-
-	# 调整背景框
-	# 已移除对 ColorRect 的依赖
-
-	# 开始排布
-	for i in range(visible_cards.size()):
-		var unit = visible_cards[i]
-		var row = int(i / cols)
-		var col = i % cols
-		
-		var x = start_x + (col * gap_x)
-		var y = start_y + (row * gap_y)
-		
-		var target_pos = Vector2(x, y)
-		
-		# 检查这个单位脚本里有没有 update_bench_pos 这个函数
-		if unit.has_method("update_bench_pos"):
-			# 有的话，就调用它，把目标坐标传过去
-			unit.update_bench_pos(target_pos)
+	for key in groups.keys():
+		var entry = groups[key]
+		var data = entry["data"] as UnitData
+		var units = entry["units"]
+		var slot = _card_slot_scene.instantiate()
+		slot.custom_minimum_size = Vector2(280, 380)
+		slot.set("use_card_base", false)
+		slot.set("drag_on_press", true)
+		bench_grid.add_child(slot)
+		if slot.has_method("setup_stacked"):
+			slot.setup_stacked(data, units.size())
+		else:
+			slot.setup(data)
+		if slot.has_signal("drag_requested"):
+			slot.drag_requested.connect(func(_d):
+				if units.size() <= 0:
+					return
+				var u = units.pop_back()
+				if u and u.has_method("begin_drag_from_ui"):
+					u.begin_drag_from_ui()
+				_refresh_bench_ui()
+			)
 
 func _apply_theme():
 	if not GameState: return

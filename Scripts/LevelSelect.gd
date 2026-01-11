@@ -54,7 +54,7 @@ func _build_list():
 		# 使用 PanelContainer 制作卡片背景
 		var card = PanelContainer.new()
 		if GameState:
-			card.add_theme_stylebox_override("panel", GameState.get_ui_style("card_bg"))
+			card.add_theme_stylebox_override("panel", GameState.get_ui_style("level_card_bg"))
 		
 		var vbox = VBoxContainer.new()
 		card.add_child(vbox)

@@ -1,17 +1,18 @@
 [gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://cq8f3un1sh778"]
 
-[ext_resource type="Texture2D" uid="uid://dcf5rvfgnmr2a" path="res://Resources/ImageFiles/kaser.jpg" id="1_0a4qb"]
+[ext_resource type="Texture2D" uid="uid://dl6g6dpg7btfv" path="res://Resources/ImageFiles/caiguan.png" id="1_4fyem"]
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
 script = ExtResource("1_data")
-name = "长枪兵"
-icon = ExtResource("1_0a4qb")
-unit_class = "spear"
+name = "汉家材官"
+icon = ExtResource("1_4fyem")
+rarity = "rare"
+civilization = "han"
 color = Color(0.5, 0.5, 0.5, 1)
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 max_hp = 25.0
 manpower_cost = 2.0
 cooldown = 2.2
 attack_damage = 5.0
-story = "长枪成林，脚步如一。以长度换取安全，以阵形换取胜利。"
+story = "汉家材官，选锋之卒。执兵如林，以阵为刃，步步推进。"

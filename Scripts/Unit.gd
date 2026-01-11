@@ -51,6 +51,37 @@ var spawned_via_script: bool = false # 如果是代码生成的，默认不去�
 
 var _is_hovered: bool = false # 内部状态：是否被鼠标悬停
 
+var in_hand: bool = false
+
+func set_bench_hidden(hidden: bool):
+	for block in visual_blocks:
+		block.visible = not hidden
+	if name_label:
+		name_label.visible = not hidden
+	if status_label:
+		status_label.visible = not hidden
+	if cooldown_bar:
+		cooldown_bar.get_parent().visible = not hidden
+	set_process_unhandled_input(not hidden)
+
+func begin_drag_from_ui():
+	if BattleManager.is_battle_started:
+		return
+	if faction != Faction.FRIENDLY:
+		return
+	if is_deployed:
+		return
+	if is_dragging:
+		return
+	set_bench_hidden(false)
+	in_hand = true
+	var center_offset = Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE) / 2.0
+	global_position = get_global_mouse_position() - center_offset
+	drag_offset = center_offset
+	is_dragging = true
+	z_index = 100
+	_create_drag_preview()
+
 func get_max_hp() -> float:
 	return data.max_hp + bonus_max_hp
 
@@ -237,6 +268,13 @@ func _on_death():
 	$StateChart.send_event("die")
 
 func _process(_delta):
+	if is_dragging and in_hand:
+		global_position = get_global_mouse_position() - drag_offset
+		_update_drag_preview()
+		if not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
+			_end_drag()
+		return
+	
 	if is_dragging or BattleManager.is_battle_started:
 		# 更新冷却条
 		if cooldown_bar and current_cooldown > 0:
@@ -707,6 +745,7 @@ func _try_start_drag():
 func _end_drag():
 	is_dragging = false
 	z_index = 0
+	in_hand = false
 	
 	# 清除指示器
 	if drag_preview:
@@ -746,7 +785,10 @@ func _deploy_to_grid(grid_pos: Vector2i):
 	GridManager.place_unit(self, grid_pos)
 	position = GridManager.grid_to_world(grid_pos)
 	is_deployed = true
+	set_bench_hidden(false)
 	stored_grid_pos = grid_pos # 记住这个新位置，下次手滑可以弹回来
+	if EventBus and EventBus.has_signal("unit_deploy_state_changed"):
+		EventBus.unit_deploy_state_changed.emit(self)
 	
 	# 视觉反馈：恢复正常亮度
 	modulate = Color(1, 1, 1, 1)
@@ -756,6 +798,9 @@ func _return_to_bench():
 	var tween = create_tween()
 	tween.tween_property(self, "position", bench_position, 0.2)
 	is_deployed = false
+	set_bench_hidden(true)
+	if EventBus and EventBus.has_signal("unit_deploy_state_changed"):
+		EventBus.unit_deploy_state_changed.emit(self)
 	
 	# 视觉反馈：变暗一点，表示未激活
 	modulate = Color(0.7, 0.7, 0.7, 1)
@@ -776,6 +821,9 @@ func update_bench_pos(new_pos: Vector2):
 	position = new_pos
 	# 3. 既然回到了备战区，肯定就是未部署状态
 	is_deployed = false
+	set_bench_hidden(true)
+	if EventBus and EventBus.has_signal("unit_deploy_state_changed"):
+		EventBus.unit_deploy_state_changed.emit(self)
 	# 4. 视觉反馈：变暗
 	modulate = Color(0.7, 0.7, 0.7, 1)
 

@@ -7,3 +7,5 @@ signal manpower_changed(current: float, max_val: float)
 #warning-ignore:unused_signal
 # 单位死亡 (单位节点, 死亡时的X坐标)
 signal unit_died(unit_node: Node2D, pos_x: float)
+
+signal unit_deploy_state_changed(unit_node: Node2D)

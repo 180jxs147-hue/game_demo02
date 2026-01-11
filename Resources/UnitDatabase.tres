@@ -9,7 +9,7 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/quarter.tres" id="7_quarter"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/shield.tres" id="8_shield"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="9_soldier"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/spear.tres" id="10_spear"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/han_caiguan.tres" id="10_spear"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/xiang_yu.tres" id="11_xiang"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/joan.tres" id="13_joan"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sun_tzu.tres" id="14_sun"]
@@ -31,5 +31,5 @@ story_by_path = {
 "res://Resources/DataFiles/quarter.tres": "不显于锋刃，却决定一支军队能走多远。\n营帐里有补给、医治、休整，也有明天的计划。",
 "res://Resources/DataFiles/shield.tres": "盾牌举起时，退路便消失了。\n他们不一定赢，但他们让别人有机会赢。",
 "res://Resources/DataFiles/soldier.tres": "无名者，最先踏上战线。\n他们用纪律与队形，把混乱挡在身后。",
-"res://Resources/DataFiles/spear.tres": "长枪成林，脚步如一。\n他们以长度换取安全，以阵形换取胜利。"
+"res://Resources/DataFiles/han_caiguan.tres": "汉家材官，选锋之卒。\n执兵如林，以阵为刃，步步推进。"
 }
