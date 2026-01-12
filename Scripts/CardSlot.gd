@@ -11,6 +11,7 @@ extends Panel
 @onready var rarity_badge = $RarityBadge
 @onready var footprint_preview = $FootprintPreview
 @onready var type_divider = $TypeDivider
+@onready var type_pattern = $TypeDivider/Pattern
 @onready var civ_class_label = $NameRow/CivClassLabel
 @onready var skill_label = $SkillLabel
 
@@ -37,6 +38,13 @@ const CARD_BASE_PATH := "res://Assets/UI/Cards/card_base.png"
 const ICON_COST_PATH := "res://Assets/UI/Cards/icon_cost.png"
 const ICON_ATK_PATH := "res://Assets/UI/Cards/icon_atk.png"
 const ICON_CD_PATH := "res://Assets/UI/Cards/icon_cd.png"
+const PATTERN_BAR_PATHS := {
+	"han": "res://Assets/UI/Cards/pattern_bars/bar_pattern_han.png",
+	"roman": "res://Assets/UI/Cards/pattern_bars/bar_pattern_roman.png",
+	"greek": "res://Assets/UI/Cards/pattern_bars/bar_pattern_greek.png",
+	"neutral": "res://Assets/UI/Cards/pattern_bars/bar_pattern_neutral.png",
+	"french": "res://Assets/UI/Cards/pattern_bars/bar_pattern_france.png"
+}
 const RARITY_BADGE_PATHS := {
 	"common": "res://Assets/UI/Cards/rarity_common.png",
 	"rare": "res://Assets/UI/Cards/rarity_rare.png",
@@ -126,11 +134,23 @@ func _apply_card_skin(data: UnitData):
 		if data:
 			var civ_key = String(data.civilization).to_lower()
 			var civ_color := _get_civ_color(civ_key)
-			civ_color.a = 0.85
-			type_divider.color = civ_color
+			var bg = civ_color
+			bg.a = 0.55
+			type_divider.color = bg
 			type_divider.visible = true
+			if type_pattern:
+				var p = PATTERN_BAR_PATHS.get(civ_key, "")
+				if p != "" and ResourceLoader.exists(p):
+					type_pattern.texture = load(p)
+					type_pattern.visible = type_pattern.texture != null
+					type_pattern.modulate = Color.WHITE
+				else:
+					type_pattern.texture = null
+					type_pattern.visible = false
 		else:
 			type_divider.visible = false
+			if type_pattern:
+				type_pattern.visible = false
 
 	if civ_class_label:
 		if data:
