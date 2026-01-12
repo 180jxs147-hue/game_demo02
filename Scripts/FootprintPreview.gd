@@ -39,9 +39,12 @@ func _draw():
 
 	var bg := Color(1, 1, 1, 0.06)
 	var line := Color(1, 1, 1, 0.12)
-	var fill := unit_data.color
+	var base := unit_data.color
+	if "civilization" in unit_data:
+		base = _get_civ_color(String(unit_data.civilization).to_lower())
+	var fill := base
 	fill.a = 0.85
-	var border := unit_data.color.darkened(0.45)
+	var border := base.darkened(0.45)
 	border.a = 0.95
 
 	draw_rect(Rect2(origin.x, origin.y, grid_w, grid_h), bg, true)
@@ -66,3 +69,16 @@ func _draw():
 	if ax >= 0 and ax < w_cells and ay >= 0 and ay < h_cells:
 		var a := Rect2(origin.x + ax * cell, origin.y + ay * cell, cell, cell)
 		draw_rect(a.grow(-2.0), Color(1, 1, 1, 0.18), false, 2.0)
+
+func _get_civ_color(civ_key: String) -> Color:
+	match civ_key:
+		"han":
+			return Color("c83f2b")
+		"roman":
+			return Color("3b1b5a")
+		"greek":
+			return Color("1b5ea8")
+		"french":
+			return Color("234aa5")
+		_:
+			return unit_data.color

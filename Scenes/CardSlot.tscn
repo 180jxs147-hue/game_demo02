@@ -4,9 +4,9 @@
 [ext_resource type="Script" path="res://Scripts/FootprintPreview.gd" id="2_footprint"]
 
 [node name="CardSlot" type="Panel"]
-custom_minimum_size = Vector2(280, 380)
+custom_minimum_size = Vector2(280, 400)
 offset_right = 280.0
-offset_bottom = 380.0
+offset_bottom = 400.0
 script = ExtResource("1_slot")
 
 [node name="CardBackground" type="TextureRect" parent="."]
@@ -38,7 +38,7 @@ anchor_bottom = 1.0
 offset_left = 20.0
 offset_top = 20.0
 offset_right = -20.0
-offset_bottom = -120.0
+offset_bottom = -140.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -51,7 +51,7 @@ anchor_bottom = 1.0
 offset_left = 20.0
 offset_top = 20.0
 offset_right = -20.0
-offset_bottom = -120.0
+offset_bottom = -140.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -59,12 +59,12 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="RarityBadge" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(48, 48)
+custom_minimum_size = Vector2(36, 36)
 layout_mode = 0
-offset_left = 212.0
+offset_left = 224.0
 offset_top = 20.0
 offset_right = 260.0
-offset_bottom = 68.0
+offset_bottom = 56.0
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -79,109 +79,122 @@ offset_bottom = 120.0
 mouse_filter = 2
 script = ExtResource("2_footprint")
 
-[node name="CivIcon" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(56, 56)
+[node name="TypeDivider" type="ColorRect" parent="."]
 layout_mode = 0
-offset_left = 28.0
-offset_top = 128.0
-offset_right = 84.0
-offset_bottom = 184.0
+offset_left = 20.0
+offset_top = 258.0
+offset_right = 260.0
+offset_bottom = 278.0
 mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
+color = Color(1, 1, 1, 0.25)
 
-[node name="ClassIcon" type="TextureRect" parent="."]
-custom_minimum_size = Vector2(56, 56)
+[node name="NameRow" type="HBoxContainer" parent="."]
 layout_mode = 0
-offset_left = 28.0
-offset_top = 188.0
-offset_right = 84.0
-offset_bottom = 244.0
+offset_left = 20.0
+offset_top = 282.0
+offset_right = 260.0
+offset_bottom = 316.0
+theme_override_constants/separation = 12
 mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 12
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_top = -112.0
-offset_bottom = -12.0
-grow_horizontal = 2
-grow_vertical = 0
-mouse_filter = 2
-theme_override_constants/separation = 8
-
-[node name="NameLabel" type="Label" parent="VBoxContainer"]
+[node name="NameLabel" type="Label" parent="NameRow"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 26
 text = "单位名称"
-horizontal_alignment = 1
+horizontal_alignment = 0
+clip_text = true
 mouse_filter = 2
 
-[node name="StatsLine" type="HBoxContainer" parent="VBoxContainer"]
+[node name="CivClassLabel" type="Label" parent="NameRow"]
+custom_minimum_size = Vector2(110, 0)
 layout_mode = 2
-theme_override_constants/separation = 20
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_font_sizes/font_size = 20
+text = "汉 步兵"
+horizontal_alignment = 2
+clip_text = true
+mouse_filter = 2
+
+[node name="SkillLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 316.0
+offset_right = 260.0
+offset_bottom = 344.0
+theme_override_colors/font_color = Color(0.9, 0.9, 0.9, 1)
+theme_override_font_sizes/font_size = 18
+text = ""
+horizontal_alignment = 0
+clip_text = true
+mouse_filter = 2
+
+[node name="StatIcons" type="HBoxContainer" parent="."]
+layout_mode = 0
+offset_left = 20.0
+offset_top = 350.0
+offset_right = 260.0
+offset_bottom = 390.0
+theme_override_constants/separation = 22
 alignment = 1
 mouse_filter = 2
 
-[node name="CostGroup" type="HBoxContainer" parent="VBoxContainer/StatsLine"]
+[node name="CostGroup" type="HBoxContainer" parent="StatIcons"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 mouse_filter = 2
 
-[node name="CostIcon" type="TextureRect" parent="VBoxContainer/StatsLine/CostGroup"]
-custom_minimum_size = Vector2(20, 20)
+[node name="CostIcon" type="TextureRect" parent="StatIcons/CostGroup"]
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CostLabel" type="Label" parent="VBoxContainer/StatsLine/CostGroup"]
+[node name="CostValue" type="Label" parent="StatIcons/CostGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 20
+text = "0"
+mouse_filter = 2
+
+[node name="AtkGroup" type="HBoxContainer" parent="StatIcons"]
+layout_mode = 2
+theme_override_constants/separation = 6
+mouse_filter = 2
+
+[node name="AtkIcon" type="TextureRect" parent="StatIcons/AtkGroup"]
+custom_minimum_size = Vector2(28, 28)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="AtkValue" type="Label" parent="StatIcons/AtkGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
-theme_override_font_sizes/font_size = 22
-text = "耗0"
+theme_override_font_sizes/font_size = 20
+text = "0"
 mouse_filter = 2
 
-[node name="AtkGroup" type="HBoxContainer" parent="VBoxContainer/StatsLine"]
+[node name="CdGroup" type="HBoxContainer" parent="StatIcons"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 mouse_filter = 2
 
-[node name="AtkIcon" type="TextureRect" parent="VBoxContainer/StatsLine/AtkGroup"]
-custom_minimum_size = Vector2(20, 20)
-layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="AtkLabel" type="Label" parent="VBoxContainer/StatsLine/AtkGroup"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
-theme_override_font_sizes/font_size = 22
-text = "攻0"
-mouse_filter = 2
-
-[node name="CdGroup" type="HBoxContainer" parent="VBoxContainer/StatsLine"]
-layout_mode = 2
-theme_override_constants/separation = 8
-mouse_filter = 2
-
-[node name="CdIcon" type="TextureRect" parent="VBoxContainer/StatsLine/CdGroup"]
-custom_minimum_size = Vector2(20, 20)
+[node name="CdIcon" type="TextureRect" parent="StatIcons/CdGroup"]
+custom_minimum_size = Vector2(28, 28)
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CdLabel" type="Label" parent="VBoxContainer/StatsLine/CdGroup"]
+[node name="CdValue" type="Label" parent="StatIcons/CdGroup"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.75, 0.75, 0.75, 1)
-theme_override_font_sizes/font_size = 22
-text = "CD0"
+theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
+theme_override_font_sizes/font_size = 20
+text = "0.0"
 mouse_filter = 2
 
 [node name="CountLabel" type="Label" parent="."]
@@ -200,14 +213,4 @@ horizontal_alignment = 2
 mouse_filter = 2
 
 [node name="SynergyInfoLabel" type="Label" parent="."]
-layout_mode = 1
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 200.0
-offset_bottom = 100.0
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 20
-text = "Han
-Infantry"
-mouse_filter = 2
+visible = false

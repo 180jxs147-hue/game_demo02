@@ -5,20 +5,21 @@ extends Panel
 ## - ClickButton 覆盖整个卡面，统一发射 pressed(UnitData)
 ## - setup_stacked 用于显示“xN”堆叠数量
 
-@onready var name_label = $VBoxContainer/NameLabel
+@onready var name_label = $NameRow/NameLabel
 @onready var icon_texture = $IconTexture # <--- 新增
 @onready var card_bg = $CardBackground
 @onready var rarity_badge = $RarityBadge
 @onready var footprint_preview = $FootprintPreview
-@onready var civ_icon = $CivIcon
-@onready var class_icon = $ClassIcon
+@onready var type_divider = $TypeDivider
+@onready var civ_class_label = $NameRow/CivClassLabel
+@onready var skill_label = $SkillLabel
 
-@onready var cost_icon = $VBoxContainer/StatsLine/CostGroup/CostIcon
-@onready var cost_label = $VBoxContainer/StatsLine/CostGroup/CostLabel
-@onready var atk_icon = $VBoxContainer/StatsLine/AtkGroup/AtkIcon
-@onready var atk_label = $VBoxContainer/StatsLine/AtkGroup/AtkLabel
-@onready var cd_icon = $VBoxContainer/StatsLine/CdGroup/CdIcon
-@onready var cd_label = $VBoxContainer/StatsLine/CdGroup/CdLabel
+@onready var cost_icon = $StatIcons/CostGroup/CostIcon
+@onready var cost_value = $StatIcons/CostGroup/CostValue
+@onready var atk_icon = $StatIcons/AtkGroup/AtkIcon
+@onready var atk_value = $StatIcons/AtkGroup/AtkValue
+@onready var cd_icon = $StatIcons/CdGroup/CdIcon
+@onready var cd_value = $StatIcons/CdGroup/CdValue
 @onready var count_label = $CountLabel
 @onready var click_button = $ClickButton
 @onready var synergy_info_label = $SynergyInfoLabel
@@ -121,31 +122,25 @@ func _apply_card_skin(data: UnitData):
 	if cd_icon:
 		cd_icon.texture = load(ICON_CD_PATH) if ResourceLoader.exists(ICON_CD_PATH) else null
 
-	if civ_icon:
+	if type_divider:
 		if data:
 			var civ_key = String(data.civilization).to_lower()
-			var civ_path = CIV_ICON_PATHS.get(civ_key, CIV_ICON_PATHS.get("neutral", ""))
-			if civ_path != "" and ResourceLoader.exists(civ_path):
-				civ_icon.texture = load(civ_path)
-				civ_icon.visible = civ_icon.texture != null
-			else:
-				civ_icon.visible = false
+			var civ_color := _get_civ_color(civ_key)
+			civ_color.a = 0.85
+			type_divider.color = civ_color
+			type_divider.visible = true
 		else:
-			civ_icon.visible = false
+			type_divider.visible = false
 
-	if class_icon:
+	if civ_class_label:
 		if data:
-			var cls_key = String(data.unit_class).to_lower()
-			var cls_path = CLASS_ICON_PATHS.get(cls_key, "")
-			if cls_path == "" or not ResourceLoader.exists(cls_path):
-				cls_path = CLASS_ICON_PATHS.get("spear", "")
-			if cls_path != "" and ResourceLoader.exists(cls_path):
-				class_icon.texture = load(cls_path)
-				class_icon.visible = class_icon.texture != null
-			else:
-				class_icon.visible = false
+			var civ_map = {"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西"}
+			var cls_map = {"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "长柄", "civilian": "平民", "siege": "攻城"}
+			var civ_str = civ_map.get(String(data.civilization).to_lower(), String(data.civilization))
+			var cls_str = cls_map.get(String(data.unit_class).to_lower(), String(data.unit_class))
+			civ_class_label.text = "%s %s" % [civ_str, cls_str]
 		else:
-			class_icon.visible = false
+			civ_class_label.text = ""
 
 func setup(data: UnitData):
 	if not data: return
@@ -153,12 +148,24 @@ func setup(data: UnitData):
 	_apply_card_skin(data)
 	
 	name_label.text = data.name
-	if data.manpower_cost < 0:
-		cost_label.text = "产%.1f" % absf(data.manpower_cost)
-	else:
-		cost_label.text = "耗%.1f" % data.manpower_cost
-	atk_label.text = "攻%.0f" % data.attack_damage
-	cd_label.text = "CD%.1fs" % data.cooldown
+	if skill_label:
+		skill_label.text = ""
+		skill_label.visible = false
+		if data.tags and not data.tags.is_empty():
+			for t in data.tags:
+				if GameConst.TAG_CN_NAMES.has(t):
+					skill_label.text = GameConst.TAG_CN_NAMES[t]
+					skill_label.visible = true
+					break
+	if cost_value:
+		if data.manpower_cost < 0:
+			cost_value.text = "+%.1f" % absf(data.manpower_cost)
+		else:
+			cost_value.text = "%.1f" % data.manpower_cost
+	if atk_value:
+		atk_value.text = "%.0f" % data.attack_damage
+	if cd_value:
+		cd_value.text = "%.1fs" % data.cooldown
 	# 已移除对 ColorRect 的依赖
 	
 	if icon_texture:
@@ -168,19 +175,19 @@ func setup(data: UnitData):
 		
 	count_label.visible = false
 	
-	# 显示羁绊信息
-	if synergy_info_label:
-		# 简单的翻译映射 (也可以用 TranslationServer)
-		var civ_map = {
-			"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西"
-		}
-		var cls_map = {
-			"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "枪兵", "civilian": "平民", "siege": "攻城"
-		}
-		
-		var civ_str = civ_map.get(data.civilization, data.civilization)
-		var cls_str = cls_map.get(data.unit_class, data.unit_class)
-		synergy_info_label.text = "%s\n%s" % [civ_str, cls_str]
+
+func _get_civ_color(civ_key: String) -> Color:
+	match civ_key:
+		"han":
+			return Color("c83f2b")
+		"roman":
+			return Color("3b1b5a")
+		"greek":
+			return Color("1b5ea8")
+		"french":
+			return Color("234aa5")
+		_:
+			return Color("9aa0a6")
 
 func setup_stacked(data: UnitData, count: int):
 	setup(data)

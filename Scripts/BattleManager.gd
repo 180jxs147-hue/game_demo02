@@ -1617,7 +1617,7 @@ func _refresh_bench_ui():
 		var data = entry["data"] as UnitData
 		var units = entry["units"]
 		var slot = _card_slot_scene.instantiate()
-		slot.custom_minimum_size = Vector2(280, 380)
+		slot.custom_minimum_size = Vector2(280, 400)
 		slot.set("use_card_base", false)
 		slot.set("drag_on_press", true)
 		bench_grid.add_child(slot)
