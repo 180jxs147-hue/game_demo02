@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/soliders.png" id="1_icon"]
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "黄巾力士"
+icon = ExtResource("1_icon")
+rarity = "rare"
+civilization = "huangjin"
+unit_class = "infantry"
+color = Color(0.8, 0.66, 0.18, 1)
+tags = Array[String]([])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+max_hp = 34.0
+manpower_cost = 3.0
+cooldown = 2.6
+attack_damage = 4.0
+story = "以血与土为誓，肩扛粗木，足踏乱军。"
+

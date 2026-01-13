@@ -80,5 +80,7 @@ func _get_civ_color(civ_key: String) -> Color:
 			return Color("1b5ea8")
 		"french":
 			return Color("234aa5")
+		"huangjin":
+			return Color("d1a322")
 		_:
 			return unit_data.color

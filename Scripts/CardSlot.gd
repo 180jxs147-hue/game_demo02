@@ -42,6 +42,7 @@ const PATTERN_BAR_PATHS := {
 	"han": "res://Assets/UI/Cards/pattern_bars/bar_pattern_han.png",
 	"roman": "res://Assets/UI/Cards/pattern_bars/bar_pattern_roman.png",
 	"greek": "res://Assets/UI/Cards/pattern_bars/bar_pattern_greek.png",
+	"huangjin": "res://Assets/UI/Cards/pattern_bars/bar_pattern_huangjin.png",
 	"neutral": "res://Assets/UI/Cards/pattern_bars/bar_pattern_neutral.png",
 	"french": "res://Assets/UI/Cards/pattern_bars/bar_pattern_france.png"
 }
@@ -154,7 +155,7 @@ func _apply_card_skin(data: UnitData):
 
 	if civ_class_label:
 		if data:
-			var civ_map = {"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西"}
+			var civ_map = {"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西", "huangjin": "黄巾"}
 			var cls_map = {"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "长柄", "civilian": "平民", "siege": "攻城"}
 			var civ_str = civ_map.get(String(data.civilization).to_lower(), String(data.civilization))
 			var cls_str = cls_map.get(String(data.unit_class).to_lower(), String(data.unit_class))
@@ -206,6 +207,8 @@ func _get_civ_color(civ_key: String) -> Color:
 			return Color("1b5ea8")
 		"french":
 			return Color("234aa5")
+		"huangjin":
+			return Color("d1a322")
 		_:
 			return Color("9aa0a6")
 

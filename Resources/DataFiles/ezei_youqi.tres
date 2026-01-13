@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/soliders.png" id="1_icon"]
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "蛾贼游骑"
+icon = ExtResource("1_icon")
+rarity = "common"
+civilization = "huangjin"
+unit_class = "cavalry"
+color = Color(0.82, 0.68, 0.18, 1)
+tags = Array[String](["sniper"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0)])
+max_hp = 20.0
+manpower_cost = 2.0
+cooldown = 2.0
+attack_damage = 4.0
+story = "来去如风，黄布遮面，马蹄掠过便只剩尘土。"
+

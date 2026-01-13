@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="UnitDatabase" load_steps=19 format=3]
+[gd_resource type="Resource" script_class="UnitDatabase" load_steps=28 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitDatabase.gd" id="1_db"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="2_pyrrhus"]
@@ -17,10 +17,19 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/alexander.tres" id="16_alex"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/caesar.tres" id="17_caesar"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="18_camp"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="19_cangtian"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="20_hj_lishi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="21_taiping"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="22_ezei"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/junguo_bing.tres" id="23_junguo"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/sanhe_qishi.tres" id="24_sanhe"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/changshui_huqi.tres" id="25_changshui"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="26_shesheng"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/yulin_lang.tres" id="27_yulin"]
 
 [resource]
 script = ExtResource("1_db")
-units = Array[Resource]([ExtResource("9_soldier"), ExtResource("10_spear"), ExtResource("3_archer"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp")])
+units = Array[Resource]([ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp")])
 story_by_path = {
 "res://Resources/DataFiles/camp.tres": "军中休憩之所，亦是补给流转的核心。\n源源不断地提供支持，是持久战的关键。",
 "res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",
@@ -31,5 +40,14 @@ story_by_path = {
 "res://Resources/DataFiles/quarter.tres": "不显于锋刃，却决定一支军队能走多远。\n营帐里有补给、医治、休整，也有明天的计划。",
 "res://Resources/DataFiles/shield.tres": "盾牌举起时，退路便消失了。\n他们不一定赢，但他们让别人有机会赢。",
 "res://Resources/DataFiles/soldier.tres": "无名者，最先踏上战线。\n他们用纪律与队形，把混乱挡在身后。",
-"res://Resources/DataFiles/han_caiguan.tres": "汉家材官，选锋之卒。\n执兵如林，以阵为刃，步步推进。"
+"res://Resources/DataFiles/han_caiguan.tres": "汉家材官，选锋之卒。\n执兵如林，以阵为刃，步步推进。",
+"res://Resources/DataFiles/junguo_bing.tres": "不是精锐，却是郡县能调得出的全部。",
+"res://Resources/DataFiles/yulin_lang.tres": "禁中精锐，披甲入夜，刀光不问姓名。",
+"res://Resources/DataFiles/shesheng_shi.tres": "弦响如裂帛。箭落时，已无人能指认是谁放的。",
+"res://Resources/DataFiles/sanhe_qishi.tres": "河内、河东、河南出良骑。马快，人也快。",
+"res://Resources/DataFiles/changshui_huqi.tres": "胡骑善射，入阵如风，撤退更快。",
+"res://Resources/DataFiles/cangtian_qimin.tres": "乱世里被抛下的人，最终只剩一条路：向天祈求，向世复仇。",
+"res://Resources/DataFiles/huangjin_lishi.tres": "以血与土为誓，肩扛粗木，足踏乱军。",
+"res://Resources/DataFiles/taiping_daoshi.tres": "符水与咒声不分善恶，能让人站起来的，就是天意。",
+"res://Resources/DataFiles/ezei_youqi.tres": "来去如风，黄布遮面，马蹄掠过便只剩尘土。"
 }

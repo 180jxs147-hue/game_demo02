@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/kaser.jpg" id="1_icon"]
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "射声士"
+icon = ExtResource("1_icon")
+rarity = "rare"
+civilization = "han"
+unit_class = "archer"
+color = Color(0.7, 0.24, 0.18, 1)
+tags = Array[String](["sniper"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 16.0
+manpower_cost = 2.0
+cooldown = 1.6
+attack_damage = 4.0
+story = "弦响如裂帛。箭落时，已无人能指认是谁放的。"
+
