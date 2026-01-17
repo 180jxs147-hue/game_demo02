@@ -136,6 +136,20 @@ offset_bottom = -20.0
 grow_horizontal = 0
 text = "退出"
 
+[node name="SaveButton" type="Button" parent="CanvasLayer/HUD"]
+layout_mode = 1
+anchors_preset = 11
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -260.0
+offset_top = -70.0
+offset_right = -140.0
+offset_bottom = -20.0
+grow_horizontal = 0
+text = "存储"
+
 [node name="ResultOverlay" type="Control" parent="CanvasLayer"]
 process_mode = 3
 visible = false
@@ -256,6 +270,7 @@ color = Color(0.77096003, 0, 0.114372455, 1)
 
 [connection signal="pressed" from="CanvasLayer/HUD/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/HUD/TopMenuButton" to="." method="_on_menu_button_pressed"]
+[connection signal="pressed" from="CanvasLayer/HUD/SaveButton" to="." method="_on_save_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/NextLevelButton" to="." method="_on_next_level_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton" to="." method="_on_retry_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/MenuButton" to="." method="_on_menu_button_pressed"]

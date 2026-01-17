@@ -30,15 +30,8 @@ func _apply_theme():
 
 func _on_start_button_pressed():
 	if GameState:
-		GameState.load_progress()
-	
-	# 播放开场剧情
-	var resource = load("res://Dialogues/level1.dialogue")
-	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
-	if resource and balloon_scene:
-		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
-	else:
-		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+		GameState.slot_select_mode = "new"
+	get_tree().change_scene_to_file("res://Scenes/SaveSlots.tscn")
 
 func start_level_id(id: String):
 	var level_database = load("res://Resources/EnemyLevels.tres")
@@ -78,3 +71,11 @@ func _on_clear_save_dialog_confirmed():
 
 func _on_quit_button_pressed():
 	get_tree().quit()
+
+func _on_load_button_pressed():
+	if GameState:
+		GameState.slot_select_mode = "load"
+	get_tree().change_scene_to_file("res://Scenes/SaveSlots.tscn")
+
+func _on_metashop_button_pressed():
+	get_tree().change_scene_to_file("res://Scenes/MetaShop.tscn")

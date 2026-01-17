@@ -584,6 +584,41 @@ func _on_ally_died(unit, _pos):
 func _build_visuals():
 	# 先计算包围盒，用于纹理映射
 	var bounds = _calculate_visual_bounds()
+	var min_x := 0
+	var min_y := 0
+	var width_grids := 1
+	var height_grids := 1
+	if data and not data.grid_shape.is_empty():
+		min_x = int(data.grid_shape[0].x)
+		min_y = int(data.grid_shape[0].y)
+		var max_x := min_x
+		var max_y := min_y
+		for p in data.grid_shape:
+			min_x = min(min_x, int(p.x))
+			min_y = min(min_y, int(p.y))
+			max_x = max(max_x, int(p.x))
+			max_y = max(max_y, int(p.y))
+		width_grids = max_x - min_x + 1
+		height_grids = max_y - min_y + 1
+	var base_color := data.color
+	if data and "civilization" in data:
+		base_color = _get_civ_color(String(data.civilization).to_lower(), data.color)
+	var crop_uv_pos := Vector2(0.0, 0.0)
+	var crop_uv_size := Vector2(1.0, 1.0)
+	if data and data.icon:
+		var tw := float(data.icon.get_width())
+		var th := float(data.icon.get_height())
+		if tw > 0.0 and th > 0.0:
+			var icon_aspect: float = tw / th
+			var target_aspect: float = float(width_grids) / maxf(1.0, float(height_grids))
+			if icon_aspect > target_aspect:
+				var sub_w := target_aspect / icon_aspect
+				crop_uv_pos.x = (1.0 - sub_w) * 0.5
+				crop_uv_size.x = sub_w
+			elif icon_aspect < target_aspect:
+				var sub_h := icon_aspect / target_aspect
+				crop_uv_pos.y = (1.0 - sub_h) * 0.5
+				crop_uv_size.y = sub_h
 
 	# 定义 Shader 代码
 	var shader_code = """
@@ -626,7 +661,7 @@ func _build_visuals():
 		var size_val = GameConst.GRID_SIZE - GameConst.GRID_PADDING
 		
 		block.size = Vector2(size_val, size_val)
-		block.color = data.color
+		block.color = base_color
 		block.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var offset = Vector2(grid_pos) * GameConst.GRID_SIZE
 		var padding = Vector2(GameConst.GRID_PADDING, GameConst.GRID_PADDING) / 2.0
@@ -638,22 +673,18 @@ func _build_visuals():
 		block.material = mat
 		
 		# 设置 Shader 参数
-		mat.set_shader_parameter("main_color", data.color)
+		mat.set_shader_parameter("main_color", base_color)
 		
 		if data.icon:
 			mat.set_shader_parameter("use_icon", true)
 			mat.set_shader_parameter("icon_tex", data.icon)
 			
-			# 计算纹理映射
-			# 纹理需要覆盖整个 bounds，而 block 只是其中的一部分
-			# block 在 bounds 中的相对位置
-			var relative_pos = block.position - bounds.position
-			
-			# 计算 UV Offset 和 Scale
-			# block 的 UV(0,0) 对应 texture 的 relative_pos / bounds.size
-			# block 的 UV(1,1) 对应 texture 的 (relative_pos + block.size) / bounds.size
-			var u_off = relative_pos / bounds.size
-			var u_scl = block.size / bounds.size
+			var rel_x := int(grid_pos.x) - min_x
+			var rel_y := int(grid_pos.y) - min_y
+			var u_off = Vector2(float(rel_x) / float(width_grids), float(rel_y) / float(height_grids))
+			var u_scl = Vector2(1.0 / float(width_grids), 1.0 / float(height_grids))
+			u_off = crop_uv_pos + Vector2(u_off.x * crop_uv_size.x, u_off.y * crop_uv_size.y)
+			u_scl = Vector2(u_scl.x * crop_uv_size.x, u_scl.y * crop_uv_size.y)
 			
 			mat.set_shader_parameter("uv_offset", u_off)
 			mat.set_shader_parameter("uv_scale", u_scl)
@@ -662,6 +693,21 @@ func _build_visuals():
 		
 		add_child(block)
 		visual_blocks.append(block)
+
+func _get_civ_color(civ_key: String, fallback: Color) -> Color:
+	match civ_key:
+		"han":
+			return Color("c83f2b")
+		"roman":
+			return Color("3b1b5a")
+		"greek":
+			return Color("1b5ea8")
+		"french":
+			return Color("234aa5")
+		"huangjin":
+			return Color("d1a322")
+		_:
+			return fallback
 
 # 辅助：计算视觉包围盒
 func _calculate_visual_bounds() -> Rect2:

@@ -55,31 +55,49 @@ horizontal_alignment = 1
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = "开始游戏"
+text = "开始新游戏"
 
-[node name="LevelSelectButton" type="Button" parent="VBoxContainer"]
+[node name="LoadButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "载入游戏"
+
+[node name="MetaShopButton" type="Button" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "局外商店"
+
+[node name="Sidebar" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -220.0
+offset_top = 60.0
+offset_right = -20.0
+offset_bottom = 420.0
+grow_horizontal = 0
+theme_override_constants/separation = 12
+
+[node name="LevelSelectButton" type="Button" parent="Sidebar"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "选关"
+
+[node name="UnlockAllButton" type="Button" parent="Sidebar"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "一键解锁 (测试)"
 
 [node name="BarracksButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "军营 (图鉴)"
-
-[node name="UnlockAllButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "一键解锁 (测试)"
-
-[node name="ClearSaveButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "清除存档"
 
 [node name="QuitButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
@@ -95,9 +113,10 @@ dialog_text = "将清空已收集卡牌等进度，是否继续？"
 title = "提示"
 
 [connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/LevelSelectButton" to="." method="_on_level_select_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
+[connection signal="pressed" from="VBoxContainer/MetaShopButton" to="." method="_on_metashop_button_pressed"]
+[connection signal="pressed" from="Sidebar/LevelSelectButton" to="." method="_on_level_select_button_pressed"]
+[connection signal="pressed" from="Sidebar/UnlockAllButton" to="." method="_on_unlock_all_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/BarracksButton" to="." method="_on_barracks_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/UnlockAllButton" to="." method="_on_unlock_all_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/ClearSaveButton" to="." method="_on_clear_save_button_pressed"]
 [connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
 [connection signal="confirmed" from="ClearSaveDialog" to="." method="_on_clear_save_dialog_confirmed"]

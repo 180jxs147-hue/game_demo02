@@ -335,6 +335,11 @@ func start_level(index: int):
 	battle_ended = false
 	if result_overlay: result_overlay.visible = false
 	
+	# 应用局外成长加成
+	if GameState:
+		max_manpower += GameState.get_max_manpower_bonus()
+		bench_columns += GameState.get_bench_columns_bonus()
+	
 	# Ensure Start Button is visible
 	if has_node("CanvasLayer/HUD/StartButton"):
 		var start_btn = $CanvasLayer/HUD/StartButton
@@ -856,6 +861,11 @@ func show_victory_screen():
 	# 胜利逻辑
 	var reward_text = ""
 	
+	# 发放局外成长货币
+	if GameState and GameState.has_method("add_meta_currency"):
+		GameState.add_meta_currency(1)
+		reward_text += "\n获得军资：+1"
+	
 	# 1. 弹出三选一奖励
 	_show_rewards()
 		
@@ -1280,6 +1290,11 @@ func _on_menu_button_pressed():
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
+func _on_save_button_pressed():
+	if GameState and GameState.has_method("save_all"):
+		var rc = GameState.save_all()
+		_update_ui()
+
 # --- 奖励相关 ---
 
 func _show_rewards():
@@ -1332,6 +1347,40 @@ func _show_rewards():
 		_create_reward_card_ui(item)
 
 func _create_reward_card_ui(item: Dictionary):
+	var type = item.get("type", "unit")
+	
+	# --- 如果是兵种卡牌，使用标准的 CardSlot 样式 ---
+	if type == "unit":
+		var data = item["data"] as UnitData
+		if _card_slot_scene:
+			var vbox = VBoxContainer.new()
+			vbox.add_theme_constant_override("separation", 12)
+			
+			var slot = _card_slot_scene.instantiate()
+			# CardSlot 默认尺寸 280x400，在奖励界面可能有点大，但为了保持一致，我们暂不缩放
+			# 或者如果需要缩放，可以用 Control 包裹并设置 scale
+			if slot.has_method("setup"):
+				slot.setup(data)
+			
+			# 禁用 CardSlot 内部的点击逻辑，改用外部按钮，或者复用内部点击
+			# 这里为了明确交互，我们在下方加一个“选择”按钮，同时让卡牌点击也触发选择
+			if slot.has_signal("pressed"):
+				slot.pressed.connect(func(_d): _on_reward_selected(item))
+			
+			vbox.add_child(slot)
+			
+			var btn = Button.new()
+			btn.text = "选择"
+			btn.custom_minimum_size = Vector2(0, 48)
+			if GameState:
+				GameState.apply_button_style(btn)
+			btn.pressed.connect(func(): _on_reward_selected(item))
+			vbox.add_child(btn)
+			
+			reward_container.add_child(vbox)
+			return
+
+	# --- 其他类型（如战线扩充）保持原有样式 ---
 	# 创建卡片容器
 	var card = PanelContainer.new()
 	card.custom_minimum_size = Vector2(140, 200)
@@ -1347,23 +1396,7 @@ func _create_reward_card_ui(item: Dictionary):
 	var desc_text = ""
 	var color = Color.WHITE
 	
-	var type = item.get("type", "unit")
-	if type == "unit":
-		var data = item["data"] as UnitData
-		title_text = data.name
-		desc_text = "ATK: %.0f\nCD: %.1f s" % [data.attack_damage, data.cooldown]
-		if not data.tags.is_empty():
-			# 简化的标签显示
-			var tags_str = ""
-			for tag in data.tags:
-				if GameConst.TAG_CN_NAMES.has(tag):
-					tags_str += GameConst.TAG_CN_NAMES[tag] + " "
-				else:
-					tags_str += tag + " "
-			desc_text += "\n\n" + tags_str
-		color = GameState.UI_COLOR_TEXT_PRIMARY
-		
-	elif type == "upgrade_row":
+	if type == "upgrade_row":
 		title_text = "战线扩充"
 		desc_text = "战场容量 +1 行\n(横向)"
 		color = GameState.UI_COLOR_ACCENT_GOLD
@@ -1380,16 +1413,6 @@ func _create_reward_card_ui(item: Dictionary):
 	lbl_title.add_theme_color_override("font_color", color)
 	lbl_title.add_theme_font_size_override("font_size", 18)
 	vbox.add_child(lbl_title)
-	
-	if type == "unit":
-		var fp = Control.new()
-		fp.custom_minimum_size = Vector2(60, 60)
-		var fp_script = load("res://Scripts/FootprintPreview.gd")
-		if fp_script:
-			fp.set_script(fp_script)
-			fp.set("unit_data", item["data"])
-			fp.queue_redraw()
-		vbox.add_child(fp)
 	
 	# 分隔线
 	var sep = HSeparator.new()
@@ -1426,6 +1449,8 @@ func _on_reward_selected(item: Dictionary):
 			player_library.collected_cards.append(data)
 			if GameState:
 				GameState.save_player_library(player_library)
+		# 立即添加到备战区显示
+		spawn_unit(data)
 				
 	elif type == "upgrade_row":
 		reward_name = "战线扩充(行)"

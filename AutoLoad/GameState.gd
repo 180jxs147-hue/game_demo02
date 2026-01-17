@@ -8,12 +8,21 @@ extends Node
 var selected_level_index: int = 0
 var current_rows: int = 4
 var current_cols: int = 4
+var slot_select_mode: String = "new"
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"
 const UNIT_DATABASE_PATH := "res://Resources/UnitDatabase.tres"
 const LEVEL_DATABASE_PATH := "res://Resources/EnemyLevels.tres"
 const SAVE_GAME_PATH := "user://savegame.cfg"
+var current_slot: int = 1
+func _slot(i: int = -1) -> int:
+	var s = current_slot if i < 0 else i
+	return clamp(s, 1, 3)
+func _save_path(i: int = -1) -> String:
+	return "user://savegame_slot_%d.cfg" % _slot(i)
+func _library_path(i: int = -1) -> String:
+	return "user://PlayerLibrary_slot_%d.tres" % _slot(i)
 
 # --- UI 样式常量与缓存 ---
 const UI_COLOR_BG_DARK = Color("1a1a1d")
@@ -141,14 +150,18 @@ func apply_button_style(btn: Button):
 
 var _cached_unit_database: UnitDatabase
 var _cached_level_database: LevelDatabase
+const METASHOP_SAVE_PATH := "user://metashop.cfg"
+var meta_currency: int = 0
+var purchased_upgrades: Dictionary = {}
 
 func load_player_library() -> CardLibrary:
 	# 存档策略：
 	# - 优先加载 user:// 下的玩家存档（每台机器/每个用户独立）
 	# - 如果第一次运行或存档不存在，则回退到 res:// 的默认库
 	var lib: CardLibrary = null
-	if FileAccess.file_exists(USER_LIBRARY_PATH):
-		lib = load(USER_LIBRARY_PATH)
+	var lib_path := _library_path()
+	if FileAccess.file_exists(lib_path):
+		lib = load(lib_path)
 	
 	if not lib:
 		lib = load(DEFAULT_LIBRARY_PATH) as CardLibrary
@@ -163,18 +176,49 @@ func save_player_library(library: CardLibrary) -> int:
 	# 将卡牌收集进度写入 user://，导出的 EXE 分发给其他用户也不会写到游戏目录。
 	if not library:
 		return ERR_INVALID_DATA
-	return ResourceSaver.save(library, USER_LIBRARY_PATH)
+	return ResourceSaver.save(library, _library_path())
 
-func save_progress():
+func save_progress() -> int:
 	var config = ConfigFile.new()
 	config.set_value("progress", "level_index", selected_level_index)
 	config.set_value("progress", "current_rows", current_rows)
 	config.set_value("progress", "current_cols", current_cols)
-	config.save(SAVE_GAME_PATH)
+	return config.save(_save_path())
+
+func save_meta() -> int:
+	var cfg := ConfigFile.new()
+	cfg.set_value("meta", "currency", meta_currency)
+	cfg.set_value("meta", "upgrades", purchased_upgrades)
+	return cfg.save(METASHOP_SAVE_PATH)
+
+func load_meta():
+	var cfg := ConfigFile.new()
+	var err = cfg.load(METASHOP_SAVE_PATH)
+	if err == OK:
+		meta_currency = int(cfg.get_value("meta", "currency", 0))
+		var up = cfg.get_value("meta", "upgrades", {})
+		if up is Dictionary:
+			purchased_upgrades = up
+	else:
+		meta_currency = 0
+		purchased_upgrades = {}
+
+func save_all() -> int:
+	var rc1 = save_progress()
+	var rc2 = OK
+	var lib = load_player_library()
+	if lib:
+		rc2 = save_player_library(lib)
+	var rc3 = save_meta()
+	return rc1 if rc1 != OK else (rc2 if rc2 != OK else rc3)
+
+func load_all():
+	load_progress()
+	load_meta()
 
 func load_progress():
 	var config = ConfigFile.new()
-	var err = config.load(SAVE_GAME_PATH)
+	var err = config.load(_save_path())
 	if err == OK:
 		selected_level_index = config.get_value("progress", "level_index", 0)
 		current_rows = config.get_value("progress", "current_rows", 4)
@@ -189,7 +233,7 @@ func clear_save() -> int:
 	selected_level_index = 0
 	current_rows = 4
 	current_cols = 4
-	save_progress() # 清空进度文件
+	save_progress() # 清空进度文件（当前槽位）
 	
 	var lib = load_player_library()
 	if not lib:
@@ -197,6 +241,35 @@ func clear_save() -> int:
 	lib.collected_cards.clear()
 	_add_initial_roster(lib) # 发放初始阵容
 	return save_player_library(lib)
+
+func add_meta_currency(amount: int):
+	meta_currency = max(0, meta_currency + amount)
+	save_meta()
+
+func get_meta_currency() -> int:
+	return meta_currency
+
+func purchase_upgrade(key: String, cost: int) -> bool:
+	if purchased_upgrades.get(key, false):
+		return false
+	if meta_currency < cost:
+		return false
+	meta_currency -= cost
+	purchased_upgrades[key] = true
+	save_meta()
+	return true
+
+func has_upgrade(key: String) -> bool:
+	return bool(purchased_upgrades.get(key, false))
+
+func get_max_manpower_bonus() -> int:
+	var bonus := 0
+	if has_upgrade("max_manpower_plus_10"):
+		bonus += 10
+	return bonus
+
+func get_bench_columns_bonus() -> int:
+	return 1 if has_upgrade("bench_columns_plus_1") else 0
 
 func _add_initial_roster(library: CardLibrary):
 	# 发放初始阵容：士兵x2，弓箭手x1，长矛手x1
@@ -209,6 +282,8 @@ func _add_initial_roster(library: CardLibrary):
 		"res://Resources/DataFiles/camp.tres",
 		"res://Resources/DataFiles/caesar.tres"
 	]
+	if has_upgrade("start_card_junguo_bing"):
+		starters.append("res://Resources/DataFiles/junguo_bing.tres")
 	for path in starters:
 		if ResourceLoader.exists(path):
 			var unit = load(path)

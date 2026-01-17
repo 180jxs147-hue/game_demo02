@@ -57,11 +57,32 @@ func _draw():
 		var p2 := origin + Vector2(grid_w, y * cell)
 		draw_line(p1, p2, line, 1.0)
 
+	var icon: Texture2D = unit_data.icon
+	var has_icon := icon != null
+	var target_aspect := float(w_cells) / maxf(1.0, float(h_cells))
+	var crop_src := Rect2(0, 0, 1, 1)
+	if has_icon:
+		crop_src = _get_center_crop_src(icon, target_aspect)
+
 	for off in unit_data.grid_shape:
 		var x := int(off.x - min_x)
 		var y := int(off.y - min_y)
 		var r := Rect2(origin.x + x * cell, origin.y + y * cell, cell, cell)
 		draw_rect(r.grow(-1.0), fill, true)
+		
+		if has_icon:
+			var rel_x := float(off.x - min_x)
+			var rel_y := float(off.y - min_y)
+			var u_off_x := rel_x / float(w_cells)
+			var u_off_y := rel_y / float(h_cells)
+			var u_scl_x := 1.0 / float(w_cells)
+			var u_scl_y := 1.0 / float(h_cells)
+			
+			var src_pos := crop_src.position + Vector2(u_off_x * crop_src.size.x, u_off_y * crop_src.size.y)
+			var src_size := Vector2(u_scl_x * crop_src.size.x, u_scl_y * crop_src.size.y)
+			var src_rect := Rect2(src_pos, src_size)
+			draw_texture_rect_region(icon, r.grow(-1.0), src_rect, Color.WHITE)
+			
 		draw_rect(r.grow(-1.0), border, false, 2.0)
 
 	var ax := int(0 - min_x)
@@ -69,6 +90,21 @@ func _draw():
 	if ax >= 0 and ax < w_cells and ay >= 0 and ay < h_cells:
 		var a := Rect2(origin.x + ax * cell, origin.y + ay * cell, cell, cell)
 		draw_rect(a.grow(-2.0), Color(1, 1, 1, 0.18), false, 2.0)
+
+func _get_center_crop_src(tex: Texture2D, target_aspect: float) -> Rect2:
+	var tw := float(tex.get_width())
+	var th := float(tex.get_height())
+	if tw <= 0.0 or th <= 0.0 or target_aspect <= 0.0:
+		return Rect2(0, 0, tw, th)
+	var src_w := tw
+	var src_h := tw / target_aspect
+	if src_h > th:
+		src_h = th
+		src_w = th * target_aspect
+	var x := (tw - src_w) * 0.5
+	var y := (th - src_h) * 0.5
+	return Rect2(x, y, src_w, src_h)
+
 
 func _get_civ_color(civ_key: String) -> Color:
 	match civ_key:

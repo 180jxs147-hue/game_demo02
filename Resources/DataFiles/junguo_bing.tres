@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://Resources/ImageFiles/soliders.png" id="1_icon"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/junguo_bing.png" id="1_icon"]
 [ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
@@ -18,4 +18,3 @@ manpower_cost = 1.0
 cooldown = 2.2
 attack_damage = 3.0
 story = "不是精锐，却是郡县能调得出的全部。"
-

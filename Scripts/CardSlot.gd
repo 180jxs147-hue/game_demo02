@@ -86,6 +86,9 @@ func _ready():
 				drag_requested.emit(_unit_data)
 		)
 	_apply_card_skin(null)
+	
+	if _unit_data:
+		setup(_unit_data)
 
 func _apply_card_skin(data: UnitData):
 	var has_base := false
@@ -166,9 +169,14 @@ func _apply_card_skin(data: UnitData):
 func setup(data: UnitData):
 	if not data: return
 	_unit_data = data
+	
+	if not is_node_ready():
+		return
+
 	_apply_card_skin(data)
 	
-	name_label.text = data.name
+	if name_label:
+		name_label.text = data.name
 	if skill_label:
 		skill_label.text = ""
 		skill_label.visible = false

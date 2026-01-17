@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
 
-[ext_resource type="Texture2D" path="res://Resources/ImageFiles/soliders.png" id="1_icon"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/huangjin_lishi.png" id="1_icon"]
 [ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
@@ -18,4 +18,3 @@ manpower_cost = 3.0
 cooldown = 2.6
 attack_damage = 4.0
 story = "以血与土为誓，肩扛粗木，足踏乱军。"
-
