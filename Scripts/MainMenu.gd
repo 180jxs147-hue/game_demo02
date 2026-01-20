@@ -27,6 +27,13 @@ func _apply_theme():
 	for node in find_children("", "Button", true, false):
 		if node is Button:
 			GameState.apply_button_style(node)
+			
+	# 连接编辑器按钮
+	if has_node("Sidebar/EditorButton"):
+		$Sidebar/EditorButton.pressed.connect(_on_editor_button_pressed)
+
+func _on_editor_button_pressed():
+	get_tree().change_scene_to_file("res://Scenes/LevelEditor.tscn")
 
 func _on_start_button_pressed():
 	if GameState:

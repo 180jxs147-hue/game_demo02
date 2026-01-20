@@ -1,0 +1,108 @@
+[gd_scene load_steps=2 format=3 uid="uid://level_editor_scene"]
+
+[ext_resource type="Script" path="res://Scripts/LevelEditor.gd" id="1_script"]
+
+[node name="LevelEditor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="BG" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.1, 1)
+
+[node name="MainLayout" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" type="HBoxContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+
+[node name="BackButton" type="Button" parent="MainLayout/TopBar"]
+layout_mode = 2
+text = "  Back to Menu  "
+
+[node name="SaveButton" type="Button" parent="MainLayout/TopBar"]
+layout_mode = 2
+text = "  Save Level  "
+
+[node name="FeedbackLabel" type="Label" parent="MainLayout/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Ready"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ContentSplit" type="HSplitContainer" parent="MainLayout"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftPanel" type="VBoxContainer" parent="MainLayout/ContentSplit"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+size_flags_stretch_ratio = 0.2
+
+[node name="Label" type="Label" parent="MainLayout/ContentSplit/LeftPanel"]
+layout_mode = 2
+text = "Levels"
+horizontal_alignment = 1
+
+[node name="LevelList" type="ItemList" parent="MainLayout/ContentSplit/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="GridContainer" type="Control" parent="MainLayout/ContentSplit"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="GridBG" type="ColorRect" parent="MainLayout/ContentSplit/GridContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.2, 0.2, 0.2, 1)
+
+[node name="GridRoot" type="Node2D" parent="MainLayout/ContentSplit/GridContainer"]
+position = Vector2(100, 100)
+
+[node name="GridOverlay" type="Control" parent="MainLayout/ContentSplit/GridContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BottomPanel" type="PanelContainer" parent="MainLayout"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MainLayout/BottomPanel"]
+layout_mode = 2
+vertical_scroll_mode = 0
+
+[node name="UnitContainer" type="HBoxContainer" parent="MainLayout/BottomPanel/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+alignment = 1
+
+[connection signal="pressed" from="MainLayout/TopBar/BackButton" to="." method="_on_back_pressed"]

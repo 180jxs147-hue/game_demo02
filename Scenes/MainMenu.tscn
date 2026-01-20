@@ -93,6 +93,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = "一键解锁 (测试)"
 
+[node name="EditorButton" type="Button" parent="Sidebar"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "关卡编辑器"
+
 [node name="BarracksButton" type="Button" parent="VBoxContainer"]
 custom_minimum_size = Vector2(0, 50)
 layout_mode = 2

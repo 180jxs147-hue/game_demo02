@@ -1,20 +1,16 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=12 format=3 uid="uid://b8vryngqj71tk"]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=14 format=3]
 
-[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" uid="uid://b5ia3pbqd8yge" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
+[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="4_youqi"]
-[ext_resource type="Resource" uid="uid://dhr6o214wk8r3" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="6_l7bdb"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="6_qimin"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("3_lishi")
-
-[sub_resource type="Resource" id="UnitSpawn_2"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("3_lishi")
-grid_pos = Vector2i(2, 2)
 
 [sub_resource type="Resource" id="UnitSpawn_3"]
 script = ExtResource("2_spawn")
@@ -31,9 +27,19 @@ script = ExtResource("2_spawn")
 unit_data = ExtResource("4_youqi")
 grid_pos = Vector2i(0, 3)
 
+[sub_resource type="Resource" id="Resource_cwqy6"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("6_l7bdb")
+grid_pos = Vector2i(3, 2)
+
+[sub_resource type="Resource" id="Resource_wln2l"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("6_l7bdb")
+grid_pos = Vector2i(2, 2)
+
 [resource]
 script = ExtResource("1_level")
 level_id = "1_0_4"
 level_name = "序章 第 4 关 - 关键抉择点"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5")])
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5"), SubResource("Resource_cwqy6"), SubResource("Resource_wln2l")])
 reward_pool_id = "generic_early"
