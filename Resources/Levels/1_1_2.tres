@@ -1,16 +1,15 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=19 format=3 uid="uid://b3a4euw76y57i"]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=17 format=3 uid="uid://b3a4euw76y57i"]
 
 [ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
+[ext_resource type="Resource" uid="uid://b5ia3pbqd8yge" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="4_youqi"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
+[ext_resource type="Resource" uid="uid://dhr6o214wk8r3" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="6_qimin"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("4_youqi")
-grid_pos = Vector2i(0, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_2"]
 script = ExtResource("2_spawn")
@@ -64,3 +63,4 @@ level_name = "汉军线 第 2 关 - 清除内应与混沌之种"
 grid_width = 8
 grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5"), SubResource("UnitSpawn_6"), SubResource("UnitSpawn_7"), SubResource("UnitSpawn_8"), SubResource("UnitSpawn_9"), SubResource("UnitSpawn_10")])
+reward_pool_id = "han_early"

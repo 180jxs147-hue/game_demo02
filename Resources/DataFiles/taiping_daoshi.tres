@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://dhr6o214wk8r3"]
 
-[ext_resource type="Texture2D" path="res://Resources/ImageFiles/taiping_daoshi.png" id="1_icon"]
-[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://cla8x82ydu88l" path="res://Resources/ImageFiles/taiping_daoshi.png" id="1_icon"]
 
 [resource]
 script = ExtResource("1_data")
@@ -12,9 +12,7 @@ civilization = "huangjin"
 unit_class = "support"
 color = Color(0.76, 0.64, 0.22, 1)
 tags = Array[String](["medic"])
-grid_shape = Array[Vector2i]([Vector2i(0, 0)])
 max_hp = 16.0
 manpower_cost = 2.0
-cooldown = 2.0
 attack_damage = 3.0
 story = "符水与咒声不分善恶，能让人站起来的，就是天意。"

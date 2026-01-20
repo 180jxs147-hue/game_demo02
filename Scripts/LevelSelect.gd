@@ -94,11 +94,28 @@ func start_level_id(id: String):
 		push_error("Level ID not found: " + id)
 	
 func play_level_intro(id: String):
+	print("[LevelSelect] Playing intro for: ", id)
+	# 如果是选关界面播放了剧情，进战斗后就不应该再播一遍
+	GameState.skip_intro = true
+	
 	var dialogue_path = BattleManager.get_dialogue_path_by_id(id)
+	
 	if dialogue_path != "":
-		var resource = load(dialogue_path)
-		var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
-		if resource and balloon_scene:
-			DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
-			return
+		if ResourceLoader.exists(dialogue_path):
+			var resource = load(dialogue_path)
+			var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+			if resource and balloon_scene:
+				print("[LevelSelect] Showing dialogue balloon...")
+				# 使用手动实例化方式，确保行为可控且能在 Pause 状态下运行（虽然 LevelSelect 通常不 Pause）
+				var balloon = balloon_scene.instantiate()
+				get_tree().root.add_child(balloon)
+				balloon.start(resource, "start", [self])
+				return
+			else:
+				push_error("[LevelSelect] Failed to load resource or balloon scene.")
+		else:
+			push_warning("[LevelSelect] Dialogue file not found at: " + dialogue_path)
+			
+	print("[LevelSelect] Skipping intro, starting level directly.")
+	GameState.skip_intro = true
 	start_level_id(id)

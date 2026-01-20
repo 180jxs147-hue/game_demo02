@@ -1,17 +1,16 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=11 format=3 uid="uid://1ujpsjc8qaeb"]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=14 format=3 uid="uid://1ujpsjc8qaeb"]
 
 [ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/junguo_bing.tres" id="3_junguo"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="4_shesheng"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/han_caiguan.tres" id="6_caiguan"]
+[ext_resource type="Resource" uid="uid://cicayjonphiu2" path="res://Resources/DataFiles/junguo_bing.tres" id="3_junguo"]
+[ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="4_shesheng"]
+[ext_resource type="Resource" uid="uid://305j83uw7asa" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
+[ext_resource type="Resource" uid="uid://cq8f3un1sh778" path="res://Resources/DataFiles/han_caiguan.tres" id="6_caiguan"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sanhe_qishi.tres" id="7_sanhe"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("3_junguo")
-grid_pos = Vector2i(0, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_2"]
 script = ExtResource("2_spawn")
@@ -44,3 +43,4 @@ level_id = "1_2_1"
 level_name = "黄巾线 第 1 关 - 拜见与重病"
 grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5"), SubResource("UnitSpawn_6")])
+reward_pool_id = "huangjin_early"

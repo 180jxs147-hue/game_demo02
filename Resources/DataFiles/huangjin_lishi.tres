@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://b5ia3pbqd8yge"]
 
-[ext_resource type="Texture2D" path="res://Resources/ImageFiles/huangjin_lishi.png" id="1_icon"]
-[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://7qigoy5v1fgm" path="res://Resources/ImageFiles/huangjin_lishi.png" id="1_icon"]
 
 [resource]
 script = ExtResource("1_data")
@@ -9,9 +9,7 @@ name = "黄巾力士"
 icon = ExtResource("1_icon")
 rarity = "rare"
 civilization = "huangjin"
-unit_class = "infantry"
 color = Color(0.8, 0.66, 0.18, 1)
-tags = Array[String]([])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
 max_hp = 34.0
 manpower_cost = 3.0

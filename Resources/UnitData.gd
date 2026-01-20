@@ -19,6 +19,7 @@ class_name UnitData extends Resource
 @export var manpower_cost: float = 1.0 
 @export var cooldown: float = 2.0
 @export var attack_damage: float = 10.0 # <--- 新增：攻击力
+@export var is_injured: bool = false # 是否受伤
 
 @export_group("Adjacency Bonuses")
 ## Adjacency Rules:

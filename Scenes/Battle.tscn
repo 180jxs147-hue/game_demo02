@@ -1,12 +1,9 @@
-[gd_scene load_steps=6 format=3 uid="uid://c1k11wlkwvsqm"]
+[gd_scene load_steps=5 format=3 uid="uid://c1k11wlkwvsqm"]
 
 [ext_resource type="Script" uid="uid://dv6ra6rxgdm5g" path="res://Scripts/BattleManager.gd" id="1_p46lj"]
 [ext_resource type="Resource" path="res://Resources/PlayerLibrary.tres" id="4_library"]
 [ext_resource type="Resource" uid="uid://durniktkpk52p" path="res://Resources/EnemyLevels.tres" id="5_levels"]
 [ext_resource type="Script" uid="uid://u1q5ipdswswu" path="res://Scripts/GridPaint.gd" id="6_8teo4"]
-
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hp_red"]
-bg_color = Color(0.9685883, 0, 0, 1)
 
 [node name="Battle" type="Node2D" node_paths=PackedStringArray("manpower_label", "enemy_manpower_label", "synergy_label")]
 script = ExtResource("1_p46lj")
@@ -15,11 +12,6 @@ enemy_manpower_label = NodePath("CanvasLayer/HUD/EnemyManpowerLabel")
 synergy_label = NodePath("CanvasLayer/HUD/SynergyLabel")
 player_library = ExtResource("4_library")
 level_database = ExtResource("5_levels")
-layout_scale = 1.2
-battlefield_position = Vector2(200, 100)
-enemy_field_base = Vector2(1400, 0)
-bench_offset = Vector2(-20, 600)
-bench_columns = 8
 
 [node name="CanvasLayer" type="CanvasLayer" parent="."]
 
@@ -34,7 +26,7 @@ mouse_filter = 1
 
 [node name="BenchPanel" type="PanelContainer" parent="CanvasLayer/HUD"]
 layout_mode = 1
-anchors_preset = 14
+anchors_preset = 12
 anchor_top = 1.0
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -44,19 +36,9 @@ offset_right = 960.0
 offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
-mouse_filter = 0
 
 [node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/BenchPanel"]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 12.0
-offset_top = 10.0
-offset_right = -12.0
-offset_bottom = -10.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
 theme_override_constants/separation = 8
 
 [node name="Title" type="Label" parent="CanvasLayer/HUD/BenchPanel/VBox"]
@@ -71,9 +53,9 @@ horizontal_scroll_mode = 0
 
 [node name="Grid" type="GridContainer" parent="CanvasLayer/HUD/BenchPanel/VBox/Scroll"]
 layout_mode = 2
-columns = 3
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
+columns = 3
 
 [node name="StartButton" type="Button" parent="CanvasLayer/HUD"]
 layout_mode = 1
@@ -124,7 +106,7 @@ text = "当前羁绊:"
 
 [node name="TopMenuButton" type="Button" parent="CanvasLayer/HUD"]
 layout_mode = 1
-anchors_preset = 11
+anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -134,11 +116,12 @@ offset_top = -70.0
 offset_right = -20.0
 offset_bottom = -20.0
 grow_horizontal = 0
+grow_vertical = 2
 text = "退出"
 
 [node name="SaveButton" type="Button" parent="CanvasLayer/HUD"]
 layout_mode = 1
-anchors_preset = 11
+anchors_preset = 3
 anchor_left = 1.0
 anchor_top = 1.0
 anchor_right = 1.0
@@ -148,6 +131,7 @@ offset_top = -70.0
 offset_right = -140.0
 offset_bottom = -20.0
 grow_horizontal = 0
+grow_vertical = 2
 text = "存储"
 
 [node name="ResultOverlay" type="Control" parent="CanvasLayer"]

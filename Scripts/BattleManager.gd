@@ -227,7 +227,7 @@ func _ready():
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
-	# call_deferred("start_intro_dialogue") # 移除了自动播放，改为在菜单/选关界面播放
+	call_deferred("start_intro_dialogue")
 	
 	# 初始化提示框
 	var tooltip_scene = load("res://Scenes/Tooltip.tscn")
@@ -348,14 +348,6 @@ func start_level(index: int):
 
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
-
-func start_level_id(id: String):
-	var idx = level_index
-	if level_database:
-		var found = level_database.get_index_by_id(id)
-		if found >= 0:
-			idx = found
-	start_level(idx)
 
 func _apply_layout():
 	# 根据屏幕宽度摆放战场
@@ -759,6 +751,9 @@ func _end_battle(victory: bool):
 	battle_ended = true
 	is_battle_started = false
 	
+	# 保存玩家数据（包括伤势）
+	_save_library()
+	
 	if victory:
 		# 胜利：直接显示结算（奖励界面），点击下一关后再播放剧情
 		show_victory_screen()
@@ -799,17 +794,50 @@ func get_next_level_id() -> String:
 			return level_database.levels[current_idx + 1].level_id
 	return ""
 
+func start_level_id(id: String):
+	if level_database:
+		var idx = level_database.get_index_by_id(id)
+		if idx != -1:
+			# 如果已经在战斗场景中，直接开始新关卡
+			start_level(idx)
+		else:
+			push_error("Level ID not found: " + id)
+
+func _save_library():
+	if not player_library: return
+	var save_path = player_library.resource_path
+	if save_path.is_empty() or save_path.begins_with("res://"):
+		# 优先使用 GameState 的存档路径管理
+		if GameState:
+			save_path = GameState._library_path()
+		else:
+			save_path = "user://PlayerLibrary.tres"
+	ResourceSaver.save(player_library, save_path)
+
 # 供对话调用的接口：播放指定关卡的开场剧情，如果没有则直接开始战斗
 func play_level_intro(id: String):
+	print("[BattleManager] play_level_intro: ", id)
 	var dialogue_path = BattleManager.get_dialogue_path_by_id(id)
+	
 	if dialogue_path != "":
-		var resource = load(dialogue_path)
-		var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
-		if resource and balloon_scene:
-			DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
-			return
+		if ResourceLoader.exists(dialogue_path):
+			var resource = load(dialogue_path)
+			var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
+			if resource and balloon_scene:
+				print("[BattleManager] Showing dialogue balloon...")
+				var balloon = balloon_scene.instantiate()
+				get_tree().root.add_child(balloon)
+				balloon.start(resource, "start", [self])
+				return
+			else:
+				push_error("[BattleManager] Failed to load resource or balloon scene.")
+		else:
+			push_warning("[BattleManager] Dialogue file not found: " + dialogue_path)
+	else:
+		print("[BattleManager] No dialogue path configured for: ", id)
 	
 	# 如果没有剧情，直接开始关卡
+	print("[BattleManager] Starting level directly: ", id)
 	start_level_id(id)
 
 func show_victory_dialogue():
@@ -1306,44 +1334,87 @@ func _show_rewards():
 	for child in reward_container.get_children():
 		child.queue_free()
 		
-	# 读取数据库
-	var db = load("res://Resources/UnitDatabase.tres")
-	if not db:
-		print("DEBUG: Failed to load UnitDatabase")
-		return
-		
-	if db.units.is_empty():
-		print("DEBUG: UnitDatabase is empty")
-		return
-		
 	reward_container.visible = true
-		
-	# 构建奖励池
-	var pool = []
 	
-	# 1. 加入兵种卡牌
-	for unit in db.units:
-		if unit:
-			pool.append({ "type": "unit", "data": unit })
-		else:
-			print("DEBUG: Found null unit in database")
-		
-	# 2. 加入扩充选项 (如果有空间)
-	# 增加出现权重? 简单起见，作为普通项加入，但为了保证出现率，可以加多次，或者保证必出？
-	# 用户说 "包括增加一行或一列"，意味着作为选项之一。
+	# --- 根据关卡配置与 RewardPool 抽取奖励 ---
+	var candidates: Array = []
+	var used_pool := false
 	
+	# 1. 优先尝试使用 RewardPoolDatabase + 当前关卡的 reward_pool_id
+	var pool_id := ""
+	if current_level_config and "reward_pool_id" in current_level_config:
+		pool_id = current_level_config.reward_pool_id
+	
+	if pool_id != "":
+		var reward_db: RewardPoolDatabase = load("res://Resources/RewardPoolDatabase.tres")
+		if reward_db:
+			var reward_pool := reward_db.get_pool_by_id(pool_id)
+			if reward_pool and not reward_pool.entries.is_empty():
+				used_pool = true
+				for entry in reward_pool.entries:
+					var unit: UnitData = entry.get("unit", null)
+					var prob: float = float(entry.get("prob", 0.0))
+					if unit and prob > 0.0:
+						var item = { "type": "unit", "data": unit }
+						candidates.append({ "item": item, "weight": prob })
+	
+	# 2. 如果没配置池或池为空，退回到 UnitDatabase 均匀分布
+	if not used_pool:
+		var db = load("res://Resources/UnitDatabase.tres")
+		if not db:
+			print("DEBUG: Failed to load UnitDatabase")
+			return
+		
+		if db.units.is_empty():
+			print("DEBUG: UnitDatabase is empty")
+			return
+		
+		for unit in db.units:
+			if unit:
+				var item = { "type": "unit", "data": unit }
+				candidates.append({ "item": item, "weight": 1.0 })
+			else:
+				print("DEBUG: Found null unit in database")
+	
+	# 3. 加入战线扩充选项，权重设为 1.0，行为与以前接近
 	if GameState:
 		if GameState.current_rows < GameConst.MAP_ROWS:
-			pool.append({ "type": "upgrade_row", "data": null })
-			# 为了增加抽取几率，可以多加几个，或者不加
-			
+			candidates.append({ "item": { "type": "upgrade_row", "data": null }, "weight": 1.0 })
 		if GameState.current_cols < GameConst.MAP_COLUMNS:
-			pool.append({ "type": "upgrade_col", "data": null })
-
-	pool.shuffle()
-	var choices = pool.slice(0, 3)
+			candidates.append({ "item": { "type": "upgrade_col", "data": null }, "weight": 1.0 })
 	
-	for item in choices:
+	# 4. 按权重抽取最多 3 个不同奖励
+	var selections: Array = []
+	
+	while candidates.size() > 0 and selections.size() < 3:
+		var total_weight := 0.0
+		for c in candidates:
+			total_weight += float(c.get("weight", 0.0))
+		
+		if total_weight <= 0.0:
+			break
+		
+		var r := randf() * total_weight
+		var chosen_idx := -1
+		var acc := 0.0
+		
+		for i in range(candidates.size()):
+			acc += float(candidates[i].get("weight", 0.0))
+			if r <= acc:
+				chosen_idx = i
+				break
+		
+		if chosen_idx == -1:
+			chosen_idx = candidates.size() - 1
+		
+		var chosen = candidates[chosen_idx]
+		candidates.remove_at(chosen_idx)
+		
+		var chosen_item: Dictionary = chosen.get("item", {})
+		if not chosen_item.is_empty():
+			selections.append(chosen_item)
+	
+	for item in selections:
 		_create_reward_card_ui(item)
 
 func _create_reward_card_ui(item: Dictionary):

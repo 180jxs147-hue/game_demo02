@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="RewardPoolData" load_steps=9 format=3 uid="uid://dkhq00o3fppmj"]
+
+[ext_resource type="Script" uid="uid://djybbfun8na35" path="res://Resources/RewardPoolData.gd" id="1"]
+[ext_resource type="Resource" uid="uid://ccrs53oj1bhbd" path="res://Resources/DataFiles/soldier.tres" id="2"]
+[ext_resource type="Resource" uid="uid://bwbtenllive4" path="res://Resources/DataFiles/archer.tres" id="3"]
+[ext_resource type="Resource" uid="uid://sg64dk33u0ae" path="res://Resources/DataFiles/shield.tres" id="4"]
+[ext_resource type="Resource" uid="uid://wnvb0locasxg" path="res://Resources/DataFiles/cavalry.tres" id="5"]
+[ext_resource type="Resource" uid="uid://di7a6p1bc0f2c" path="res://Resources/DataFiles/camp.tres" id="6"]
+[ext_resource type="Resource" uid="uid://jn3gfjnoevr5" path="res://Resources/DataFiles/catapult.tres" id="7"]
+[ext_resource type="Resource" uid="uid://b2ho72ardhrnj" path="res://Resources/DataFiles/quarter.tres" id="8"]
+
+[resource]
+script = ExtResource("1")
+pool_id = "generic_early"
+display_name = "通用前期池"
+entries = Array[Dictionary]([{
+"min_level": 1,
+"prob": 30.0,
+"tags": [],
+"unit": ExtResource("2")
+}, {
+"min_level": 1,
+"prob": 20.0,
+"tags": [],
+"unit": ExtResource("3")
+}, {
+"min_level": 1,
+"prob": 15.0,
+"tags": [],
+"unit": ExtResource("4")
+}, {
+"min_level": 1,
+"prob": 10.0,
+"tags": [],
+"unit": ExtResource("5")
+}, {
+"min_level": 1,
+"prob": 10.0,
+"tags": ["building"],
+"unit": ExtResource("6")
+}, {
+"min_level": 1,
+"prob": 5.0,
+"tags": ["siege"],
+"unit": ExtResource("7")
+}, {
+"min_level": 1,
+"prob": 10.0,
+"tags": ["building"],
+"unit": ExtResource("8")
+}])

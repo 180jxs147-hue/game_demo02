@@ -175,8 +175,15 @@ func setup(data: UnitData):
 
 	_apply_card_skin(data)
 	
-	if name_label:
-		name_label.text = data.name
+	if data.is_injured:
+		modulate = Color(1.0, 0.5, 0.5) # 变红
+		if name_label:
+			name_label.text = data.name + " (重伤)"
+	else:
+		modulate = Color.WHITE
+		if name_label:
+			name_label.text = data.name
+
 	if skill_label:
 		skill_label.text = ""
 		skill_label.visible = false

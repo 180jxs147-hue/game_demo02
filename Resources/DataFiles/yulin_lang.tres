@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://305j83uw7asa"]
 
-[ext_resource type="Texture2D" path="res://Resources/ImageFiles/yulin_lang.png" id="1_icon"]
-[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://6wnhnjywgsx6" path="res://Resources/ImageFiles/yulin_lang.png" id="1_icon"]
 
 [resource]
 script = ExtResource("1_data")
@@ -9,9 +9,7 @@ name = "羽林郎"
 icon = ExtResource("1_icon")
 rarity = "epic"
 civilization = "han"
-unit_class = "infantry"
 color = Color(0.74, 0.24, 0.18, 1)
-tags = Array[String]([])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
 max_hp = 28.0
 manpower_cost = 3.0

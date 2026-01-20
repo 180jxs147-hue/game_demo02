@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://dmqkrq7ays640"]
 
-[ext_resource type="Texture2D" path="res://Resources/ImageFiles/shesheng_shi.png" id="1_icon"]
-[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://bwbad5pbac0s6" path="res://Resources/ImageFiles/shesheng_shi.png" id="1_icon"]
 
 [resource]
 script = ExtResource("1_data")
@@ -12,7 +12,6 @@ civilization = "han"
 unit_class = "archer"
 color = Color(0.7, 0.24, 0.18, 1)
 tags = Array[String](["sniper"])
-grid_shape = Array[Vector2i]([Vector2i(0, 0)])
 max_hp = 16.0
 manpower_cost = 2.0
 cooldown = 1.6

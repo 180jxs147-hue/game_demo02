@@ -1,14 +1,14 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=12 format=3 uid="uid://bfrp46u6t7i8b"]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=17 format=3 uid="uid://bfrp46u6t7i8b"]
 
 [ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/xiang_yu.tres" id="3_xiangyu"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="4_pyrrhus"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/han_caiguan.tres" id="6_caiguan"]
+[ext_resource type="Resource" uid="uid://bxv7718qwb2i5" path="res://Resources/DataFiles/xiang_yu.tres" id="3_xiangyu"]
+[ext_resource type="Resource" uid="uid://d3ar1fu712kj8" path="res://Resources/DataFiles/Pyrrhus.tres" id="4_pyrrhus"]
+[ext_resource type="Resource" uid="uid://305j83uw7asa" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
+[ext_resource type="Resource" uid="uid://cq8f3un1sh778" path="res://Resources/DataFiles/han_caiguan.tres" id="6_caiguan"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/changshui_huqi.tres" id="7_changshui"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sanhe_qishi.tres" id="8_sanhe"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="9_shesheng"]
+[ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="9_shesheng"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
@@ -52,3 +52,4 @@ level_name = "终章 - 宿命终结"
 grid_width = 8
 grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5"), SubResource("UnitSpawn_6"), SubResource("UnitSpawn_7")])
+reward_pool_id = "generic_early"

@@ -265,6 +265,11 @@ func _update_health_visuals():
 func _on_death():
 	# 触发死亡状态机
 	current_hp = 0 # 确保数值为0
+	
+	# 受伤逻辑：被击败的单位进入受伤状态
+	if faction == Faction.FRIENDLY and data:
+		data.is_injured = true
+		
 	$StateChart.send_event("die")
 
 func _process(_delta):

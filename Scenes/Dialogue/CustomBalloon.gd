@@ -117,7 +117,17 @@ func _load_texture_any(path: String) -> Texture2D:
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	print("[CustomBalloon] _ready called")
+	
+	if not Engine.is_editor_hint():
+		get_tree().paused = true # 确保对话时暂停游戏（如果还没暂停）
+
 	balloon.hide()
+	
+	# 确保输入能穿透
+	if not responses_menu.response_template.has_theme_stylebox_override("normal"):
+		# 防止样式为空导致无法点击
+		pass
 	Engine.get_singleton("DialogueManager").mutated.connect(_on_mutated)
 
 	# If the responses menu doesn't have a next action set, use this one

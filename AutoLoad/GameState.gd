@@ -9,6 +9,7 @@ var selected_level_index: int = 0
 var current_rows: int = 4
 var current_cols: int = 4
 var slot_select_mode: String = "new"
+var skip_intro: bool = false
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"
@@ -23,6 +24,26 @@ func _save_path(i: int = -1) -> String:
 	return "user://savegame_slot_%d.cfg" % _slot(i)
 func _library_path(i: int = -1) -> String:
 	return "user://PlayerLibrary_slot_%d.tres" % _slot(i)
+
+# --- 恢复逻辑 ---
+func recover_all_injured_units():
+	var path = _library_path()
+	if not FileAccess.file_exists(path):
+		return # 没有存档，不做处理
+	
+	var lib = ResourceLoader.load(path) as CardLibrary
+	if not lib:
+		return
+		
+	var changed = false
+	for unit in lib.collected_cards:
+		if unit and unit.is_injured:
+			unit.is_injured = false
+			changed = true
+			
+	if changed:
+		ResourceSaver.save(lib, path)
+		print("All units recovered and saved.")
 
 # --- UI 样式常量与缓存 ---
 const UI_COLOR_BG_DARK = Color("1a1a1d")

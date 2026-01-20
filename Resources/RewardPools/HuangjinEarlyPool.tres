@@ -1,0 +1,35 @@
+[gd_resource type="Resource" script_class="RewardPoolData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Resources/RewardPoolData.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="2"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="3"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="4"]
+
+[resource]
+script = ExtResource("1")
+
+pool_id = "huangjin_early"
+display_name = "黄巾前期池"
+
+entries = [{
+	"unit": ExtResource("2"),
+	"prob": 20.0,
+	"min_level": 1,
+	"tags": []
+}, {
+	"unit": ExtResource("3"),
+	"prob": 20.0,
+	"min_level": 1,
+	"tags": ["support"]
+}, {
+	"unit": ExtResource("4"),
+	"prob": 35.0,
+	"min_level": 1,
+	"tags": []
+}, {
+	"unit": ExtResource("5"),
+	"prob": 25.0,
+	"min_level": 1,
+	"tags": []
+}]
+
