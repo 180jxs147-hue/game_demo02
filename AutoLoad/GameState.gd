@@ -175,17 +175,22 @@ const METASHOP_SAVE_PATH := "user://metashop.cfg"
 var meta_currency: int = 0
 var purchased_upgrades: Dictionary = {}
 
-func load_player_library() -> CardLibrary:
+func load_player_library(force_reload: bool = false) -> CardLibrary:
 	# 存档策略：
 	# - 优先加载 user:// 下的玩家存档（每台机器/每个用户独立）
 	# - 如果第一次运行或存档不存在，则回退到 res:// 的默认库
 	var lib: CardLibrary = null
 	var lib_path := _library_path()
+	
+	var cache_mode = ResourceLoader.CACHE_MODE_REUSE
+	if force_reload:
+		cache_mode = ResourceLoader.CACHE_MODE_REPLACE
+
 	if FileAccess.file_exists(lib_path):
-		lib = load(lib_path)
+		lib = ResourceLoader.load(lib_path, "", cache_mode)
 	
 	if not lib:
-		lib = load(DEFAULT_LIBRARY_PATH) as CardLibrary
+		lib = ResourceLoader.load(DEFAULT_LIBRARY_PATH, "", cache_mode) as CardLibrary
 		
 	# 如果库是空的（可能是默认库也没配置，或者新档），强制发放初始阵容
 	if lib and lib.collected_cards.is_empty():
@@ -304,7 +309,8 @@ func _add_initial_roster(library: CardLibrary):
 		if ResourceLoader.exists(path):
 			var unit = load(path)
 			if unit:
-				library.collected_cards.append(unit)
+				# 必须复制，否则会修改原始资源，导致新存档继承旧状态
+				library.collected_cards.append(unit.duplicate())
 
 func get_unit_database() -> UnitDatabase:
 	# 单位数据库用于：

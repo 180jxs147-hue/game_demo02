@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagSniper.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "sniper"
+name = "狙击"
+description = "距离越远伤害越高（每格约 +6%）。"

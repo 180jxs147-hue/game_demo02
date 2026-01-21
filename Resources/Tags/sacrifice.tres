@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagSacrifice.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "sacrifice"
+name = "牺牲"
+description = "队友阵亡时，冷却减少 30%（最低 0.2s）。"

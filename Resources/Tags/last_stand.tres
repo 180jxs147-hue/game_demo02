@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagLastStand.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "last_stand"
+name = "亡语"
+description = "阵亡时对随机敌人造成 300% 伤害。"

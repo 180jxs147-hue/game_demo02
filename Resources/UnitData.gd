@@ -20,6 +20,7 @@ class_name UnitData extends Resource
 @export var cooldown: float = 2.0
 @export var attack_damage: float = 10.0 # <--- 新增：攻击力
 @export var is_injured: bool = false # 是否受伤
+@export var charge_count: int = 0 # 冲锋次数：前 X 次攻击造成双倍伤害
 
 @export_group("Adjacency Bonuses")
 ## Adjacency Rules:

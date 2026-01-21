@@ -29,7 +29,17 @@ func update_info(data: UnitData):
 		
 		var tag_lines = []
 		for t in data.tags:
-			var t_desc = GameConst.TAG_DESCRIPTIONS.get(t, t)
+			var t_desc = ""
+			if TagManager:
+				t_desc = TagManager.get_tag_description(t)
+				# Format charge
+				if t == "charge" and "charge_count" in data:
+					if "%d" in t_desc:
+						t_desc = t_desc % data.charge_count
+			
+			if t_desc == "":
+				t_desc = GameConst.TAG_DESCRIPTIONS.get(t, t)
+				
 			tag_lines.append("• " + t_desc)
 		desc += "\n".join(tag_lines)
 	

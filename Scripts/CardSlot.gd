@@ -188,12 +188,31 @@ func setup(data: UnitData):
 	if skill_label:
 		skill_label.text = ""
 		skill_label.visible = false
+		var text_list = []
+		
+		# 1. 标签
 		if data.tags and not data.tags.is_empty():
 			for t in data.tags:
-				if GameConst.TAG_CN_NAMES.has(t):
-					skill_label.text = GameConst.TAG_CN_NAMES[t]
-					skill_label.visible = true
-					break
+				if t == "charge" and "charge_count" in data and data.charge_count > 0:
+					text_list.append("冲锋 %d" % data.charge_count)
+					continue
+
+				if TagManager:
+					var info = TagManager.get_tag_info(t)
+					if info:
+						text_list.append(info.name)
+					else:
+						# Fallback to old system or just ID
+						if GameConst.TAG_CN_NAMES.has(t):
+							text_list.append(GameConst.TAG_CN_NAMES[t])
+				else:
+					if GameConst.TAG_CN_NAMES.has(t):
+						text_list.append(GameConst.TAG_CN_NAMES[t])
+			
+		if text_list.size() > 0:
+			skill_label.text = " ".join(text_list)
+			skill_label.visible = true
+
 	if cost_value:
 		if data.manpower_cost < 0:
 			cost_value.text = "+%.1f" % absf(data.manpower_cost)

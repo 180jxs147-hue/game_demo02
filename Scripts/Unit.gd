@@ -29,6 +29,7 @@ var bonus_cooldown_flat: float = 0.0
 var visual_blocks: Array[ColorRect] = []
 var _processed_death_ids: Dictionary = {}
 var _last_stand_triggered: bool = false
+var current_charge_stacks: int = 0 # 剩余冲锋次数
 
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
@@ -52,6 +53,33 @@ var spawned_via_script: bool = false # 如果是代码生成的，默认不去�
 var _is_hovered: bool = false # 内部状态：是否被鼠标悬停
 
 var in_hand: bool = false
+
+var _cached_tag_defs: Array[TagDefinition] = []
+
+func _update_tag_defs():
+	_cached_tag_defs.clear()
+	if not data: return
+	if not TagManager: return
+	
+	# 1. Load explicit tags
+	if data.tags:
+		for t in data.tags:
+			var def = TagManager.get_tag_info(t)
+			if def:
+				_cached_tag_defs.append(def)
+
+	# 2. Auto-inject charge tag if needed (for backward compatibility)
+	if "charge_count" in data and data.charge_count > 0:
+		var has_charge = false
+		for t in data.tags:
+			if t == "charge":
+				has_charge = true
+				break
+		
+		if not has_charge:
+			var def = TagManager.get_tag_info("charge")
+			if def:
+				_cached_tag_defs.append(def)
 
 func set_bench_hidden(hidden: bool):
 	for block in visual_blocks:
@@ -115,6 +143,30 @@ func reset_stats():
 	_recalculate_stats()
 	if not BattleManager.is_battle_started:
 		current_hp = get_max_hp()
+		
+		# Tag init
+		for tag in _cached_tag_defs:
+			tag.on_battle_start(self)
+			
+		# Fallback/Default for charge if tag is missing but data has it?
+		# But we are unifying, so assume tag exists if "charge" is in tags.
+		# If charge is NOT in tags but charge_count > 0, we might have an issue.
+		# The previous code checked `if data and "charge_count" in data`.
+		# We should ensure "charge" tag is added to unit if charge_count > 0? 
+		# Or just rely on the "charge" tag being present in data.tags.
+		# User said "冲锋也应该被放在类似牺牲一类的标签中".
+		# So we assume units with charge_count also have "charge" tag.
+		# If not, we should probably add it in UnitData or ensure it's there.
+		
+		# For now, let's keep the hardcoded fallback IF the tag is missing?
+		# No, the goal is to unify. If the tag is missing, the effect is missing.
+		# But wait, I added "charge" tag definition, but did I add "charge" string to the unit's tags list?
+		# I haven't modified the UnitData resources to add "charge" to `tags` array yet!
+		# I need to do that.
+		
+		# Let's keep the hardcoded logic ONLY if tag logic fails?
+		# No, let's rely on tags. I will update UnitData files later.
+		pass
 
 func _ready():
 	var node = self
@@ -125,6 +177,8 @@ func _ready():
 		node = node.get_parent()
 		
 	if not data: return
+	
+	_update_tag_defs() # Load tags
 	
 	_recalculate_stats()
 	current_hp = get_max_hp()
@@ -406,28 +460,10 @@ func _attack():
 	if not manager:
 		return
 		
-	# 特性: 医者 (medic) - 治疗友军
-	if "medic" in data.tags:
-		# 贞德已改为光环效果，移除主动治疗逻辑
-		if data.name == "圣女贞德":
-			# 贞德的普通攻击逻辑（或者不攻击只加光环？暂时按普通攻击处理）
-			pass 
-		else:
-			# 其他医者保持原样
-			# 治疗量 = 攻击力
-			var heal_val = current_attack_damage
-			# 改为治疗受伤最重的友军
-			if manager.has_method("heal_lowest_hp_ally"):
-				manager.heal_lowest_hp_ally(heal_val, faction == Faction.FRIENDLY)
-			
-			_pop_text("Heal!")
-			# 消耗民力
-			if faction == Faction.FRIENDLY:
-				manager.modify_manpower(-data.manpower_cost)
-			else:
-				if manager.has_method("modify_enemy_manpower"):
-					manager.modify_enemy_manpower(-data.manpower_cost)
-			return
+	# 1. 攻击前置钩子 (如医者治疗)
+	for tag in _cached_tag_defs:
+		if tag.on_attack_start(self, manager):
+			return # 已接管攻击行为
 	
 	var dmg = current_attack_damage
 	var target = manager.find_target_for(self)
@@ -452,18 +488,9 @@ func _attack():
 	
 	# --------------------
 	
-	# 特性: 神射手 (sniper) - 距离目标越远伤害越高
-	if faction == Faction.FRIENDLY and "sniper" in data.tags:
-		var dist = 0.0
-		if target:
-			dist = abs(global_position.x - target.global_position.x)
-		else:
-			# 如果打基地，假设距离是到屏幕边缘
-			dist = abs(global_position.x - GameConst.BATTLE_FIELD_WIDTH)
-			
-		# 每 100 像素增加 10% 伤害
-		var bonus = (dist / 100.0) * 0.1
-		dmg *= (1.0 + bonus)
+	# 2. 伤害修正钩子 (如狙击、冲锋)
+	for tag in _cached_tag_defs:
+		dmg = tag.modify_damage(self, target, dmg)
 
 	if faction == Faction.FRIENDLY:
 		manager.modify_manpower(-data.manpower_cost)
@@ -482,6 +509,10 @@ func _attack():
 		else:
 			manager.deal_damage_to_enemy(dmg)
 		# _pop_text("Base!") # 移除旧的飘字
+		
+	# 3. 攻击后置钩子 (如扣除冲锋层数)
+	for tag in _cached_tag_defs:
+		tag.on_post_attack(self, target)
 
 # 绘制简单的攻击连线
 func _draw_attack_line(target_global_pos: Vector2):
@@ -550,14 +581,9 @@ func _trigger_last_stand():
 	if _last_stand_triggered: return
 	_last_stand_triggered = true
 	
-	if "last_stand" in data.tags and faction == Faction.FRIENDLY:
-		if battle_manager:
-			# 造成 300% 攻击力的伤害
-			var dmg = current_attack_damage * 3.0
-			# 改为对随机敌人造成伤害
-			if battle_manager.has_method("deal_damage_to_random_enemy"):
-				battle_manager.deal_damage_to_random_enemy(dmg, true)
-			_pop_text("BOOM!")
+	# Tag Hooks
+	for tag in _cached_tag_defs:
+		tag.on_death(self, battle_manager)
 
 func heal(amount: float):
 	if current_hp <= 0: return
@@ -578,12 +604,10 @@ func _on_ally_died(unit, _pos):
 	if _processed_death_ids.has(id):
 		return
 	_processed_death_ids[id] = true
-	if not timer.is_stopped():
-		if "sacrifice" in data.tags:
-			current_cooldown = max(0.2, current_cooldown * 0.7)
-			if timer.time_left > current_cooldown:
-				timer.start(current_cooldown)
-			status_label.modulate = Color.RED
+	
+	# Tag Hooks
+	for tag in _cached_tag_defs:
+		tag.on_ally_died(self, unit)
 
 # 辅助：构建视觉方块
 func _build_visuals():

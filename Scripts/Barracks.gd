@@ -129,7 +129,7 @@ func _refresh_tags():
 	var tags = _get_all_tags()
 	tag_list.clear()
 	for t in tags:
-		var cn_name = GameConst.TAG_CN_NAMES.get(t, t)
+		var cn_name = TagManager.get_tag_name(t)
 		tag_list.add_item(cn_name)
 		# 将原始 tag key 存入 metadata
 		tag_list.set_item_metadata(tag_list.get_item_count() - 1, t)
@@ -347,7 +347,7 @@ func _get_adjacency_desc(data: UnitData) -> String:
 			req_str = "周围所有友军"
 		elif rt == "tag":
 			# 尝试翻译 tag
-			var tag_name = GameConst.TAG_CN_NAMES.get(rv, rv)
+			var tag_name = TagManager.get_tag_name(rv)
 			req_str = "周围[%s]" % tag_name
 		elif rt == "class":
 			req_str = "周围[%s]" % rv
@@ -411,20 +411,27 @@ func _show_unit_detail(data: UnitData):
 	# 2. 标签/技能
 	tag_lines.append("[特性]")
 	for t in data.tags:
-		var desc = ""
-		# 特殊处理：贞德的医者标签
+		var t_name = TagManager.get_tag_name(t)
+		var t_desc = TagManager.get_tag_description(t)
+		
+		# 特殊处理：圣女贞德的医者标签
 		if data.name == "圣女贞德" and t == "medic":
-			desc = "医者(光环)：不再主动治疗，而是通过光环辅助队友。"
+			t_desc = "不再主动治疗，而是通过光环辅助队友。"
+		
+		# Format description if it has placeholders (like charge)
+		if t == "charge" and "charge_count" in data:
+			if "%d" in t_desc:
+				t_desc = t_desc % data.charge_count
+			elif "{X}" in t_desc:
+				t_desc = t_desc.replace("{X}", str(data.charge_count))
+		
+		if t_desc != "":
+			tag_lines.append("• %s：%s" % [t_name, t_desc])
 		else:
-			desc = GameConst.TAG_DESCRIPTIONS.get(t, "")
+			tag_lines.append("• %s" % t_name)
 
-		if desc == "":
-			var cn = GameConst.TAG_CN_NAMES.get(t, t)
-			tag_lines.append("• %s" % cn)
-		else:
-			tag_lines.append("• %s" % desc)
 	
-	# 3. 邻近加成
+	# 4. 邻近加成
 	var adj_text = _get_adjacency_desc(data)
 	if not adj_text.is_empty():
 		tag_lines.append("")

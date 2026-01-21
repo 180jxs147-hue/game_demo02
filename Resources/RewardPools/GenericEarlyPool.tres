@@ -28,20 +28,20 @@ entries = Array[Dictionary]([{
 "unit": ExtResource("4")
 }, {
 "min_level": 1,
-"prob": 5.0,
+"prob": 10.0,
 "tags": [],
 "unit": ExtResource("5")
 }, {
 "min_level": 1,
-"prob": 5.0,
+"prob": 10.0,
 "tags": ["building"],
 "unit": ExtResource("6")
 }, {
 "min_level": 1,
-"prob": 1000.0,
+"prob": 10.0,
 "type": "upgrade_row"
 }, {
 "min_level": 1,
-"prob": 1000.0,
+"prob": 10.0,
 "type": "upgrade_col"
 }])

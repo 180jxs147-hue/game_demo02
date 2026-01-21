@@ -574,18 +574,49 @@ func find_target_for(attacker: Node2D) -> Node2D:
 				min_dist = dist
 				best_target = enemy
 	
-	# 策略2: 如果本行没找到，寻找全局最近的 (跨行支援)
+	# 策略2: 如果本行没找到，寻找“距离最近的有存活敌人的行”里面，“血量最少”的人
 	if not best_target:
-		min_dist = INF # 重置
+		# 1. 收集所有有效敌人及其相关信息
+		var candidates = [] # Array of { unit, v_dist, hp, dist_sq }
+		
 		for enemy in target_container.get_children():
 			if not _is_valid_target(enemy): continue
 			
-			# 计算欧几里得距离 (不仅仅是 x 轴)
-			var dist = attacker.global_position.distance_to(enemy.global_position)
-			if dist < min_dist:
-				min_dist = dist
-				best_target = enemy
-				
+			# 计算垂直距离 (Vertical Distance)
+			# 即：攻击者所在行与敌人所在行的最小行距
+			var enemy_rows = _get_unit_occupied_rows(enemy)
+			var min_v_dist = 9999
+			
+			for my_r in my_rows:
+				for enemy_r in enemy_rows:
+					var diff = abs(my_r - enemy_r)
+					if diff < min_v_dist:
+						min_v_dist = diff
+			
+			# 收集信息
+			candidates.append({
+				"unit": enemy,
+				"v_dist": min_v_dist,
+				"hp": enemy.current_hp,
+				"dist_sq": attacker.global_position.distance_squared_to(enemy.global_position)
+			})
+			
+		# 2. 排序筛选
+		# 优先级: 
+		# 1. 行距最小 (v_dist) -> 也就是“最近的行”
+		# 2. 血量最少 (hp)
+		# 3. 物理距离最近 (dist_sq) ->作为同血量同行的兜底
+		
+		if candidates.size() > 0:
+			candidates.sort_custom(func(a, b):
+				if a.v_dist != b.v_dist:
+					return a.v_dist < b.v_dist
+				if not is_equal_approx(a.hp, b.hp):
+					return a.hp < b.hp
+				return a.dist_sq < b.dist_sq
+			)
+			best_target = candidates[0].unit
+
 	return best_target
 
 # --- 新增辅助战术函数 ---
@@ -722,14 +753,12 @@ func _end_battle(victory: bool):
 	battle_ended = true
 	is_battle_started = false
 	
-	# 保存玩家数据（包括伤势）
-	_save_library()
-	
 	if victory:
-		# 胜利：直接显示结算（奖励界面），点击下一关后再播放剧情
+		# 胜利：保存进度并显示结算
+		_save_library()
 		show_victory_screen()
 	else:
-		# 失败：直接显示结算
+		# 失败：不保存进度（允许重试），直接显示结算
 		get_tree().paused = true
 		_show_defeat_screen()
 
@@ -1282,6 +1311,10 @@ func _on_next_level_button_pressed():
 		_proceed_to_next_level_direct()
 
 func _on_retry_button_pressed():
+	# 重试时强制重载存档，丢弃当前战斗中的更改（如受伤）
+	if GameState:
+		GameState.load_player_library(true)
+		
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 
@@ -1586,7 +1619,6 @@ func _on_reward_selected(item: Dictionary):
 		# 必须复制一份，防止引用到已受伤的实例
 		var new_data = data.duplicate()
 		new_data.is_injured = false # 确保新获得的卡牌是健康的
-		new_data.current_hp = new_data.max_hp
 		
 		reward_name = new_data.name
 		# 添加到玩家库
