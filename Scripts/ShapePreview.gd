@@ -44,7 +44,7 @@ func _draw():
 	var icon: Texture2D = unit_data.icon
 	var has_icon := icon != null
 	var bounds := _get_shape_bounds(unit_data.grid_shape)
-	var target_aspect := bounds.size.x / maxf(1.0, bounds.size.y)
+	var target_aspect := 1.0 # Changed to 1.0 for per-block full icon
 	var crop_src := Rect2(0, 0, 1, 1)
 	if has_icon:
 		crop_src = _get_center_crop_src(icon, target_aspect)
@@ -52,13 +52,8 @@ func _draw():
 		var dest = Rect2(base_offset.x + off.x * cell_size, base_offset.y + off.y * cell_size, cell_size, cell_size)
 		draw_rect(dest.grow(-1.0), fill, true)
 		if has_icon:
-			var rel = Vector2(off.x - bounds.position.x, off.y - bounds.position.y)
-			var u_off := Vector2(rel.x / bounds.size.x, rel.y / bounds.size.y)
-			var u_scl := Vector2(1.0 / bounds.size.x, 1.0 / bounds.size.y)
-			var src_pos := crop_src.position + Vector2(u_off.x * crop_src.size.x, u_off.y * crop_src.size.y)
-			var src_size := Vector2(u_scl.x * crop_src.size.x, u_scl.y * crop_src.size.y)
-			var src_rect := Rect2(src_pos, src_size)
-			draw_texture_rect_region(icon, dest.grow(-1.0), src_rect, Color.WHITE)
+			# Use the full cropped icon for every block
+			draw_texture_rect_region(icon, dest.grow(-1.0), crop_src, Color.WHITE)
 		draw_rect(dest.grow(-1.0), border, false, 2.0)
 	
 	var anchor_rect = Rect2(base_offset.x, base_offset.y, cell_size, cell_size)

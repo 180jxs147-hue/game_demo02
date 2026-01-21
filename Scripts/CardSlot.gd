@@ -14,6 +14,7 @@ extends Panel
 @onready var type_pattern = $TypeDivider/Pattern
 @onready var civ_class_label = $NameRow/CivClassLabel
 @onready var skill_label = $SkillLabel
+@onready var stat_icons = $StatIcons
 
 @onready var cost_icon = $StatIcons/CostGroup/CostIcon
 @onready var cost_value = $StatIcons/CostGroup/CostValue
@@ -232,3 +233,42 @@ func setup_stacked(data: UnitData, count: int):
 	if count > 1:
 		count_label.visible = true
 		count_label.text = "x%d" % count
+
+func setup_upgrade(title: String, desc: String, icon_tex: Texture2D = null):
+	_unit_data = null
+	
+	if not is_node_ready(): return
+	
+	_apply_card_skin(null)
+	modulate = Color.WHITE
+	
+	if name_label:
+		name_label.text = title
+		
+	if skill_label:
+		skill_label.text = desc
+		skill_label.visible = true
+		
+	if civ_class_label:
+		civ_class_label.text = "特殊奖励"
+		
+	if stat_icons:
+		stat_icons.visible = false
+		
+	if footprint_preview:
+		footprint_preview.visible = false
+		
+	if rarity_badge:
+		rarity_badge.visible = false
+		
+	if count_label:
+		count_label.visible = false
+		
+	if icon_texture:
+		icon_texture.texture = icon_tex
+		
+	if type_divider:
+		type_divider.visible = true
+		type_divider.color = Color(0.8, 0.7, 0.2, 0.55) # Gold-ish
+		if type_pattern:
+			type_pattern.visible = false

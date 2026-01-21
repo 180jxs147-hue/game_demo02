@@ -1,42 +1,22 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=11 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=6 format=3]
 
 [ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="3_r334h"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="5_camp"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="4_c52in"]
 
-[sub_resource type="Resource" id="Resource_dr8vb"]
+[sub_resource type="Resource" id="Resource_yba0d"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_r334h")
-grid_pos = Vector2i(2, 0)
-
-[sub_resource type="Resource" id="Resource_c52in"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("3_r334h")
-grid_pos = Vector2i(2, 1)
+unit_data = ExtResource("4_c52in")
+grid_pos = Vector2i(3, 0)
 
 [sub_resource type="Resource" id="Resource_r334h"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_r334h")
-grid_pos = Vector2i(1, 0)
-
-[sub_resource type="Resource" id="Resource_evof0"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("3_r334h")
-grid_pos = Vector2i(1, 1)
-
-[sub_resource type="Resource" id="Resource_f25pu"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("5_camp")
-
-[sub_resource type="Resource" id="Resource_y0uxe"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("5_camp")
-grid_pos = Vector2i(0, 1)
+unit_data = ExtResource("4_c52in")
+grid_pos = Vector2i(3, 1)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_0_1"
 level_name = "序章 第 1 关 - 使命与净化测试"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_dr8vb"), SubResource("Resource_c52in"), SubResource("Resource_r334h"), SubResource("Resource_evof0"), SubResource("Resource_f25pu"), SubResource("Resource_y0uxe")])
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_yba0d"), SubResource("Resource_r334h")])
 reward_pool_id = "generic_early"

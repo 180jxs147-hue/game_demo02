@@ -174,36 +174,7 @@ func _ready():
 	if GridManager:
 		GridManager.playable_columns = final_cols
 		GridManager.playable_rows = final_rows
-	if GameState and player_library:
-		var has_caesar = false
-		for card in player_library.collected_cards:
-			if card and card.resource_path.ends_with("caesar.tres"):
-				has_caesar = true
-				break
-		
-		# 如果没有凯撒，添加凯撒
-		if not has_caesar:
-			var caesar = load("res://Resources/DataFiles/caesar.tres")
-			if caesar:
-				player_library.collected_cards.append(caesar)
-				GameState.save_player_library(player_library)
-				
-		# 3. 紧急修复：如果因为之前的 Bug 导致存档只剩凯撒，重新发放初始包
-		if player_library.collected_cards.size() <= 1 and has_caesar:
-			# 看起来被误清空了，补发初始包
-			var starters = [
-				"res://Resources/DataFiles/soldier.tres",
-				"res://Resources/DataFiles/soldier.tres",
-				"res://Resources/DataFiles/archer.tres",
-				"res://Resources/DataFiles/han_caiguan.tres",
-				"res://Resources/DataFiles/camp.tres",
-				"res://Resources/DataFiles/camp.tres"
-			]
-			for path in starters:
-				var unit = load(path)
-				if unit:
-					player_library.collected_cards.append(unit)
-			GameState.save_player_library(player_library)
+
 
 	if level:
 		if units_container:
@@ -1352,11 +1323,27 @@ func _show_rewards():
 			if reward_pool and not reward_pool.entries.is_empty():
 				used_pool = true
 				for entry in reward_pool.entries:
-					var unit: UnitData = entry.get("unit", null)
 					var prob: float = float(entry.get("prob", 0.0))
-					if unit and prob > 0.0:
-						var item = { "type": "unit", "data": unit }
-						candidates.append({ "item": item, "weight": prob })
+					if prob <= 0.0: continue
+					
+					var type = entry.get("type", "unit")
+					# 兼容旧配置：如果没有 type 且有 unit，认为是 unit
+					if not entry.has("type") and entry.has("unit"):
+						type = "unit"
+						
+					if type == "unit":
+						var unit: UnitData = entry.get("unit", null)
+						if unit:
+							var item = { "type": "unit", "data": unit }
+							candidates.append({ "item": item, "weight": prob })
+
+					elif type == "upgrade_row":
+						if GameState and GameState.current_rows < GameConst.MAP_ROWS:
+							candidates.append({ "item": { "type": "upgrade_row", "data": null }, "weight": prob })
+							
+					elif type == "upgrade_col":
+						if GameState and GameState.current_cols < GameConst.MAP_COLUMNS:
+							candidates.append({ "item": { "type": "upgrade_col", "data": null }, "weight": prob })
 	
 	# 2. 如果没配置池或池为空，退回到 UnitDatabase 均匀分布
 	if not used_pool:
@@ -1376,12 +1363,12 @@ func _show_rewards():
 			else:
 				print("DEBUG: Found null unit in database")
 	
-	# 3. 加入战线扩充选项，权重设为 1.0，行为与以前接近
-	if GameState:
-		if GameState.current_rows < GameConst.MAP_ROWS:
-			candidates.append({ "item": { "type": "upgrade_row", "data": null }, "weight": 1.0 })
-		if GameState.current_cols < GameConst.MAP_COLUMNS:
-			candidates.append({ "item": { "type": "upgrade_col", "data": null }, "weight": 1.0 })
+	# 3. 加入战线扩充选项 (已移至 RewardPool 配置中控制)
+	# if GameState:
+	# 	if GameState.current_rows < GameConst.MAP_ROWS:
+	# 		candidates.append({ "item": { "type": "upgrade_row", "data": null }, "weight": 1.0 })
+	# 	if GameState.current_cols < GameConst.MAP_COLUMNS:
+	# 		candidates.append({ "item": { "type": "upgrade_col", "data": null }, "weight": 1.0 })
 	
 	# 4. 按权重抽取最多 3 个不同奖励
 	var selections: Array = []
@@ -1451,7 +1438,89 @@ func _create_reward_card_ui(item: Dictionary):
 			reward_container.add_child(vbox)
 			return
 
-	# --- 其他类型（如战线扩充）保持原有样式 ---
+	# --- 其他类型（如战线扩充） ---
+	elif type == "upgrade_row" or type == "upgrade_col":
+		# 使用简单的白底黑字样式，不使用 CardSlot
+		var card = PanelContainer.new()
+		# 设置尺寸与 CardSlot 一致，保持排版整齐，或者稍小一点
+		card.custom_minimum_size = Vector2(280, 400)
+		
+		# 设置白底背景
+		var bg_style = StyleBoxFlat.new()
+		bg_style.bg_color = Color.WHITE
+		bg_style.border_width_left = 2
+		bg_style.border_width_top = 2
+		bg_style.border_width_right = 2
+		bg_style.border_width_bottom = 2
+		bg_style.border_color = Color.BLACK
+		bg_style.corner_radius_top_left = 8
+		bg_style.corner_radius_top_right = 8
+		bg_style.corner_radius_bottom_left = 8
+		bg_style.corner_radius_bottom_right = 8
+		card.add_theme_stylebox_override("panel", bg_style)
+		
+		var vbox = VBoxContainer.new()
+		vbox.add_theme_constant_override("separation", 20)
+		# 增加内边距
+		var margin_container = MarginContainer.new()
+		margin_container.add_theme_constant_override("margin_left", 20)
+		margin_container.add_theme_constant_override("margin_right", 20)
+		margin_container.add_theme_constant_override("margin_top", 40)
+		margin_container.add_theme_constant_override("margin_bottom", 40)
+		margin_container.add_child(vbox)
+		card.add_child(margin_container)
+		
+		var title_text = ""
+		var desc_text = ""
+		
+		if type == "upgrade_row":
+			title_text = "战线扩充 (行)"
+			desc_text = "战场容量 +1 行\n(横向扩展)"
+		elif type == "upgrade_col":
+			title_text = "战线扩充 (列)"
+			desc_text = "战场容量 +1 列\n(纵向扩展)"
+			
+		# 标题
+		var lbl_title = Label.new()
+		lbl_title.text = title_text
+		lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl_title.add_theme_color_override("font_color", Color.BLACK)
+		lbl_title.add_theme_font_size_override("font_size", 28)
+		lbl_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		vbox.add_child(lbl_title)
+		
+		# 分隔线
+		var sep = HSeparator.new()
+		sep.modulate = Color.BLACK 
+		vbox.add_child(sep)
+		
+		# 描述
+		var lbl_desc = Label.new()
+		lbl_desc.text = desc_text
+		lbl_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		lbl_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lbl_desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		lbl_desc.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2)) # 深灰色
+		lbl_desc.add_theme_font_size_override("font_size", 20)
+		vbox.add_child(lbl_desc)
+		
+		# 为了整体布局，我们需要将 Card 和 Button 放在一个垂直容器中
+		var wrapper_vbox = VBoxContainer.new()
+		wrapper_vbox.add_theme_constant_override("separation", 12)
+		wrapper_vbox.add_child(card)
+		
+		var btn = Button.new()
+		btn.text = "选择"
+		btn.custom_minimum_size = Vector2(0, 48)
+		if GameState:
+			GameState.apply_button_style(btn)
+		btn.pressed.connect(func(): _on_reward_selected(item))
+		wrapper_vbox.add_child(btn)
+		
+		reward_container.add_child(wrapper_vbox)
+		return
+
+	# --- 如果都不是，保持原有样式（如果有） ---
 	# 创建卡片容器
 	var card = PanelContainer.new()
 	card.custom_minimum_size = Vector2(140, 200)
@@ -1514,14 +1583,19 @@ func _on_reward_selected(item: Dictionary):
 	
 	if type == "unit":
 		var data = item["data"] as UnitData
-		reward_name = data.name
+		# 必须复制一份，防止引用到已受伤的实例
+		var new_data = data.duplicate()
+		new_data.is_injured = false # 确保新获得的卡牌是健康的
+		new_data.current_hp = new_data.max_hp
+		
+		reward_name = new_data.name
 		# 添加到玩家库
 		if player_library:
-			player_library.collected_cards.append(data)
+			player_library.collected_cards.append(new_data)
 			if GameState:
 				GameState.save_player_library(player_library)
 		# 立即添加到备战区显示
-		spawn_unit(data)
+		spawn_unit(new_data)
 				
 	elif type == "upgrade_row":
 		reward_name = "战线扩充(行)"

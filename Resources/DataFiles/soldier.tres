@@ -6,6 +6,7 @@
 script = ExtResource("1_data")
 name = "士兵"
 color = Color(0.5, 0.5, 0.5, 1)
-max_hp = 20.0
-attack_damage = 4.0
+max_hp = 10.0
+manpower_cost = 1.0
+attack_damage = 2.0
 story = "基础步兵，虽然单体弱小，但胜在廉价且守纪律。"

@@ -36,4 +36,12 @@ entries = Array[Dictionary]([{
 "prob": 25.0,
 "tags": [],
 "unit": ExtResource("6")
+}, {
+"min_level": 1,
+"prob": 1000.0,
+"type": "upgrade_row"
+}, {
+"min_level": 1,
+"prob": 1000.0,
+"type": "upgrade_col"
 }])

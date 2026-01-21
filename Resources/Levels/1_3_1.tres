@@ -7,7 +7,7 @@
 [ext_resource type="Resource" uid="uid://305j83uw7asa" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
 [ext_resource type="Resource" uid="uid://cq8f3un1sh778" path="res://Resources/DataFiles/han_caiguan.tres" id="6_caiguan"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/changshui_huqi.tres" id="7_changshui"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/sanhe_qishi.tres" id="8_sanhe"]
+[ext_resource type="Resource" uid="uid://dftd24kpmy2dq" path="res://Resources/DataFiles/sanhe_qishi.tres" id="8_sanhe"]
 [ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="9_shesheng"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]

@@ -1,16 +1,16 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://drv0q4pultwje"]
 
+[ext_resource type="Texture2D" uid="uid://daifps0qug0db" path="res://Resources/ImageFiles/kaser.png" id="1_8trfo"]
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
 script = ExtResource("1_data")
 name = "凯撒"
+icon = ExtResource("1_8trfo")
 civilization = "roman"
-unit_class = "infantry"
-color = Color(0.7, 0.6, 0.1, 1)
-tags = Array[String]([])
+color = Color(0.2314, 0.1059, 0.3529, 1)
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
-max_hp = 35.0
+max_hp = 30.0
 manpower_cost = 3.0
 cooldown = 1.8
 attack_damage = 6.0

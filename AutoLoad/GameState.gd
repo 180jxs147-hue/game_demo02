@@ -6,8 +6,8 @@ extends Node
 ## - user:// 下的资源用于“玩家存档”（每台机器/每个系统用户独立，可读写）
 
 var selected_level_index: int = 0
-var current_rows: int = 4
-var current_cols: int = 4
+var current_rows: int = 3
+var current_cols: int = 2
 var slot_select_mode: String = "new"
 var skip_intro: bool = false
 
@@ -242,18 +242,18 @@ func load_progress():
 	var err = config.load(_save_path())
 	if err == OK:
 		selected_level_index = config.get_value("progress", "level_index", 0)
-		current_rows = config.get_value("progress", "current_rows", 4)
-		current_cols = config.get_value("progress", "current_cols", 4)
+		current_rows = config.get_value("progress", "current_rows", 3)
+		current_cols = config.get_value("progress", "current_cols", 2)
 	else:
 		selected_level_index = 0
-		current_rows = 4
-		current_cols = 4
+		current_rows = 3
+		current_cols = 2
 
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。
 	selected_level_index = 0
-	current_rows = 4
-	current_cols = 4
+	current_rows = 3
+	current_cols = 2
 	save_progress() # 清空进度文件（当前槽位）
 	
 	var lib = load_player_library()
@@ -295,13 +295,8 @@ func get_bench_columns_bonus() -> int:
 func _add_initial_roster(library: CardLibrary):
 	# 发放初始阵容：士兵x2，弓箭手x1，长矛手x1
 	var starters = [
-		"res://Resources/DataFiles/soldier.tres",
-		"res://Resources/DataFiles/soldier.tres",
-		"res://Resources/DataFiles/archer.tres",
 		"res://Resources/DataFiles/han_caiguan.tres",
 		"res://Resources/DataFiles/camp.tres",
-		"res://Resources/DataFiles/camp.tres",
-		"res://Resources/DataFiles/caesar.tres"
 	]
 	if has_upgrade("start_card_junguo_bing"):
 		starters.append("res://Resources/DataFiles/junguo_bing.tres")

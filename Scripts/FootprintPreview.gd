@@ -59,7 +59,7 @@ func _draw():
 
 	var icon: Texture2D = unit_data.icon
 	var has_icon := icon != null
-	var target_aspect := float(w_cells) / maxf(1.0, float(h_cells))
+	var target_aspect := 1.0 # Changed to 1.0 for per-block full icon
 	var crop_src := Rect2(0, 0, 1, 1)
 	if has_icon:
 		crop_src = _get_center_crop_src(icon, target_aspect)
@@ -71,17 +71,8 @@ func _draw():
 		draw_rect(r.grow(-1.0), fill, true)
 		
 		if has_icon:
-			var rel_x := float(off.x - min_x)
-			var rel_y := float(off.y - min_y)
-			var u_off_x := rel_x / float(w_cells)
-			var u_off_y := rel_y / float(h_cells)
-			var u_scl_x := 1.0 / float(w_cells)
-			var u_scl_y := 1.0 / float(h_cells)
-			
-			var src_pos := crop_src.position + Vector2(u_off_x * crop_src.size.x, u_off_y * crop_src.size.y)
-			var src_size := Vector2(u_scl_x * crop_src.size.x, u_scl_y * crop_src.size.y)
-			var src_rect := Rect2(src_pos, src_size)
-			draw_texture_rect_region(icon, r.grow(-1.0), src_rect, Color.WHITE)
+			# Use the full cropped icon for every block
+			draw_texture_rect_region(icon, r.grow(-1.0), crop_src, Color.WHITE)
 			
 		draw_rect(r.grow(-1.0), border, false, 2.0)
 

@@ -53,7 +53,7 @@ func _build_visuals():
 		var th := float(unit_data.icon.get_height())
 		if tw > 0.0 and th > 0.0:
 			var icon_aspect: float = tw / th
-			var target_aspect: float = float(width_grids) / maxf(1.0, float(height_grids))
+			var target_aspect: float = 1.0 # Target is always a single square block
 			if icon_aspect > target_aspect:
 				var sub_w := target_aspect / icon_aspect
 				crop_uv_pos.x = (1.0 - sub_w) * 0.5
@@ -109,15 +109,8 @@ func _build_visuals():
 			mat.set_shader_parameter("use_icon", true)
 			mat.set_shader_parameter("icon_tex", unit_data.icon)
 			
-			var rel_x := int(pos.x) - min_x
-			var rel_y := int(pos.y) - min_y
-			var u_off = Vector2(float(rel_x) / float(width_grids), float(rel_y) / float(height_grids))
-			var u_scl = Vector2(1.0 / float(width_grids), 1.0 / float(height_grids))
-			u_off = crop_uv_pos + Vector2(u_off.x * crop_uv_size.x, u_off.y * crop_uv_size.y)
-			u_scl = Vector2(u_scl.x * crop_uv_size.x, u_scl.y * crop_uv_size.y)
-			
-			mat.set_shader_parameter("uv_offset", u_off)
-			mat.set_shader_parameter("uv_scale", u_scl)
+			mat.set_shader_parameter("uv_offset", crop_uv_pos)
+			mat.set_shader_parameter("uv_scale", crop_uv_size)
 		else:
 			mat.set_shader_parameter("use_icon", false)
 			

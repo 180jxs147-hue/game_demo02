@@ -1,46 +1,48 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=15 format=3 uid="uid://b5h6c5f6xxmi1"]
+[gd_resource type="Resource" script_class="LevelConfig" load_steps=13 format=3]
 
-[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" uid="uid://bxv7718qwb2i5" path="res://Resources/DataFiles/xiang_yu.tres" id="3_xiangyu"]
-[ext_resource type="Resource" uid="uid://dg76ebf7v7bur" path="res://Resources/DataFiles/sun_tzu.tres" id="4_sunwu"]
-[ext_resource type="Resource" uid="uid://305j83uw7asa" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
-[ext_resource type="Resource" uid="uid://cq8f3un1sh778" path="res://Resources/DataFiles/han_caiguan.tres" id="6_caiguan"]
+[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="4_yi370"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sanhe_qishi.tres" id="7_sanhe"]
-[ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="8_shesheng"]
 
-[sub_resource type="Resource" id="UnitSpawn_1"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("3_xiangyu")
-grid_pos = Vector2i(1, 1)
-
-[sub_resource type="Resource" id="UnitSpawn_2"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("4_sunwu")
-
-[sub_resource type="Resource" id="UnitSpawn_3"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("5_yulin")
-grid_pos = Vector2i(3, 0)
-
-[sub_resource type="Resource" id="UnitSpawn_4"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("6_caiguan")
-grid_pos = Vector2i(0, 2)
-
-[sub_resource type="Resource" id="UnitSpawn_5"]
+[sub_resource type="Resource" id="Resource_ehonj"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("7_sanhe")
-grid_pos = Vector2i(1, 0)
 
-[sub_resource type="Resource" id="UnitSpawn_6"]
+[sub_resource type="Resource" id="Resource_8u730"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("8_shesheng")
+unit_data = ExtResource("7_sanhe")
+grid_pos = Vector2i(0, 3)
+
+[sub_resource type="Resource" id="Resource_d12pp"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("5_yulin")
+grid_pos = Vector2i(0, 1)
+
+[sub_resource type="Resource" id="Resource_c4fvi"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_yi370")
+grid_pos = Vector2i(3, 0)
+
+[sub_resource type="Resource" id="Resource_1lj0c"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_yi370")
 grid_pos = Vector2i(3, 3)
+
+[sub_resource type="Resource" id="Resource_q154l"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_yi370")
+grid_pos = Vector2i(3, 1)
+
+[sub_resource type="Resource" id="Resource_pa6c6"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_yi370")
+grid_pos = Vector2i(3, 2)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_2_4"
 level_name = "黄巾线 第 4 关 - 广宗城下：皇甫嵩的疯狂"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_3"), SubResource("UnitSpawn_4"), SubResource("UnitSpawn_5"), SubResource("UnitSpawn_6")])
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_ehonj"), SubResource("Resource_8u730"), SubResource("Resource_d12pp"), SubResource("Resource_c4fvi"), SubResource("Resource_1lj0c"), SubResource("Resource_q154l"), SubResource("Resource_pa6c6")])
 reward_pool_id = "huangjin_early"
