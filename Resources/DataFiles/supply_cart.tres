@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/icon_cost.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "辎重车"
+icon = ExtResource("2_icon")
+rarity = "common"
+civilization = "neutral"
+unit_class = "equipment"
+color = Color(1, 1, 1, 1)
+tags = Array[String]([])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 100.0
+manpower_cost = 3.0
+cooldown = 5.0
+attack_damage = 0.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = [{
+"effect_stat": "max_hp",
+"effect_value": 50.0,
+"req_type": "all",
+"req_value": "",
+"type": "give"
+}]
+story = "装满补给的车辆，为前线提供持续的支持。"

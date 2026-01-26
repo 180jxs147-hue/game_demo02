@@ -5,6 +5,8 @@
 [resource]
 script = ExtResource("1_data")
 name = "项羽"
+icon = null
+rarity = "epic"
 civilization = "han"
 unit_class = "cavalry"
 color = Color(0.75, 0.15, 0.15, 1)
@@ -14,5 +16,9 @@ max_hp = 30.0
 manpower_cost = 5.0
 cooldown = 3.0
 attack_damage = 12.0
+defense = 1.0
+attack_range = 1
+is_injured = false
 charge_count = 5
+adjacency_rules = Array[Dictionary]([])
 story = "力拔山兮气盖世。即便战死，也会对敌人造成毁灭性打击。"

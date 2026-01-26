@@ -141,72 +141,127 @@ horizontal_alignment = 0
 clip_text = true
 mouse_filter = 2
 
-[node name="StatIcons" type="HBoxContainer" parent="."]
+[node name="StatGrid" type="GridContainer" parent="."]
 layout_mode = 0
 offset_left = 20.0
-offset_top = 350.0
+offset_top = 340.0
 offset_right = 260.0
-offset_bottom = 390.0
-theme_override_constants/separation = 22
-alignment = 1
+offset_bottom = 396.0
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 4
+columns = 3
 mouse_filter = 2
 
-[node name="CostGroup" type="HBoxContainer" parent="StatIcons"]
+[node name="HpGroup" type="HBoxContainer" parent="StatGrid"]
 layout_mode = 2
-theme_override_constants/separation = 6
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
 mouse_filter = 2
 
-[node name="CostIcon" type="TextureRect" parent="StatIcons/CostGroup"]
-custom_minimum_size = Vector2(28, 28)
+[node name="HpLabel" type="Label" parent="StatGrid/HpGroup"]
 layout_mode = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
+theme_override_colors/font_color = Color(0.2, 0.8, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "HP"
 
-[node name="CostValue" type="Label" parent="StatIcons/CostGroup"]
+[node name="HpValue" type="Label" parent="StatGrid/HpGroup"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
-theme_override_font_sizes/font_size = 20
-text = "0"
-mouse_filter = 2
+theme_override_font_sizes/font_size = 18
+text = "10"
 
-[node name="AtkGroup" type="HBoxContainer" parent="StatIcons"]
+[node name="DefGroup" type="HBoxContainer" parent="StatGrid"]
 layout_mode = 2
-theme_override_constants/separation = 6
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
 mouse_filter = 2
 
-[node name="AtkIcon" type="TextureRect" parent="StatIcons/AtkGroup"]
-custom_minimum_size = Vector2(28, 28)
+[node name="DefLabel" type="Label" parent="StatGrid/DefGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.2, 0.6, 0.8, 1)
+theme_override_font_sizes/font_size = 14
+text = "DF"
+
+[node name="DefValue" type="Label" parent="StatGrid/DefGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+text = "0"
+
+[node name="CostGroup" type="HBoxContainer" parent="StatGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+mouse_filter = 2
+
+[node name="CostIcon" type="TextureRect" parent="StatGrid/CostGroup"]
+custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="AtkValue" type="Label" parent="StatIcons/AtkGroup"]
+[node name="CostValue" type="Label" parent="StatGrid/CostGroup"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 18
 text = "0"
-mouse_filter = 2
 
-[node name="CdGroup" type="HBoxContainer" parent="StatIcons"]
+[node name="AtkGroup" type="HBoxContainer" parent="StatGrid"]
 layout_mode = 2
-theme_override_constants/separation = 6
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
 mouse_filter = 2
 
-[node name="CdIcon" type="TextureRect" parent="StatIcons/CdGroup"]
-custom_minimum_size = Vector2(28, 28)
+[node name="AtkIcon" type="TextureRect" parent="StatGrid/AtkGroup"]
+custom_minimum_size = Vector2(20, 20)
 layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="CdValue" type="Label" parent="StatIcons/CdGroup"]
+[node name="AtkValue" type="Label" parent="StatGrid/AtkGroup"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.85, 0.85, 0.85, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+text = "0"
+
+[node name="RngGroup" type="HBoxContainer" parent="StatGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+mouse_filter = 2
+
+[node name="RngLabel" type="Label" parent="StatGrid/RngGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.8, 0.6, 0.2, 1)
+theme_override_font_sizes/font_size = 14
+text = "RG"
+
+[node name="RngValue" type="Label" parent="StatGrid/RngGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 18
+text = "1"
+
+[node name="CdGroup" type="HBoxContainer" parent="StatGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 4
+mouse_filter = 2
+
+[node name="CdIcon" type="TextureRect" parent="StatGrid/CdGroup"]
+custom_minimum_size = Vector2(20, 20)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="CdValue" type="Label" parent="StatGrid/CdGroup"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.92, 0.92, 0.92, 1)
+theme_override_font_sizes/font_size = 18
 text = "0.0"
-mouse_filter = 2
 
 [node name="CountLabel" type="Label" parent="."]
 layout_mode = 1

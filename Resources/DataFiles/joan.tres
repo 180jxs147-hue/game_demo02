@@ -5,6 +5,8 @@
 [resource]
 script = ExtResource("1_data")
 name = "圣女贞德"
+icon = null
+rarity = "epic"
 civilization = "french"
 unit_class = "support"
 color = Color(0.2, 0.3, 0.8, 1)
@@ -14,6 +16,10 @@ max_hp = 25.0
 manpower_cost = 4.0
 cooldown = 3.0
 attack_damage = 3.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
 adjacency_rules = [{
 "effect_stat": "max_hp",
 "effect_value": 10.0,

@@ -5,7 +5,9 @@
 [resource]
 script = ExtResource("1_data")
 name = "投石车"
-rarity = "rare"
+icon = null
+rarity = "uncommon"
+civilization = "neutral"
 unit_class = "archer"
 color = Color(0.5, 0.5, 0.5, 1)
 tags = Array[String](["sniper"])
@@ -14,4 +16,9 @@ max_hp = 5.0
 manpower_cost = 4.0
 cooldown = 5.0
 attack_damage = 15.0
+defense = 0.0
+attack_range = 5
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
 story = "巨石飞过，城墙与意志一起碎裂。每一次装填，都是把未来投向远方。"

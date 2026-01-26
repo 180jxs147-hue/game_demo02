@@ -13,5 +13,6 @@ func modify_damage(unit, target, damage: float) -> float:
 	return damage
 
 func on_post_attack(unit, target):
+	# 只要攻击了就消耗层数，不管是否命中目标
 	if unit.current_charge_stacks > 0:
 		unit.current_charge_stacks -= 1

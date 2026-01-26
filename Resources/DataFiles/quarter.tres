@@ -5,6 +5,9 @@
 [resource]
 script = ExtResource("1_data")
 name = "军需官"
+icon = null
+rarity = "common"
+civilization = "neutral"
 unit_class = "support"
 color = Color(0.5, 0.5, 0.5, 1)
 tags = Array[String](["medic"])
@@ -13,4 +16,9 @@ max_hp = 5.0
 manpower_cost = -3.0
 cooldown = 2.0
 attack_damage = 2.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
 story = "不显于锋刃，却决定一支军队能走多远。营帐里有补给、医治、休整。"

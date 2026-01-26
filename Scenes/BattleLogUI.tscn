@@ -1,0 +1,35 @@
+[gd_scene load_steps=2 format=3 uid="uid://cx4x2q8n8w5y7"]
+
+[ext_resource type="Script" path="res://Scripts/BattleLogUI.gd" id="1_log"]
+
+[node name="BattleLogUI" type="PanelContainer"]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -400.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 320.0
+grow_horizontal = 0
+script = ExtResource("1_log")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="Header" type="HBoxContainer" parent="VBox"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="VBox/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "战斗日志"
+
+[node name="CloseButton" type="Button" parent="VBox/Header"]
+layout_mode = 2
+text = "X"
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+bbcode_enabled = true
+scroll_following = true

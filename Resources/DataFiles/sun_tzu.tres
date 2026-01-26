@@ -5,12 +5,20 @@
 [resource]
 script = ExtResource("1_data")
 name = "孙武"
+icon = null
+rarity = "epic"
 civilization = "han"
 unit_class = "support"
 color = Color(0.75, 0.15, 0.15, 1)
 tags = Array[String](["sacrifice"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
 max_hp = 15.0
 manpower_cost = 5.0
 cooldown = 1.0
 attack_damage = 4.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
 story = "兵者，国之大事。善于利用局势，将牺牲转化为胜机。"

@@ -29,7 +29,10 @@ class_name BattleManager extends Node2D
 @export var bench_columns: int = 8         ## 备战区每行显示的卡牌数列数
 
 # --- 内部引用 ---
+static var instance: BattleManager
 var unit_scene = preload("res://Scenes/Unit.tscn")
+var battle_log_ui_scene = preload("res://Scenes/BattleLogUI.tscn")
+var battle_log_ui_instance = null
 
 # --- 战斗参数 ---
 static var is_battle_started: bool = false
@@ -79,7 +82,52 @@ var current_enemy_rows: int = GameConst.MAP_ROWS
 # 当前关卡配置引用
 var current_level_config: LevelConfig
 
+func _exit_tree():
+	if instance == self:
+		instance = null
+
+func log_message(msg: String, color: Color = Color.WHITE):
+	if battle_log_ui_instance and battle_log_ui_instance.has_method("add_log"):
+		battle_log_ui_instance.add_log(msg, color)
+
 func _ready():
+	if instance == null:
+		instance = self
+	
+	# 初始化战斗日志UI
+	if battle_log_ui_scene:
+		battle_log_ui_instance = battle_log_ui_scene.instantiate()
+		# 添加到HUD层，确保在最上层显示
+		var hud = $CanvasLayer/HUD
+		if hud:
+			hud.add_child(battle_log_ui_instance)
+			
+			# 创建打开日志的按钮
+			var open_log_btn = Button.new()
+			open_log_btn.text = "战斗日志"
+			
+			# 使用锚点定位到右上角
+			open_log_btn.layout_mode = 1 # Anchors
+			open_log_btn.anchor_left = 1.0
+			open_log_btn.anchor_top = 0.0
+			open_log_btn.anchor_right = 1.0
+			open_log_btn.anchor_bottom = 0.0
+			
+			open_log_btn.offset_left = -120
+			open_log_btn.offset_top = 70
+			open_log_btn.offset_right = -20
+			open_log_btn.offset_bottom = 100
+			open_log_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+			
+			if GameState:
+				GameState.apply_button_style(open_log_btn)
+			
+			open_log_btn.pressed.connect(func(): 
+				if battle_log_ui_instance: 
+					battle_log_ui_instance.toggle()
+			)
+			hud.add_child(open_log_btn)
+	
 	_apply_theme()
 	_setup_bench_ui()
 	
@@ -453,7 +501,10 @@ func _debug_add_random_unit() -> UnitData:
 		preload("res://Resources/DataFiles/cavalry.tres"),
 		preload("res://Resources/DataFiles/catapult.tres"),
 		preload("res://Resources/DataFiles/shield.tres"),
-		preload("res://Resources/DataFiles/farmer.tres")
+		preload("res://Resources/DataFiles/farmer.tres"),
+		preload("res://Resources/DataFiles/war_drum.tres"),
+		preload("res://Resources/DataFiles/supply_cart.tres"),
+		preload("res://Resources/DataFiles/scout_tower.tres")
 	]
 	var data = random_datas.pick_random()
 	spawn_unit(data)
@@ -474,7 +525,10 @@ func _debug_add_card_to_library():
 		preload("res://Resources/DataFiles/cavalry.tres"),
 		preload("res://Resources/DataFiles/catapult.tres"),
 		preload("res://Resources/DataFiles/shield.tres"),
-		preload("res://Resources/DataFiles/farmer.tres")
+		preload("res://Resources/DataFiles/farmer.tres"),
+		preload("res://Resources/DataFiles/war_drum.tres"),
+		preload("res://Resources/DataFiles/supply_cart.tres"),
+		preload("res://Resources/DataFiles/scout_tower.tres")
 	]
 	var data = random_datas.pick_random()
 	
@@ -621,6 +675,58 @@ func find_target_for(attacker: Node2D) -> Node2D:
 
 # --- 新增辅助战术函数 ---
 
+# 检查攻击射程限制 (返回 true 表示可以攻击)
+func can_unit_attack(attacker: Node2D) -> bool:
+	if not "data" in attacker or not attacker.data:
+		return true # 没数据默认可以攻击
+		
+	var range_limit = attacker.data.attack_range
+	# 射程 1: 前方无队友; 2: 前方<1队友; N: 前方<N-1队友
+	# 即：allow if friends_in_front < range_limit
+	
+	# 确定我方阵营容器
+	var my_container = null
+	if attacker.faction == 0: # FRIENDLY
+		my_container = $Battlefield/FriendlyField/UnitsContainer
+	else:
+		my_container = $Battlefield/EnemyField/UnitsContainer
+		
+	if not my_container: return true
+	
+	var my_rows = _get_unit_occupied_rows(attacker)
+	var max_friends_in_front = 0
+	
+	# 遍历每一行，计算该行前方的友军数量
+	for r in my_rows:
+		var friends_in_this_row = 0
+		for friend in my_container.get_children():
+			if friend == attacker: continue
+			if not _is_valid_target(friend): continue # 只计算存活且已部署的
+			
+			var friend_rows = _get_unit_occupied_rows(friend)
+			if r in friend_rows:
+				# 检查是否在“前方”
+				# Friendly(0) 向右打(x变大)，Enemy(1) 向左打(x变小)
+				var is_in_front = false
+				if attacker.faction == 0:
+					if friend.global_position.x > attacker.global_position.x:
+						is_in_front = true
+				else:
+					if friend.global_position.x < attacker.global_position.x:
+						is_in_front = true
+				
+				if is_in_front:
+					friends_in_this_row += 1
+		
+		if friends_in_this_row > max_friends_in_front:
+			max_friends_in_front = friends_in_this_row
+			
+	# 如果前方阻挡数量 >= 射程，则无法攻击
+	if max_friends_in_front >= range_limit:
+		return false
+		
+	return true
+
 func heal_lowest_hp_ally(amount: float, is_friendly: bool):
 	var container = null
 	if is_friendly:
@@ -638,6 +744,10 @@ func heal_lowest_hp_ally(amount: float, is_friendly: bool):
 	
 	for unit in container.get_children():
 		if is_instance_valid(unit) and not unit.is_queued_for_deletion():
+			# Skip equipment
+			if "data" in unit and unit.data and unit.data.unit_class == "equipment":
+				continue
+				
 			if "current_hp" in unit and unit.current_hp > 0 and "data" in unit and unit.data:
 				# 必须是已受伤的
 				if unit.current_hp < unit.data.max_hp:
@@ -651,6 +761,9 @@ func heal_lowest_hp_ally(amount: float, is_friendly: bool):
 		if target.has_method("heal"):
 			target.heal(amount)
 		else:
+			var u_name = target.data.name if ("data" in target and target.data) else target.name
+			log_message("%s 恢复了 %.1f 生命" % [u_name, amount], Color.GREEN)
+			
 			target.current_hp = min(target.current_hp + amount, target.data.max_hp)
 			if target.has_method("_update_health_visuals"):
 				target._update_health_visuals()
@@ -681,6 +794,8 @@ func _is_valid_target(unit: Node2D) -> bool:
 	if unit.is_queued_for_deletion(): return false
 	if "is_deployed" in unit and not unit.is_deployed: return false
 	if "current_hp" in unit and unit.current_hp <= 0: return false
+	# 装备无法被选为目标
+	if "data" in unit and unit.data and unit.data.unit_class == "equipment": return false
 	return true
 
 func _get_unit_occupied_rows(unit: Node2D) -> Array:
@@ -703,10 +818,12 @@ func _get_unit_occupied_rows(unit: Node2D) -> Array:
 
 # 对敌人造成伤害 (新增)
 func deal_damage_to_enemy(_amount: float):
-	pass
+	log_message("敌方基地受到 %.1f 伤害" % _amount, Color.GREEN)
+	modify_enemy_manpower(-_amount)
 
 func deal_damage_to_army(_amount: float):
-	pass
+	log_message("我方阵线受到 %.1f 伤害" % _amount, Color.RED)
+	modify_manpower(-_amount)
 
 # 修改民力
 func modify_manpower(amount: float):
@@ -754,13 +871,61 @@ func _end_battle(victory: bool):
 	is_battle_started = false
 	
 	if victory:
-		# 胜利：保存进度并显示结算
+		# 胜利：保存进度
 		_save_library()
-		show_victory_screen()
+		
+		# 不直接显示结算界面，而是显示“完成战斗”按钮
+		# show_victory_screen()
+		_show_finish_battle_button()
 	else:
 		# 失败：不保存进度（允许重试），直接显示结算
 		get_tree().paused = true
 		_show_defeat_screen()
+
+func _show_finish_battle_button():
+	# 弹出飘字提示
+	log_message("战斗胜利！请点击右上角按钮进行结算。", Color("gold"))
+	
+	# 创建或显示“结算”按钮
+	# 复用 HUD，类似于 battle_log_ui_instance
+	var hud = $CanvasLayer/HUD
+	if not hud: return
+	
+	var btn_name = "FinishBattleButton"
+	var btn = hud.get_node_or_null(btn_name)
+	
+	if not btn:
+		btn = Button.new()
+		btn.name = btn_name
+		btn.text = "完成战斗"
+		
+		# 使用锚点定位到右上角下方
+		btn.layout_mode = 1 # Anchors
+		btn.anchor_left = 1.0
+		btn.anchor_top = 0.0
+		btn.anchor_right = 1.0
+		btn.anchor_bottom = 0.0
+		
+		# 位于 BattleLog 按钮 (70, 30) 下方
+		# BattleLog: top=70, height=30 -> bottom=100
+		btn.offset_left = -120
+		btn.offset_top = 110 
+		btn.offset_right = -20
+		btn.offset_bottom = 140
+		btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+		
+		if GameState:
+			GameState.apply_button_style(btn)
+			# 覆盖颜色以突显
+			btn.modulate = Color(1.2, 1.2, 0.8) 
+			
+		btn.pressed.connect(func():
+			btn.visible = false
+			show_victory_screen()
+		)
+		hud.add_child(btn)
+	
+	btn.visible = true
 
 static func get_dialogue_path_by_id(id: String) -> String:
 	var dialogue_path = ""

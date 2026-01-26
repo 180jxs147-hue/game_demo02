@@ -14,14 +14,17 @@ extends Panel
 @onready var type_pattern = $TypeDivider/Pattern
 @onready var civ_class_label = $NameRow/CivClassLabel
 @onready var skill_label = $SkillLabel
-@onready var stat_icons = $StatIcons
+@onready var stat_grid = $StatGrid
 
-@onready var cost_icon = $StatIcons/CostGroup/CostIcon
-@onready var cost_value = $StatIcons/CostGroup/CostValue
-@onready var atk_icon = $StatIcons/AtkGroup/AtkIcon
-@onready var atk_value = $StatIcons/AtkGroup/AtkValue
-@onready var cd_icon = $StatIcons/CdGroup/CdIcon
-@onready var cd_value = $StatIcons/CdGroup/CdValue
+@onready var hp_value = $StatGrid/HpGroup/HpValue
+@onready var def_value = $StatGrid/DefGroup/DefValue
+@onready var cost_icon = $StatGrid/CostGroup/CostIcon
+@onready var cost_value = $StatGrid/CostGroup/CostValue
+@onready var atk_icon = $StatGrid/AtkGroup/AtkIcon
+@onready var atk_value = $StatGrid/AtkGroup/AtkValue
+@onready var rng_value = $StatGrid/RngGroup/RngValue
+@onready var cd_icon = $StatGrid/CdGroup/CdIcon
+@onready var cd_value = $StatGrid/CdGroup/CdValue
 @onready var count_label = $CountLabel
 @onready var click_button = $ClickButton
 @onready var synergy_info_label = $SynergyInfoLabel
@@ -49,6 +52,7 @@ const PATTERN_BAR_PATHS := {
 }
 const RARITY_BADGE_PATHS := {
 	"common": "res://Assets/UI/Cards/rarity_common.png",
+	"uncommon": "res://Assets/UI/Cards/rarity_uncommon.png",
 	"rare": "res://Assets/UI/Cards/rarity_rare.png",
 	"epic": "res://Assets/UI/Cards/rarity_epic.png",
 	"legendary": "res://Assets/UI/Cards/rarity_legendary.png"
@@ -160,7 +164,7 @@ func _apply_card_skin(data: UnitData):
 	if civ_class_label:
 		if data:
 			var civ_map = {"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西", "huangjin": "黄巾"}
-			var cls_map = {"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "长柄", "civilian": "平民", "siege": "攻城"}
+			var cls_map = {"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "长柄", "civilian": "平民", "siege": "攻城", "equipment": "装备"}
 			var civ_str = civ_map.get(String(data.civilization).to_lower(), String(data.civilization))
 			var cls_str = cls_map.get(String(data.unit_class).to_lower(), String(data.unit_class))
 			civ_class_label.text = "%s %s" % [civ_str, cls_str]
@@ -208,11 +212,25 @@ func setup(data: UnitData):
 				else:
 					if GameConst.TAG_CN_NAMES.has(t):
 						text_list.append(GameConst.TAG_CN_NAMES[t])
+		
+		# 2. 防御与射程 (Moved to StatGrid)
+		# if "defense" in data and data.defense > 0:
+		# 	text_list.append("护甲 %.0f" % data.defense)
+		# 	
+		# if "attack_range" in data and data.attack_range > 1:
+		# 	text_list.append("射程 %d" % data.attack_range)
 			
 		if text_list.size() > 0:
 			skill_label.text = " ".join(text_list)
 			skill_label.visible = true
 
+	if hp_value:
+		hp_value.text = "%.0f" % data.max_hp
+	if def_value:
+		def_value.text = "%.0f" % data.defense
+	if rng_value:
+		rng_value.text = "%.1f" % data.attack_range
+		
 	if cost_value:
 		if data.manpower_cost < 0:
 			cost_value.text = "+%.1f" % absf(data.manpower_cost)
@@ -228,6 +246,18 @@ func setup(data: UnitData):
 		icon_texture.texture = data.icon
 	if footprint_preview and footprint_preview.has_method("set_unit_data"):
 		footprint_preview.set_unit_data(data)
+		
+	# 装备特殊处理：隐藏战斗属性
+	if data.unit_class == "equipment":
+		if hp_value and hp_value.get_parent(): hp_value.get_parent().visible = false
+		if def_value and def_value.get_parent(): def_value.get_parent().visible = false
+		if atk_value and atk_value.get_parent(): atk_value.get_parent().visible = false
+		if rng_value and rng_value.get_parent(): rng_value.get_parent().visible = false
+	else:
+		if hp_value and hp_value.get_parent(): hp_value.get_parent().visible = true
+		if def_value and def_value.get_parent(): def_value.get_parent().visible = true
+		if atk_value and atk_value.get_parent(): atk_value.get_parent().visible = true
+		if rng_value and rng_value.get_parent(): rng_value.get_parent().visible = true
 		
 	count_label.visible = false
 	
@@ -271,8 +301,8 @@ func setup_upgrade(title: String, desc: String, icon_tex: Texture2D = null):
 	if civ_class_label:
 		civ_class_label.text = "特殊奖励"
 		
-	if stat_icons:
-		stat_icons.visible = false
+	if stat_grid:
+		stat_grid.visible = false
 		
 	if footprint_preview:
 		footprint_preview.visible = false

@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Cards/icon_cd.png" id="2_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "哨塔"
+icon = ExtResource("2_icon")
+rarity = "common"
+civilization = "neutral"
+unit_class = "equipment"
+color = Color(1, 1, 1, 1)
+tags = Array[String]([])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 50.0
+manpower_cost = 2.0
+cooldown = 5.0
+attack_damage = 0.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = [{
+"effect_stat": "cooldown_speed",
+"effect_value": 0.2,
+"req_type": "all",
+"req_value": "",
+"type": "give"
+}]
+story = "高耸的哨塔能提供更好的视野，指挥部队更迅速地反应。"

@@ -43,6 +43,10 @@ var _current_tag: String = ""
 enum UnitTypeFilter { ALL, CONSUME, PRODUCE }
 var _selected_unit: UnitData
 
+# Sorting
+var sort_option_collected: OptionButton
+var sort_option_all: OptionButton
+
 func _ready():
 	# 图鉴数据有两部分来源：
 	# 1) 玩家存档库：决定“已收集”页显示哪些卡、各卡数量（user://PlayerLibrary.tres）
@@ -68,6 +72,46 @@ func _ready():
 	_update_columns()
 	_show_unit_detail(null)
 
+func _setup_sort_option(parent: Node) -> OptionButton:
+	var opt = OptionButton.new()
+	opt.add_item("名称 (A-Z)", 0)
+	opt.add_item("稀有度 (高到低)", 1)
+	opt.add_item("费用 (高到低)", 2)
+	opt.add_item("费用 (低到高)", 3)
+	parent.add_child(opt)
+	# 调整顺序：放在 TypeOptionButton 后面
+	parent.move_child(opt, parent.get_child_count() - 1)
+	return opt
+
+func _get_rarity_score(r: String) -> int:
+	match r:
+		"legendary": return 5
+		"epic": return 4
+		"rare": return 3
+		"uncommon": return 2
+		_: return 1
+
+func _sort_list(list: Array, sort_mode: int):
+	list.sort_custom(func(a, b):
+		var da = a if a is UnitData else a["data"]
+		var db = b if b is UnitData else b["data"]
+		
+		match sort_mode:
+			1: # Rarity Desc
+				var ra = _get_rarity_score(da.rarity)
+				var rb = _get_rarity_score(db.rarity)
+				if ra != rb: return ra > rb
+				return da.name < db.name
+			2: # Cost Desc
+				if da.manpower_cost != db.manpower_cost: return da.manpower_cost > db.manpower_cost
+				return da.name < db.name
+			3: # Cost Asc
+				if da.manpower_cost != db.manpower_cost: return da.manpower_cost < db.manpower_cost
+				return da.name < db.name
+			_: # Name
+				return da.name < db.name
+	)
+
 func _resolve_unit_data(data: UnitData) -> UnitData:
 	if not data:
 		return null
@@ -86,6 +130,11 @@ func _get_story_text(data: UnitData) -> String:
 func _setup_filters():
 	_setup_type_option(collected_type)
 	_setup_type_option(all_type)
+	
+	if collected_type:
+		sort_option_collected = _setup_sort_option(collected_type.get_parent())
+	if all_type:
+		sort_option_all = _setup_sort_option(all_type.get_parent())
 
 func _setup_type_option(option: OptionButton):
 	option.clear()
@@ -99,6 +148,12 @@ func _connect_signals():
 	all_search.text_changed.connect(func(_t): _refresh_all_units())
 	collected_type.item_selected.connect(func(_i): _refresh_collected())
 	all_type.item_selected.connect(func(_i): _refresh_all_units())
+	
+	if sort_option_collected:
+		sort_option_collected.item_selected.connect(func(_i): _refresh_collected())
+	if sort_option_all:
+		sort_option_all.item_selected.connect(func(_i): _refresh_all_units())
+		
 	tag_list.item_selected.connect(_on_tag_selected)
 
 func _refresh_all():
@@ -110,6 +165,12 @@ func _refresh_all():
 func _refresh_collected():
 	var entries = _get_stacked_collected()
 	var filtered = _filter_stacked_entries(entries, collected_search.text, collected_type.get_selected_id())
+	
+	if sort_option_collected:
+		_sort_list(filtered, sort_option_collected.get_selected_id())
+	else:
+		_sort_list(filtered, 0)
+		
 	_fill_grid_stacked(collected_grid, filtered)
 	if not filtered.is_empty():
 		_show_unit_detail(filtered[0]["data"])
@@ -119,6 +180,12 @@ func _refresh_collected():
 func _refresh_all_units():
 	var base = _get_all_units()
 	var filtered = _filter_units(base, all_search.text, all_type.get_selected_id(), "")
+	
+	if sort_option_all:
+		_sort_list(filtered, sort_option_all.get_selected_id())
+	else:
+		_sort_list(filtered, 0)
+		
 	_fill_grid(all_grid, filtered)
 	if not filtered.is_empty():
 		_show_unit_detail(filtered[0])
@@ -165,6 +232,10 @@ func _refresh_tag_units():
 		return
 	var base = _get_all_units()
 	var filtered = _filter_units(base, "", UnitTypeFilter.ALL, _current_tag)
+	
+	# Default sort by name for tags page
+	_sort_list(filtered, 0)
+	
 	_fill_grid(tags_grid, filtered)
 	if _selected_unit and filtered.has(_selected_unit):
 		_show_unit_detail(_selected_unit)
@@ -188,7 +259,6 @@ func _filter_units(units: Array[UnitData], query: String, type_filter_id: int, t
 		if type_filter_id == UnitTypeFilter.PRODUCE and u.manpower_cost >= 0:
 			continue
 		out.append(u)
-	out.sort_custom(func(a: UnitData, b: UnitData): return a.name < b.name)
 	return out
 
 func _fill_grid(grid: GridContainer, units: Array[UnitData]):
@@ -219,11 +289,6 @@ func _get_stacked_collected() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
 	for k in counts.keys():
 		out.append({"key": k, "data": rep[k], "count": counts[k]})
-	out.sort_custom(func(a: Dictionary, b: Dictionary):
-		var an: String = a["data"].name
-		var bn: String = b["data"].name
-		return an < bn
-	)
 	return out
 
 func _filter_stacked_entries(entries: Array[Dictionary], query: String, type_filter_id: int) -> Array[Dictionary]:
@@ -302,14 +367,24 @@ func _switch_page(page: String):
 	synergy_page.visible = page == "synergy"
 	if page == "collected":
 		page_header.text = "已收集"
+		if sort_option_collected: sort_option_collected.show()
+		if sort_option_all: sort_option_all.hide()
 	elif page == "all":
-		page_header.text = "全部兵种"
+		page_header.text = "全部卡牌"
+		if sort_option_all: sort_option_all.show()
+		if sort_option_collected: sort_option_collected.hide()
 	elif page == "tags":
-		page_header.text = "标签"
+		page_header.text = "标签分类"
+		if sort_option_all: sort_option_all.hide()
+		if sort_option_collected: sort_option_collected.hide()
 	elif page == "synergy":
 		page_header.text = "羁绊效果"
+		if sort_option_all: sort_option_all.hide()
+		if sort_option_collected: sort_option_collected.hide()
 	else:
 		page_header.text = ""
+		if sort_option_collected: sort_option_collected.hide()
+		if sort_option_all: sort_option_all.hide()
 
 func _on_tag_selected(index: int):
 	if index < 0 or index >= tag_list.get_item_count():
@@ -403,9 +478,20 @@ func _show_unit_detail(data: UnitData):
 	# 1. 基础属性
 	tag_lines.append("[基础属性]")
 	tag_lines.append("• 攻击力: %s" % data.attack_damage)
+	if "defense" in data and data.defense > 0:
+		tag_lines.append("• 防御力: %s" % data.defense)
+	
 	tag_lines.append("• 生命值: %s" % data.max_hp)
 	tag_lines.append("• 冷却: %s秒" % data.cooldown)
 	tag_lines.append("• 民力消耗: %s" % data.manpower_cost)
+	
+	if "attack_range" in data:
+		var r_desc = ""
+		if data.attack_range == 1: r_desc = "近战 (前方无友军)"
+		elif data.attack_range == 2: r_desc = "中距 (前方<1友军)"
+		elif data.attack_range >= 3: r_desc = "远距 (前方<%d友军)" % (data.attack_range - 1)
+		tag_lines.append("• 射程: %d - %s" % [data.attack_range, r_desc])
+	
 	tag_lines.append("")
 
 	# 2. 标签/技能

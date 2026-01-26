@@ -5,7 +5,9 @@
 [resource]
 script = ExtResource("1_data")
 name = "轻骑兵"
-rarity = "rare"
+icon = null
+rarity = "uncommon"
+civilization = "neutral"
 unit_class = "cavalry"
 color = Color(0.5, 0.5, 0.5, 1)
 tags = Array[String](["charge"])
@@ -14,5 +16,9 @@ max_hp = 10.0
 manpower_cost = 3.0
 cooldown = 1.5
 attack_damage = 6.0
+defense = 0.0
+attack_range = 1
+is_injured = false
 charge_count = 1
+adjacency_rules = Array[Dictionary]([])
 story = "快速机动部队，攻击频率高，适合突破。"

@@ -7,13 +7,20 @@
 script = ExtResource("1_data")
 name = "凯撒"
 icon = ExtResource("1_8trfo")
+rarity = "epic"
 civilization = "roman"
+unit_class = "infantry"
 color = Color(0.2314, 0.1059, 0.3529, 1)
+tags = Array[String]([])
 grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
 max_hp = 30.0
 manpower_cost = 3.0
 cooldown = 1.8
 attack_damage = 6.0
+defense = 1.0
+attack_range = 1
+is_injured = false
+charge_count = 0
 adjacency_rules = Array[Dictionary]([{
 "effect_stat": "attack_damage",
 "effect_value": 5.0,

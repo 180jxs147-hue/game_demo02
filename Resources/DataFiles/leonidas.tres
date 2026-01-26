@@ -5,6 +5,8 @@
 [resource]
 script = ExtResource("1_data")
 name = "列奥尼达"
+icon = null
+rarity = "epic"
 civilization = "greek"
 unit_class = "shield"
 color = Color(0.1, 0.5, 0.8, 1)
@@ -14,4 +16,9 @@ max_hp = 30.0
 manpower_cost = 4.0
 cooldown = 2.5
 attack_damage = 6.0
+defense = 2.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
 story = "斯巴达的怒吼。在温泉关，他们证明了防守也是一种进攻。"

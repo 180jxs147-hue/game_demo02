@@ -80,6 +80,13 @@ func _update_tag_defs():
 			var def = TagManager.get_tag_info("charge")
 			if def:
 				_cached_tag_defs.append(def)
+				
+	# 3. 蛾贼游骑的 "charge" 标签在 tags 里，但 data 也有 charge_count
+	# 上面的逻辑是如果 tag 有 charge 就加载了，如果没有但 count > 0 才补救
+	# 蛾贼游骑 tags=["sniper", "charge"], charge_count=1
+	# 所以 TagCharge 会被加载一次。
+	# 问题在于 TagCharge 需要 unit.current_charge_stacks 被初始化
+	# 这需要在 battle_started 时调用 on_battle_start
 
 func set_bench_hidden(hidden: bool):
 	for block in visual_blocks:
@@ -271,10 +278,28 @@ func _create_cooldown_bar(bounds: Rect2):
 	cooldown_bar.set_meta("max_width", bar_width)
 
 func take_damage(amount: float):
+	if data and data.unit_class == "equipment": return
+	if not BattleManager.is_battle_started: return # 战斗未开始或已结束，无敌
 	if not is_deployed: return # 备战区无敌
 	if current_hp <= 0: return
 	
-	current_hp -= amount
+	# 应用防御减免
+	var def = 0.0
+	if data:
+		def = data.defense
+	
+	var final_damage = max(1.0, amount - def)
+	
+	if BattleManager.instance:
+		var u_name = data.name if data else name
+		var msg = "%s 受到 %.1f 伤害" % [u_name, final_damage]
+		if def > 0:
+			msg += " (防御减免 %.1f)" % def
+		# 我方受伤显示橙色，敌方受伤显示白色
+		var log_color = Color.ORANGE if faction == Faction.FRIENDLY else Color.WHITE
+		BattleManager.instance.log_message(msg, log_color)
+	
+	current_hp -= final_damage
 	_update_health_visuals()
 	
 	# 受击闪烁
@@ -319,6 +344,10 @@ func _update_health_visuals():
 func _on_death():
 	# 触发死亡状态机
 	current_hp = 0 # 确保数值为0
+	
+	if BattleManager.instance:
+		var u_name = data.name if data else name
+		BattleManager.instance.log_message("%s 阵亡" % u_name, Color.GRAY)
 	
 	# 受伤逻辑：被击败的单位进入受伤状态
 	if faction == Faction.FRIENDLY and data:
@@ -381,18 +410,30 @@ func _process(_delta):
 
 # 状态 1: 进入冷却
 func _on_cooldown_entered():
+	if not BattleManager.is_battle_started:
+		return
+		
 	# status_label.text = "CD..." # 移除文字
 	timer.start(current_cooldown)
 
 # Timer 跑完了 -> 告诉状态机 "CD结束了"
 func _on_timer_timeout():
+	if not BattleManager.is_battle_started:
+		return
 	state_chart.send_event("cd_finished")
 
 # 状态 2: 准备就绪 (判定民力)
 func _on_ready_entered():
+	if not BattleManager.is_battle_started:
+		return
 	_check_condition()
 
 func _check_condition():
+	if not BattleManager.is_battle_started:
+		return
+	if not is_deployed:
+		return
+		
 	# A. 产出类单位
 	if data.manpower_cost < 0:
 		state_chart.send_event("act")
@@ -414,14 +455,20 @@ func _check_condition():
 			can_act = true # Fallback
 			
 	if can_act:
-		state_chart.send_event("act")
+		if BattleManager.is_battle_started:
+			state_chart.send_event("act")
 	else:
 		# 缺气，等待 0.5s 后重试 (停留在 Ready 状态)
 		status_label.text = "缺气"
-		get_tree().create_timer(0.5).timeout.connect(_check_condition)
+		if BattleManager.is_battle_started:
+			get_tree().create_timer(0.5).timeout.connect(_check_condition)
 
 # 状态 3: 执行动作
 func _on_action_entered():
+	if not BattleManager.is_battle_started:
+		# 如果动作还没开始就结束了，尝试回到冷却或直接停止
+		return
+		
 	if data.manpower_cost < 0:
 		_produce()
 	else:
@@ -456,9 +503,14 @@ func _produce():
 	_pop_text("+%.1f" % amount)
 
 func _attack():
+	if data and data.unit_class == "equipment": return
 	var manager = battle_manager
-	if not manager:
-		return
+	if not manager: return
+	
+	# 0. 检查射程/攻击条件
+	if manager.has_method("can_unit_attack"):
+		if not manager.can_unit_attack(self):
+			return # 无法攻击（被阻挡），跳过本次攻击
 		
 	# 1. 攻击前置钩子 (如医者治疗)
 	for tag in _cached_tag_defs:
@@ -499,14 +551,26 @@ func _attack():
 			manager.modify_enemy_manpower(-data.manpower_cost)
 		
 	if target:
+		if BattleManager.instance:
+			var u_name = data.name if data else name
+			var t_name = target.data.name if (target.get("data") and target.data) else target.name
+			BattleManager.instance.log_message("%s 攻击 %s" % [u_name, t_name], Color.LIGHT_BLUE)
+
 		if target.has_method("take_damage"):
 			target.take_damage(dmg)
 			# _pop_text("ATK!") # 移除旧的飘字
 	else:
 		# 没有单位目标，攻击基地
+		var u_name = data.name if data else name
 		if faction == Faction.ENEMY:
+			if BattleManager.instance:
+				# 敌人攻击我方 -> 攻击我方基地
+				BattleManager.instance.log_message("%s 攻击我方基地" % u_name, Color.RED)
 			manager.deal_damage_to_army(dmg)
 		else:
+			if BattleManager.instance:
+				# 我方攻击敌人 -> 攻击敌方基地
+				BattleManager.instance.log_message("%s 攻击敌方基地" % u_name, Color.GREEN)
 			manager.deal_damage_to_enemy(dmg)
 		# _pop_text("Base!") # 移除旧的飘字
 		
@@ -536,6 +600,12 @@ func _draw_attack_line(target_global_pos: Vector2):
 
 func start_battle():
 	if not is_deployed: return # <--- 加锁
+	
+	# 初始化 Tag 状态
+	for tag in _cached_tag_defs:
+		if tag.has_method("on_battle_start"):
+			tag.on_battle_start(self)
+			
 	state_chart.send_event("battle_started")
 
 func reset_state():
@@ -587,6 +657,11 @@ func _trigger_last_stand():
 
 func heal(amount: float):
 	if current_hp <= 0: return
+	
+	if BattleManager.instance:
+		var u_name = data.name if data else name
+		BattleManager.instance.log_message("%s 恢复了 %.1f 生命" % [u_name, amount], Color.GREEN)
+	
 	current_hp = min(current_hp + amount, get_max_hp())
 	_update_health_visuals()
 	

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="UnitDatabase" load_steps=28 format=3]
+[gd_resource type="Resource" script_class="UnitDatabase" load_steps=31 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitDatabase.gd" id="1_db"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="2_pyrrhus"]
@@ -26,10 +26,13 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/changshui_huqi.tres" id="25_changshui"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="26_shesheng"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/yulin_lang.tres" id="27_yulin"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/war_drum.tres" id="28_drum"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/supply_cart.tres" id="29_cart"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/scout_tower.tres" id="30_tower"]
 
 [resource]
 script = ExtResource("1_db")
-units = Array[Resource]([ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp")])
+units = Array[Resource]([ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp"), ExtResource("28_drum"), ExtResource("29_cart"), ExtResource("30_tower")])
 story_by_path = {
 "res://Resources/DataFiles/camp.tres": "军中休憩之所，亦是补给流转的核心。\n源源不断地提供支持，是持久战的关键。",
 "res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",

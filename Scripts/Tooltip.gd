@@ -10,7 +10,17 @@ func update_info(data: UnitData):
 		%CostLabel.text = "消耗: %.1f" % cost_val
 		%CostLabel.modulate = Color(1, 0.8, 0.2) # Yellow
 		 
-	%StatsLabel.text = "生命: %.0f  攻击: %.0f  冷却: %.1fs" % [data.max_hp, data.attack_damage, data.cooldown]
+	var stats_text = "生命: %.0f  攻击: %.0f  冷却: %.1fs" % [data.max_hp, data.attack_damage, data.cooldown]
+	
+	if "defense" in data and data.defense > 0:
+		stats_text += "\n防御: %.0f" % data.defense
+		
+	if "attack_range" in data:
+		var r_desc = "近战"
+		if data.attack_range >= 2: r_desc = "射程%d" % data.attack_range
+		stats_text += "  %s" % r_desc
+		
+	%StatsLabel.text = stats_text
 	
 	# 显示文明和兵种
 	var civ_map = { "han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西" }
