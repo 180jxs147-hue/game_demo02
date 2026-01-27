@@ -5,5 +5,8 @@ Player01: 这不是愤怒，这是纯粹的腐化。我必须净化他们。
 Player01: (战斗胜利后) 混沌残留物…它正在污染这片土地。 
 Player01: 如果放任不管，它会像瘟疫一样蔓延。 
 Player01: 我必须找到源头。 
-do start_level_id("1_0_2")
+
+do set_shop_pool_for_next_camp("generic_shop")
+do enter_camp_before_level("1_0_2")
+# do start_level_id("1_0_2")
 => END

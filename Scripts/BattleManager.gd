@@ -99,6 +99,7 @@ func set_shop_pool_for_next_camp(pool_id: String):
 		GameState.set_next_shop_pool(pool_id)
 
 func _ready():
+	print("BattleManager: _ready started")
 	if instance == null:
 		instance = self
 	
@@ -210,13 +211,21 @@ func _ready():
 	# 检查是否需要自动播放关卡剧情（从营地返回时）
 	if GameState and "next_level_id_from_camp" in GameState and GameState.next_level_id_from_camp != "":
 		var id = GameState.next_level_id_from_camp
-		print("[BattleManager] Auto-playing intro for level: ", id)
+		print("BattleManager: Found next_level_id_from_camp: ", id)
 		# 清除标记防止重复
 		GameState.next_level_id_from_camp = ""
-		# 延迟一帧调用以确保 _ready 完成
-		get_tree().create_timer(0.1).timeout.connect(func():
-			play_level_intro(id)
-		)
+		# 如果需要跳过（例如上一段剧情已经作为该关的引子），则不再播放
+		if not GameState.skip_intro:
+			print("[BattleManager] Auto-playing intro for level: ", id)
+			# 延迟一帧调用以确保 _ready 完成
+			get_tree().create_timer(0.1).timeout.connect(func():
+				play_level_intro(id)
+			)
+		else:
+			print("BattleManager: skip_intro is true. Skipping intro for: ", id)
+			GameState.skip_intro = false
+	else:
+		print("BattleManager: No next_level_id_from_camp found or it is empty.")
 	
 	if GameState:
 		final_cols = GameState.current_cols
@@ -1067,6 +1076,10 @@ func _proceed_to_next_level_direct():
 		var current_idx = level_database.get_index_by_id(current_level_config.level_id)
 		if current_idx != -1 and current_idx + 1 < level_database.levels.size():
 			start_level(current_idx + 1)
+		else:
+			# 没有下一关，回到主菜单 (Demo 结束)
+			get_tree().paused = false
+			get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 # 供对话调用的接口
 func show_victory_screen():
@@ -1661,7 +1674,11 @@ func _create_reward_card_ui(item: Dictionary):
 			
 			# Add "Sell" button
 			var btn_sell = Button.new()
-			btn_sell.text = "折现 (+3 军资)"
+			var sell_price = 1
+			if GameState and data:
+				sell_price = GameState.get_card_sell_price(data.rarity)
+			btn_sell.text = "折现 (+%d 军资)" % sell_price
+			
 			btn_sell.custom_minimum_size = Vector2(0, 36)
 			if GameState:
 				GameState.apply_button_style(btn_sell)
@@ -1815,10 +1832,19 @@ func _create_reward_card_ui(item: Dictionary):
 
 func _on_reward_sold(item: Dictionary):
 	# 折现逻辑
-	var reward_name = "军资 x3"
+	var reward_name = "军资"
+	var sell_value = 1
+	
+	var type = item.get("type", "unit")
+	if type == "unit":
+		var data = item.get("data")
+		if data and data is UnitData:
+			if GameState:
+				sell_value = GameState.get_card_sell_price(data.rarity)
+			reward_name = "军资 x%d" % sell_value
 	
 	if GameState:
-		GameState.add_run_gold(3)
+		GameState.add_run_gold(sell_value)
 		
 	# 隐藏奖励界面
 	reward_container.visible = false
@@ -1891,19 +1917,9 @@ func _show_camp_button():
 			for c in conns:
 				next_level_button.pressed.disconnect(c.callable)
 			
-			# 检查当前关卡是否允许进入营地
-			var can_enter_camp = true
-			if current_level_config:
-				can_enter_camp = current_level_config.allow_camp
-			
-			if can_enter_camp:
-				next_level_button.text = "前往营地"
-				next_level_button.pressed.connect(func():
-					_go_to_camp()
-				)
-			else:
-				next_level_button.text = "下一关"
-				next_level_button.pressed.connect(_on_next_level_button_pressed)
+			# 统一只显示“下一关”，取消自动进营地的逻辑
+			next_level_button.text = "下一关"
+			next_level_button.pressed.connect(_on_next_level_button_pressed)
 				
 			next_level_button.visible = true
 		else:
@@ -1913,14 +1929,6 @@ func _show_camp_button():
 func _grant_random_reward() -> UnitData:
 	# 保留此函数以防万一，但逻辑已转移
 	return null
-
-func _go_to_camp():
-	# 切换到营地场景
-	# 为了保持 BattleManager 的状态（或者不保持？如果 Camp 是独立场景）
-	# 如果 Camp 是独立场景，BattleManager 会被销毁。
-	# 下一次战斗需要重新加载 BattleManager。
-	# 这通常是可以的，因为 BattleManager 主要负责单场战斗。
-	get_tree().change_scene_to_file("res://Scenes/CampShop.tscn")
 
 func _spawn_enemy(spawn: UnitSpawn, map_cols: int = -1, map_rows: int = -1):
 	# 生成敌方单位并直接部署到敌军网格。

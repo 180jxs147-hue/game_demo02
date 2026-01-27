@@ -72,13 +72,20 @@ func _load_shop_config():
 		current_base_card_cost = COST_CARD_BASE
 
 func _ready():
+	print("CampShop: _ready called")
+	get_tree().paused = false # Ensure game is not paused from previous state (e.g. Dialogue)
 	_load_shop_config()
 	_refresh_ui()
 	_refresh_hospital()
 	_refresh_shop(true) # Initial refresh (free or auto)
 	
 	if next_level_btn:
+		print("CampShop: Connecting NextLevelBtn")
+		if next_level_btn.is_connected("pressed", _on_next_level_pressed):
+			next_level_btn.pressed.disconnect(_on_next_level_pressed)
 		next_level_btn.pressed.connect(_on_next_level_pressed)
+	else:
+		push_error("CampShop: NextLevelBtn not found!")
 		
 	if btn_refresh:
 		btn_refresh.pressed.connect(_on_refresh_shop_pressed)
@@ -193,7 +200,10 @@ func _refresh_shop(free: bool = false):
 			var picked = _pick_weighted(current_shop_pool.entries)
 			if picked and picked.has("unit"):
 				var unit = picked.get("unit")
-				var cost = picked.get("cost", current_base_card_cost)
+				# If ShopPool entry has specific cost, use it; otherwise use rarity based price
+				var cost = picked.get("cost", -1)
+				if cost < 0:
+					cost = GameState.get_card_buy_price(unit.rarity)
 				generated_cards.append({ "unit": unit, "cost": cost })
 	else:
 		# Random 3 cards (Fallback)
@@ -201,7 +211,8 @@ func _refresh_shop(free: bool = false):
 		if db and not db.units.is_empty(): 
 			for i in range(3):
 				var card = db.units.pick_random()
-				generated_cards.append({ "unit": card, "cost": current_base_card_cost })
+				var cost = GameState.get_card_buy_price(card.rarity)
+				generated_cards.append({ "unit": card, "cost": cost })
 	
 	for card_info in generated_cards:
 		var card = card_info.unit
@@ -260,23 +271,31 @@ func _on_refresh_shop_pressed():
 	_refresh_shop(false)
 
 func _on_next_level_pressed():
+	print("CampShop: Next Level Pressed")
 	# 检查是否有挂起的目标关卡（从剧情跳转过来的情况）
 	var target_level_id = ""
+	var is_from_dialogue = false
 	if GameState.next_level_id_from_camp != "":
 		target_level_id = GameState.next_level_id_from_camp
+		is_from_dialogue = true
+		print("CampShop: Using next_level_id_from_camp: ", target_level_id)
 	else:
 		# 正常流程：当前关卡的下一关
 		var level_db = GameState.get_level_database()
-		if not level_db: return
+		if not level_db: 
+			print("CampShop: No level database")
+			return
 		
 		var current_idx = GameState.selected_level_index
 		var next_idx = current_idx + 1
+		print("CampShop: Calculating next level. Current: ", current_idx, " Next: ", next_idx)
 		
 		if next_idx < level_db.levels.size():
 			var next_level_data = level_db.levels[next_idx]
 			target_level_id = next_level_data.level_id
 			# 设置 pending ID 以便 BattleManager 播放剧情
 			GameState.next_level_id_from_camp = target_level_id
+			print("CampShop: Calculated next level ID: ", target_level_id)
 	
 	if target_level_id != "":
 		# 更新 GameState 索引，确保加载正确的环境
@@ -286,10 +305,20 @@ func _on_next_level_pressed():
 			if idx != -1:
 				GameState.selected_level_index = idx
 				GameState.save_progress()
+				print("CampShop: Saved progress. Selected Index: ", idx)
 		
+		# 如果是从剧情跳转过来的（例如 1-0-2 -> Camp -> 1-0-2），
+		# 我们希望跳过该关卡的 Intro（因为已经播过了）。
+		# 强制设置 skip_intro = true，防止因存档或其他原因丢失标记。
+		if is_from_dialogue:
+			GameState.skip_intro = true
+			print("CampShop: Forcing skip_intro = true for pending level")
+		
+		print("CampShop: Changing scene to Battle.tscn")
 		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 	else:
 		# Game Over / Win
+		print("CampShop: No target level (Win/Game Over). To MainMenu.")
 		get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 func start_level_id(id: String):

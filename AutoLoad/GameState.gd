@@ -15,8 +15,43 @@ const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"
 const UNIT_DATABASE_PATH := "res://Resources/UnitDatabase.tres"
 const LEVEL_DATABASE_PATH := "res://Resources/EnemyLevels.tres"
+const GAME_CONFIG_PATH := "res://Resources/GameConfig.tres"
 const SAVE_GAME_PATH := "user://savegame.cfg"
 var current_slot: int = 1
+
+# Caches for price configuration
+var _rarity_buy_prices: Dictionary = {}
+var _rarity_sell_prices: Dictionary = {}
+
+func _ready():
+	_load_price_config()
+	load_all()
+	# Optional: Apply initial prestige if starting fresh
+	var config_res = load(GAME_CONFIG_PATH) as GameConfig
+	if config_res and config_res.initial_prestige > 0 and meta_currency == 0:
+		meta_currency = config_res.initial_prestige
+		save_meta()
+
+func _load_price_config():
+	var config_res = load(GAME_CONFIG_PATH) as GameConfig
+	if config_res:
+		_rarity_buy_prices = config_res.rarity_buy_prices
+		_rarity_sell_prices = config_res.rarity_sell_prices
+	else:
+		# Fallback defaults if config missing
+		_rarity_buy_prices = {
+			"common": 3, "uncommon": 5, "rare": 8, "epic": 12, "legendary": 20
+		}
+		_rarity_sell_prices = {
+			"common": 1, "uncommon": 2, "rare": 4, "epic": 6, "legendary": 10
+		}
+
+func get_card_buy_price(rarity: String) -> int:
+	return _rarity_buy_prices.get(rarity.to_lower(), 3)
+
+func get_card_sell_price(rarity: String) -> int:
+	return _rarity_sell_prices.get(rarity.to_lower(), 1)
+
 func _slot(i: int = -1) -> int:
 	var s = current_slot if i < 0 else i
 	return clamp(s, 1, 3)
@@ -181,9 +216,12 @@ var run_gold: int = 0
 var run_manpower_bonus: int = 0
 var next_level_id_from_camp: String = ""
 var next_shop_pool_id: String = ""
-
+	
 func enter_camp_then_level(level_id: String):
+	print("GameState: enter_camp_then_level called with ", level_id)
 	next_level_id_from_camp = level_id
+	skip_intro = true
+	get_tree().paused = false # Safety unpause
 	get_tree().change_scene_to_file("res://Scenes/CampShop.tscn")
 
 func set_next_shop_pool(pool_id: String):
@@ -302,10 +340,20 @@ func load_progress():
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。
 	selected_level_index = 0
-	current_rows = 3
-	current_cols = 2
-	run_gold = 0
-	run_manpower_bonus = 0
+	
+	# Load GameConfig for initial values
+	var config_res = load(GAME_CONFIG_PATH) as GameConfig
+	if config_res:
+		current_rows = config_res.initial_grid_rows
+		current_cols = config_res.initial_grid_cols
+		run_gold = config_res.initial_gold
+		run_manpower_bonus = config_res.initial_manpower_bonus
+	else:
+		current_rows = 3
+		current_cols = 2
+		run_gold = 0
+		run_manpower_bonus = 0
+		
 	next_level_id_from_camp = ""
 	save_progress() # 清空进度文件（当前槽位）
 	
@@ -346,19 +394,31 @@ func get_bench_columns_bonus() -> int:
 	return 1 if has_upgrade("bench_columns_plus_1") else 0
 
 func _add_initial_roster(library: CardLibrary):
-	# 发放初始阵容：士兵x2，弓箭手x1，长矛手x1
-	var starters = [
-		"res://Resources/DataFiles/han_caiguan.tres",
-		"res://Resources/DataFiles/camp.tres",
-	]
+	# 发放初始阵容
+	var config_res = load(GAME_CONFIG_PATH) as GameConfig
+	
+	if config_res and not config_res.initial_cards.is_empty():
+		for card_data in config_res.initial_cards:
+			if card_data:
+				library.collected_cards.append(card_data.duplicate())
+	else:
+		# Fallback to hardcoded if config is missing or empty
+		var starters = [
+			"res://Resources/DataFiles/han_caiguan.tres",
+			"res://Resources/DataFiles/camp.tres",
+		]
+		for path in starters:
+			if ResourceLoader.exists(path):
+				var unit = load(path)
+				if unit:
+					library.collected_cards.append(unit.duplicate())
+
+	# Meta upgrades (append extra)
 	if has_upgrade("start_card_junguo_bing"):
-		starters.append("res://Resources/DataFiles/junguo_bing.tres")
-	for path in starters:
-		if ResourceLoader.exists(path):
-			var unit = load(path)
-			if unit:
-				# 必须复制，否则会修改原始资源，导致新存档继承旧状态
-				library.collected_cards.append(unit.duplicate())
+		var p = "res://Resources/DataFiles/junguo_bing.tres"
+		if ResourceLoader.exists(p):
+			var u = load(p)
+			if u: library.collected_cards.append(u.duplicate())
 
 func get_unit_database() -> UnitDatabase:
 	# 单位数据库用于：

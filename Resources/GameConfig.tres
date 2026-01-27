@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="GameConfig" load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://Resources/GameConfig.gd" id="1_script"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/han_caiguan.tres" id="2_han"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="3_camp"]
+
+[resource]
+script = ExtResource("1_script")
+initial_gold = 20
+initial_manpower_bonus = 0
+initial_prestige = 0
+initial_grid_rows = 3
+initial_grid_cols = 2
+initial_cards = Array[Resource]([ExtResource("2_han"), ExtResource("3_camp")])
