@@ -31,12 +31,4 @@ entries = [{
 	"min_level": 1,
 	"tags": [],
 	"type": "unit"
-}, {
-	"prob": 1000.0,
-	"min_level": 1,
-	"type": "upgrade_row"
-}, {
-	"prob": 1000.0,
-	"min_level": 1,
-	"type": "upgrade_col"
 }]

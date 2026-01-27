@@ -49,7 +49,7 @@ func _try_buy(key: String, cost: int):
 
 func _refresh():
 	if GameState:
-		currency_label.text = "军资: %d" % GameState.get_meta_currency()
+		currency_label.text = "威望: %d" % GameState.get_meta_currency()
 		if u1_buy:
 			u1_buy.disabled = GameState.has_upgrade("start_card_junguo_bing")
 			u1_buy.text = "已购买" if u1_buy.disabled else "购买"

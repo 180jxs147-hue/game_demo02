@@ -20,3 +20,7 @@ level_id = "1_0_1"
 level_name = "序章 第 1 关 - 使命与净化测试"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_yba0d"), SubResource("Resource_r334h")])
 reward_pool_id = "generic_early"
+grid_width = 4
+grid_height = 4
+position_offset = Vector2(0, 0)
+allow_camp = false

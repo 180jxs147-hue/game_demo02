@@ -1,0 +1,41 @@
+[gd_resource type="Resource" script_class="ShopPoolData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Resources/ShopPoolData.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="2"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="3"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="4"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/catapult.tres" id="5"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/quarter.tres" id="6"]
+
+[resource]
+script = ExtResource("1")
+pool_id = "generic_shop"
+display_name = "通用商店"
+refresh_cost = 1
+base_card_cost = 3
+entries = Array[Dictionary]([{
+"min_level": 1,
+"prob": 30.0,
+"tags": [],
+"unit": ExtResource("2")
+}, {
+"min_level": 1,
+"prob": 20.0,
+"tags": [],
+"unit": ExtResource("3")
+}, {
+"min_level": 1,
+"prob": 20.0,
+"tags": [],
+"unit": ExtResource("4")
+}, {
+"min_level": 1,
+"prob": 10.0,
+"tags": [],
+"unit": ExtResource("5")
+}, {
+"min_level": 1,
+"prob": 10.0,
+"tags": ["building"],
+"unit": ExtResource("6")
+}])

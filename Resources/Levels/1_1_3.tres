@@ -27,3 +27,5 @@ grid_width = 9
 grid_height = 6
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_5")])
 reward_pool_id = "han_early"
+position_offset = Vector2(0, 0)
+allow_camp = true

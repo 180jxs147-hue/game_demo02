@@ -90,6 +90,14 @@ func log_message(msg: String, color: Color = Color.WHITE):
 	if battle_log_ui_instance and battle_log_ui_instance.has_method("add_log"):
 		battle_log_ui_instance.add_log(msg, color)
 
+func enter_camp_before_level(level_id: String):
+	if GameState and GameState.has_method("enter_camp_then_level"):
+		GameState.enter_camp_then_level(level_id)
+
+func set_shop_pool_for_next_camp(pool_id: String):
+	if GameState and GameState.has_method("set_next_shop_pool"):
+		GameState.set_next_shop_pool(pool_id)
+
 func _ready():
 	if instance == null:
 		instance = self
@@ -199,6 +207,17 @@ func _ready():
 	var final_cols = GameConst.MAP_COLUMNS
 	var final_rows = GameConst.MAP_ROWS
 	
+	# 检查是否需要自动播放关卡剧情（从营地返回时）
+	if GameState and "next_level_id_from_camp" in GameState and GameState.next_level_id_from_camp != "":
+		var id = GameState.next_level_id_from_camp
+		print("[BattleManager] Auto-playing intro for level: ", id)
+		# 清除标记防止重复
+		GameState.next_level_id_from_camp = ""
+		# 延迟一帧调用以确保 _ready 完成
+		get_tree().create_timer(0.1).timeout.connect(func():
+			play_level_intro(id)
+		)
+	
 	if GameState:
 		final_cols = GameState.current_cols
 		final_rows = GameState.current_rows
@@ -289,6 +308,11 @@ func start_level(index: int):
 	_enemy_occupied.clear()
 	
 	# 2. 设置数值
+	max_manpower = 50.0 # 默认值
+	if GameState:
+		max_manpower += GameState.get_run_manpower_bonus()
+	
+	current_manpower = max_manpower
 	
 	# 3. 调整格子大小 (分别设置)
 	# 玩家格子大小：只受 GameState 影响
@@ -483,7 +507,9 @@ func start_intro_dialogue():
 	if level_index != 0:
 		return
 
-	var resource = load("res://Dialogues/level1.dialogue")
+	# 使用 1_0_1.dialogue 而不是 level1.dialogue，以便统一管理
+	var dialogue_path = BattleManager.get_dialogue_path_by_id("1_0_1")
+	var resource = load(dialogue_path)
 	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
 	if resource and balloon_scene:
 		# 传入 [self] 以便在对话中调用 start_level
@@ -1057,7 +1083,7 @@ func show_victory_screen():
 	# 发放局外成长货币
 	if GameState and GameState.has_method("add_meta_currency"):
 		GameState.add_meta_currency(1)
-		reward_text += "\n获得军资：+1"
+		reward_text += "\n获得威望：+1"
 	
 	# 1. 弹出三选一奖励
 	_show_rewards()
@@ -1633,6 +1659,18 @@ func _create_reward_card_ui(item: Dictionary):
 			btn.pressed.connect(func(): _on_reward_selected(item))
 			vbox.add_child(btn)
 			
+			# Add "Sell" button
+			var btn_sell = Button.new()
+			btn_sell.text = "折现 (+3 军资)"
+			btn_sell.custom_minimum_size = Vector2(0, 36)
+			if GameState:
+				GameState.apply_button_style(btn_sell)
+				# Make it look different, maybe distinct color
+				btn_sell.modulate = Color(1.0, 0.8, 0.4)
+				
+			btn_sell.pressed.connect(func(): _on_reward_sold(item))
+			vbox.add_child(btn_sell)
+			
 			reward_container.add_child(vbox)
 			return
 
@@ -1775,6 +1813,27 @@ func _create_reward_card_ui(item: Dictionary):
 	
 	reward_container.add_child(card)
 
+func _on_reward_sold(item: Dictionary):
+	# 折现逻辑
+	var reward_name = "军资 x3"
+	
+	if GameState:
+		GameState.add_run_gold(3)
+		
+	# 隐藏奖励界面
+	reward_container.visible = false
+	
+	# 更新文本提示
+	if result_detail_label:
+		result_detail_label.text += "\n\n已选择: %s" % reward_name
+		
+	# 无论是否有下一关，都先进入营地
+	# 如果是最后一关，可能也允许进营地看看？或者直接结束？
+	# 逻辑：Battle -> Camp -> Next Level
+	# 我们需要在这里修改流程，不直接显示 Next Level Button，而是显示 "前往营地"
+	
+	_show_camp_button()
+
 func _on_reward_selected(item: Dictionary):
 	var type = item.get("type", "unit")
 	var reward_name = ""
@@ -1813,9 +1872,11 @@ func _on_reward_selected(item: Dictionary):
 	if result_detail_label:
 		result_detail_label.text += "\n\n已选择: %s" % reward_name
 		
-	# 显示下一关按钮 (如果有关卡)
+	_show_camp_button()
+
+func _show_camp_button():
+	# 检查是否还有下一关，决定是去营地还是直接结束
 	var has_next = false
-	
 	var current_idx = -1
 	if level_database and current_level_config:
 		current_idx = level_database.get_index_by_id(current_level_config.level_id)
@@ -1824,11 +1885,42 @@ func _on_reward_selected(item: Dictionary):
 		has_next = true
 	
 	if next_level_button:
-		next_level_button.visible = has_next
+		if has_next:
+			# 断开旧连接
+			var conns = next_level_button.pressed.get_connections()
+			for c in conns:
+				next_level_button.pressed.disconnect(c.callable)
+			
+			# 检查当前关卡是否允许进入营地
+			var can_enter_camp = true
+			if current_level_config:
+				can_enter_camp = current_level_config.allow_camp
+			
+			if can_enter_camp:
+				next_level_button.text = "前往营地"
+				next_level_button.pressed.connect(func():
+					_go_to_camp()
+				)
+			else:
+				next_level_button.text = "下一关"
+				next_level_button.pressed.connect(_on_next_level_button_pressed)
+				
+			next_level_button.visible = true
+		else:
+			# 通关了
+			next_level_button.visible = false
 
 func _grant_random_reward() -> UnitData:
 	# 保留此函数以防万一，但逻辑已转移
 	return null
+
+func _go_to_camp():
+	# 切换到营地场景
+	# 为了保持 BattleManager 的状态（或者不保持？如果 Camp 是独立场景）
+	# 如果 Camp 是独立场景，BattleManager 会被销毁。
+	# 下一次战斗需要重新加载 BattleManager。
+	# 这通常是可以的，因为 BattleManager 主要负责单场战斗。
+	get_tree().change_scene_to_file("res://Scenes/CampShop.tscn")
 
 func _spawn_enemy(spawn: UnitSpawn, map_cols: int = -1, map_rows: int = -1):
 	# 生成敌方单位并直接部署到敌军网格。

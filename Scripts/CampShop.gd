@@ -1,0 +1,308 @@
+extends Control
+
+@onready var gold_label = $Header/GoldLabel
+@onready var next_level_btn = $Header/NextLevelBtn
+
+# Infrastructure
+@onready var btn_expand_rows = $Content/Infrastructure/Grid/ExpandRowsBtn
+@onready var btn_expand_cols = $Content/Infrastructure/Grid/ExpandColsBtn
+@onready var btn_max_manpower = $Content/Infrastructure/Grid/MaxManpowerBtn
+
+# Hospital
+@onready var hospital_container = $Content/Hospital/Scroll/VBox
+var hospital_slot_scene = preload("res://Scenes/CardSlot.tscn")
+
+# Recruitment
+@onready var shop_container = $Content/Recruitment/ShopContainer
+@onready var btn_refresh = $Content/Recruitment/Header/RefreshBtn
+var shop_cards: Array[UnitData] = []
+var shop_card_scene = preload("res://Scenes/CardSlot.tscn")
+var balloon_scene = preload("res://Scenes/Dialogue/CustomBalloon.tscn")
+
+const COST_EXPAND_ROWS = 10
+const COST_EXPAND_COLS = 10
+const COST_MAX_MANPOWER = 5
+const COST_HEAL = 2
+const COST_REFRESH = 1
+const COST_CARD_BASE = 3
+
+var current_shop_pool = null
+var current_refresh_cost = COST_REFRESH
+var current_base_card_cost = COST_CARD_BASE
+
+func _load_shop_config():
+	if not GameState: return
+	var level_db = GameState.get_level_database()
+	if not level_db: return
+	
+	var config_to_use = null
+	var shop_pool_id_to_use = ""
+
+	# Priority 1: Explicit override from story/dialogue
+	if "next_shop_pool_id" in GameState and GameState.next_shop_pool_id != "":
+		shop_pool_id_to_use = GameState.next_shop_pool_id
+		# Clear it so it doesn't persist forever, unless that's desired.
+		# For now, let's clear it to act as a one-time override.
+		GameState.next_shop_pool_id = ""
+	
+	if shop_pool_id_to_use == "":
+		# Priority 2: Pending level (from story) -> Current level (post-battle)
+		if GameState.next_level_id_from_camp != "":
+			var idx = level_db.get_index_by_id(GameState.next_level_id_from_camp)
+			if idx != -1:
+				config_to_use = level_db.get_level(idx)
+		
+		if not config_to_use:
+			var idx = GameState.selected_level_index
+			config_to_use = level_db.get_level(idx)
+		
+		if config_to_use and "shop_pool_id" in config_to_use:
+			shop_pool_id_to_use = config_to_use.shop_pool_id
+
+	if shop_pool_id_to_use != "":
+		var shop_db = load("res://Resources/ShopPoolDatabase.tres")
+		if shop_db:
+			current_shop_pool = shop_db.get_pool_by_id(shop_pool_id_to_use)
+
+	if current_shop_pool:
+		current_refresh_cost = current_shop_pool.refresh_cost
+		current_base_card_cost = current_shop_pool.base_card_cost
+	else:
+		current_refresh_cost = COST_REFRESH
+		current_base_card_cost = COST_CARD_BASE
+
+func _ready():
+	_load_shop_config()
+	_refresh_ui()
+	_refresh_hospital()
+	_refresh_shop(true) # Initial refresh (free or auto)
+	
+	if next_level_btn:
+		next_level_btn.pressed.connect(_on_next_level_pressed)
+		
+	if btn_refresh:
+		btn_refresh.pressed.connect(_on_refresh_shop_pressed)
+		
+	if btn_expand_rows:
+		btn_expand_rows.pressed.connect(func(): _try_upgrade("rows", COST_EXPAND_ROWS))
+	if btn_expand_cols:
+		btn_expand_cols.pressed.connect(func(): _try_upgrade("cols", COST_EXPAND_COLS))
+	if btn_max_manpower:
+		btn_max_manpower.pressed.connect(func(): _try_upgrade("manpower", COST_MAX_MANPOWER))
+
+func _refresh_ui():
+	if not GameState: return
+	gold_label.text = "当前军资: %d" % GameState.get_run_gold()
+	
+	# Update buttons state
+	if btn_expand_rows:
+		btn_expand_rows.text = "扩充军阵(行)\n消耗: %d" % COST_EXPAND_ROWS
+		btn_expand_rows.disabled = GameState.get_run_gold() < COST_EXPAND_ROWS or GameState.current_rows >= GameConst.MAP_ROWS
+	
+	if btn_expand_cols:
+		btn_expand_cols.text = "扩充军阵(列)\n消耗: %d" % COST_EXPAND_COLS
+		btn_expand_cols.disabled = GameState.get_run_gold() < COST_EXPAND_COLS or GameState.current_cols >= GameConst.MAP_COLUMNS
+		
+	if btn_max_manpower:
+		btn_max_manpower.text = "粮草征收(上限+10)\n消耗: %d" % COST_MAX_MANPOWER
+		btn_max_manpower.disabled = GameState.get_run_gold() < COST_MAX_MANPOWER
+		
+	if btn_refresh:
+		btn_refresh.text = "刷新商品 (%d)" % current_refresh_cost
+		btn_refresh.disabled = GameState.get_run_gold() < current_refresh_cost
+
+func _try_upgrade(type: String, cost: int):
+	if not GameState: return
+	if GameState.spend_run_gold(cost):
+		if type == "rows":
+			GameState.current_rows = min(GameState.current_rows + 1, GameConst.MAP_ROWS)
+		elif type == "cols":
+			GameState.current_cols = min(GameState.current_cols + 1, GameConst.MAP_COLUMNS)
+		elif type == "manpower":
+			# Manpower cap is usually defined in BattleManager.
+			# We might need to store a bonus in GameState or increase base.
+			# Currently BattleManager.max_manpower = 50.0
+			# Let's add a "max_manpower_bonus" in GameState for run-specific upgrades
+			# Wait, GameState already has meta upgrades. We need run upgrades.
+			# Let's add 'run_manpower_bonus' to GameState.
+			GameState.add_run_manpower_bonus(10)
+			
+		GameState.save_progress()
+		_refresh_ui()
+
+func _refresh_hospital():
+	# Clear
+	for c in hospital_container.get_children():
+		c.queue_free()
+		
+	if not GameState: return
+	var lib = GameState.load_player_library()
+	if not lib: return
+	
+	var injured_found = false
+	for unit in lib.collected_cards:
+		if unit.is_injured:
+			injured_found = true
+			var hbox = HBoxContainer.new()
+			
+			var lbl = Label.new()
+			lbl.text = unit.name
+			lbl.custom_minimum_size = Vector2(100, 0)
+			hbox.add_child(lbl)
+			
+			var btn = Button.new()
+			btn.text = "治疗 (-%d)" % COST_HEAL
+			if GameState.get_run_gold() < COST_HEAL:
+				btn.disabled = true
+			
+			btn.pressed.connect(func():
+				if GameState.spend_run_gold(COST_HEAL):
+					unit.is_injured = false
+					GameState.save_player_library(lib)
+					_refresh_ui()
+					_refresh_hospital()
+			)
+			hbox.add_child(btn)
+			
+			hospital_container.add_child(hbox)
+			
+	if not injured_found:
+		var lbl = Label.new()
+		lbl.text = "没有受伤单位"
+		lbl.add_theme_color_override("font_color", Color.GRAY)
+		hospital_container.add_child(lbl)
+
+func _refresh_shop(free: bool = false):
+	if not free:
+		if not GameState.spend_run_gold(current_refresh_cost):
+			return
+	
+	_refresh_ui()
+	
+	# Clear
+	for c in shop_container.get_children():
+		c.queue_free()
+		
+	shop_cards.clear()
+	
+	# Generate cards
+	var generated_cards: Array[Dictionary] = [] # { "unit": UnitData, "cost": int }
+	
+	if current_shop_pool and not current_shop_pool.entries.is_empty():
+		for i in range(3):
+			var picked = _pick_weighted(current_shop_pool.entries)
+			if picked and picked.has("unit"):
+				var unit = picked.get("unit")
+				var cost = picked.get("cost", current_base_card_cost)
+				generated_cards.append({ "unit": unit, "cost": cost })
+	else:
+		# Random 3 cards (Fallback)
+		var db = GameState.get_unit_database()
+		if db and not db.units.is_empty(): 
+			for i in range(3):
+				var card = db.units.pick_random()
+				generated_cards.append({ "unit": card, "cost": current_base_card_cost })
+	
+	for card_info in generated_cards:
+		var card = card_info.unit
+		var cost = card_info.cost
+		
+		shop_cards.append(card)
+		
+		var vbox = VBoxContainer.new()
+		
+		# Slot display
+		var slot = shop_card_scene.instantiate()
+		if slot.has_method("setup"):
+			slot.setup(card)
+		vbox.add_child(slot)
+		
+		# Buy button
+		var btn = Button.new()
+		# var cost = COST_CARD_BASE # Removed local var
+		btn.text = "购买 (%d)" % cost
+		if GameState.get_run_gold() < cost:
+			btn.disabled = true
+			
+		btn.pressed.connect(func():
+			if GameState.spend_run_gold(cost):
+				# Add to library
+				var lib = GameState.load_player_library()
+				if lib:
+					lib.collected_cards.append(card.duplicate())
+					GameState.save_player_library(lib)
+				
+				# Disable button
+				btn.disabled = true
+				btn.text = "已购买"
+				_refresh_ui()
+		)
+		vbox.add_child(btn)
+		
+		shop_container.add_child(vbox)
+
+func _pick_weighted(entries: Array) -> Dictionary:
+	var total_weight = 0.0
+	for e in entries:
+		total_weight += e.get("prob", 0.0)
+	
+	if total_weight <= 0.0: return {}
+
+	var r = randf() * total_weight
+	var acc = 0.0
+	for e in entries:
+		acc += e.get("prob", 0.0)
+		if r <= acc:
+			return e
+	return entries.back() if not entries.is_empty() else {}
+
+func _on_refresh_shop_pressed():
+	_refresh_shop(false)
+
+func _on_next_level_pressed():
+	# 检查是否有挂起的目标关卡（从剧情跳转过来的情况）
+	var target_level_id = ""
+	if GameState.next_level_id_from_camp != "":
+		target_level_id = GameState.next_level_id_from_camp
+	else:
+		# 正常流程：当前关卡的下一关
+		var level_db = GameState.get_level_database()
+		if not level_db: return
+		
+		var current_idx = GameState.selected_level_index
+		var next_idx = current_idx + 1
+		
+		if next_idx < level_db.levels.size():
+			var next_level_data = level_db.levels[next_idx]
+			target_level_id = next_level_data.level_id
+			# 设置 pending ID 以便 BattleManager 播放剧情
+			GameState.next_level_id_from_camp = target_level_id
+	
+	if target_level_id != "":
+		# 更新 GameState 索引，确保加载正确的环境
+		var level_db = GameState.get_level_database()
+		if level_db:
+			var idx = level_db.get_index_by_id(target_level_id)
+			if idx != -1:
+				GameState.selected_level_index = idx
+				GameState.save_progress()
+		
+		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+	else:
+		# Game Over / Win
+		get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
+
+func start_level_id(id: String):
+	# 此函数供对话脚本调用，或无剧情时直接调用
+	var level_db = GameState.get_level_database()
+	if not level_db: return
+	
+	var idx = level_db.get_index_by_id(id)
+	if idx != -1:
+		GameState.selected_level_index = idx
+		# 标记跳过 BattleManager 内部的开场剧情检查，因为我们已经在 CampShop 处理过了（或者本身就没有）
+		GameState.skip_intro = true
+		GameState.save_progress()
+		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+	else:
+		push_error("Level ID not found: " + id)

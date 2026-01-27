@@ -32,3 +32,7 @@ level_name = "黄巾线 第 1 关 - 拜见与重病"
 grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("Resource_wuyq2"), SubResource("Resource_c6y3w"), SubResource("Resource_dy5qq")])
 reward_pool_id = "huangjin_early"
+shop_pool_id = "huangjin_shop"
+grid_width = 4
+position_offset = Vector2(0, 0)
+allow_camp = true

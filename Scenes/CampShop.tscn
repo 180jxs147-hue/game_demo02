@@ -1,0 +1,149 @@
+[gd_scene load_steps=2 format=3 uid="uid://bvmf5sdwx4elg"]
+
+[ext_resource type="Script" path="res://Scripts/CampShop.gd" id="1_script"]
+
+[node name="CampShop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.12, 0.15, 1)
+
+[node name="Header" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 20.0
+offset_top = 20.0
+offset_right = -20.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_constants/separation = 20
+
+[node name="Label" type="Label" parent="Header"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 32
+text = "行军营地"
+
+[node name="GoldLabel" type="Label" parent="Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 0.84, 0, 1)
+theme_override_font_sizes/font_size = 24
+text = "当前军资: 0"
+horizontal_alignment = 2
+
+[node name="NextLevelBtn" type="Button" parent="Header"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+text = "下一场战斗"
+
+[node name="Content" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = 100.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="Infrastructure" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="Content/Infrastructure"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "基建升级"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Content/Infrastructure"]
+layout_mode = 2
+
+[node name="Grid" type="VBoxContainer" parent="Content/Infrastructure"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="ExpandRowsBtn" type="Button" parent="Content/Infrastructure/Grid"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "扩充军阵(行)"
+
+[node name="ExpandColsBtn" type="Button" parent="Content/Infrastructure/Grid"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "扩充军阵(列)"
+
+[node name="MaxManpowerBtn" type="Button" parent="Content/Infrastructure/Grid"]
+custom_minimum_size = Vector2(0, 60)
+layout_mode = 2
+text = "粮草征收(上限+10)"
+
+[node name="VSeparator1" type="VSeparator" parent="Content"]
+layout_mode = 2
+
+[node name="Hospital" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Title" type="Label" parent="Content/Hospital"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "医疗帐篷"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Content/Hospital"]
+layout_mode = 2
+
+[node name="Scroll" type="ScrollContainer" parent="Content/Hospital"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBox" type="VBoxContainer" parent="Content/Hospital/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 10
+
+[node name="VSeparator2" type="VSeparator" parent="Content"]
+layout_mode = 2
+
+[node name="Recruitment" type="VBoxContainer" parent="Content"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Header" type="HBoxContainer" parent="Content/Recruitment"]
+layout_mode = 2
+
+[node name="Title" type="Label" parent="Content/Recruitment/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+text = "招募中心"
+horizontal_alignment = 1
+
+[node name="RefreshBtn" type="Button" parent="Content/Recruitment/Header"]
+layout_mode = 2
+text = "刷新"
+
+[node name="HSeparator" type="HSeparator" parent="Content/Recruitment"]
+layout_mode = 2
+
+[node name="ShopContainer" type="HBoxContainer" parent="Content/Recruitment"]
+layout_mode = 2
+size_flags_vertical = 3
+alignment = 1

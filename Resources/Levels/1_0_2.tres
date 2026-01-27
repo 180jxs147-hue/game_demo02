@@ -26,3 +26,7 @@ level_id = "1_0_2"
 level_name = "序章 第 2 关 - 初战与混沌初现"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("Resource_r3wya"), SubResource("Resource_uwdb7")])
 reward_pool_id = "generic_early"
+grid_width = 4
+grid_height = 4
+position_offset = Vector2(0, 0)
+allow_camp = true

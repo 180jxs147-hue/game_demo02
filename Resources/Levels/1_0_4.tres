@@ -42,3 +42,7 @@ level_id = "1_0_4"
 level_name = "序章 第 4 关 - 关键抉择点"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_qvjkk"), SubResource("Resource_l7bdb"), SubResource("Resource_cwqy6"), SubResource("Resource_wln2l"), SubResource("Resource_rkhjh"), SubResource("Resource_s4uiy")])
 reward_pool_id = "generic_early"
+grid_width = 4
+grid_height = 4
+position_offset = Vector2(0, 0)
+allow_camp = true

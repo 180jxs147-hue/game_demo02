@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ShopPoolData" load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://Resources/ShopPoolData.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="2"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="3"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="4"]
+
+[resource]
+script = ExtResource("1")
+pool_id = "huangjin_shop"
+display_name = "黄巾集市"
+refresh_cost = 1
+base_card_cost = 3
+entries = Array[Dictionary]([{
+"min_level": 1,
+"prob": 30.0,
+"tags": [],
+"unit": ExtResource("2")
+}, {
+"min_level": 1,
+"prob": 20.0,
+"tags": [],
+"unit": ExtResource("3")
+}, {
+"min_level": 1,
+"prob": 50.0,
+"tags": [],
+"unit": ExtResource("4")
+}])

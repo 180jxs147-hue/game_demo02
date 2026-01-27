@@ -6,5 +6,13 @@ Narrator: 现在，进行你的净化测试。证明你能驾驭这股力量。
 Player01: (感受到一股强大的力量涌入军阵) 
 Narrator: 通过测试。你的军阵已准备就绪。 
 Narrator: 去吧，去那黄巾初起之地，开始你的净化之旅。 
+
+# 强制指定为汉军补给点
+# do set_shop_pool_for_next_camp("han_shop")
+# 强制指定为黄巾集市
+# do set_shop_pool_for_next_camp("huangjin_shop")
+# 强制指定为通用商店
+# do set_shop_pool_for_next_camp("generic_shop")
+# do enter_camp_before_level("1_0_1")
 do start_level_id("1_0_1")
 => END

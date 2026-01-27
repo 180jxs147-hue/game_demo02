@@ -175,6 +175,42 @@ const METASHOP_SAVE_PATH := "user://metashop.cfg"
 var meta_currency: int = 0
 var purchased_upgrades: Dictionary = {}
 
+# --- Run Currency (军资) ---
+# This is valid for the current run only
+var run_gold: int = 0
+var run_manpower_bonus: int = 0
+var next_level_id_from_camp: String = ""
+var next_shop_pool_id: String = ""
+
+func enter_camp_then_level(level_id: String):
+	next_level_id_from_camp = level_id
+	get_tree().change_scene_to_file("res://Scenes/CampShop.tscn")
+
+func set_next_shop_pool(pool_id: String):
+	next_shop_pool_id = pool_id
+
+func add_run_gold(amount: int):
+	run_gold += amount
+	# We might want to save this if we support mid-run saving
+	save_progress()
+
+func spend_run_gold(amount: int) -> bool:
+	if run_gold >= amount:
+		run_gold -= amount
+		save_progress()
+		return true
+	return false
+
+func get_run_gold() -> int:
+	return run_gold
+
+func add_run_manpower_bonus(amount: int):
+	run_manpower_bonus += amount
+	save_progress()
+
+func get_run_manpower_bonus() -> int:
+	return run_manpower_bonus
+
 func load_player_library(force_reload: bool = false) -> CardLibrary:
 	# 存档策略：
 	# - 优先加载 user:// 下的玩家存档（每台机器/每个用户独立）
@@ -209,6 +245,9 @@ func save_progress() -> int:
 	config.set_value("progress", "level_index", selected_level_index)
 	config.set_value("progress", "current_rows", current_rows)
 	config.set_value("progress", "current_cols", current_cols)
+	config.set_value("progress", "run_gold", run_gold)
+	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
+	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
 	return config.save(_save_path())
 
 func save_meta() -> int:
@@ -249,16 +288,25 @@ func load_progress():
 		selected_level_index = config.get_value("progress", "level_index", 0)
 		current_rows = config.get_value("progress", "current_rows", 3)
 		current_cols = config.get_value("progress", "current_cols", 2)
+		run_gold = config.get_value("progress", "run_gold", 0)
+		run_manpower_bonus = config.get_value("progress", "run_manpower_bonus", 0)
+		next_level_id_from_camp = config.get_value("progress", "next_level_id_from_camp", "")
 	else:
 		selected_level_index = 0
 		current_rows = 3
 		current_cols = 2
+		run_gold = 0
+		run_manpower_bonus = 0
+		next_level_id_from_camp = ""
 
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。
 	selected_level_index = 0
 	current_rows = 3
 	current_cols = 2
+	run_gold = 0
+	run_manpower_bonus = 0
+	next_level_id_from_camp = ""
 	save_progress() # 清空进度文件（当前槽位）
 	
 	var lib = load_player_library()

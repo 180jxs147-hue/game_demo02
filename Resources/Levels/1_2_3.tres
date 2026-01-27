@@ -53,3 +53,7 @@ level_id = "1_2_3"
 level_name = "黄巾线 第 3 关 - 临终托付与权力交接"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_qaq6b"), SubResource("Resource_luw6o"), SubResource("Resource_p44xs"), SubResource("Resource_r5c6o"), SubResource("Resource_mlhq3"), SubResource("Resource_54v5e"), SubResource("Resource_y17t6"), SubResource("Resource_4h4rn")])
 reward_pool_id = "huangjin_early"
+grid_width = 4
+grid_height = 4
+position_offset = Vector2(0, 0)
+allow_camp = true

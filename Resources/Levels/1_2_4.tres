@@ -46,3 +46,7 @@ level_id = "1_2_4"
 level_name = "黄巾线 第 4 关 - 广宗城下：皇甫嵩的疯狂"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_ehonj"), SubResource("Resource_8u730"), SubResource("Resource_d12pp"), SubResource("Resource_c4fvi"), SubResource("Resource_1lj0c"), SubResource("Resource_q154l"), SubResource("Resource_pa6c6")])
 reward_pool_id = "huangjin_early"
+grid_width = 4
+grid_height = 4
+position_offset = Vector2(0, 0)
+allow_camp = true

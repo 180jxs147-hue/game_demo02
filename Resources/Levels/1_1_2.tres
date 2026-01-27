@@ -88,3 +88,6 @@ grid_width = 8
 grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_nqgsn"), SubResource("Resource_is85u"), SubResource("Resource_jsat6"), SubResource("Resource_og5r6"), SubResource("Resource_xbso4"), SubResource("Resource_u8auf"), SubResource("Resource_g0d6t"), SubResource("Resource_1nfuu"), SubResource("Resource_j4yrm"), SubResource("Resource_cdykx"), SubResource("Resource_f4mp0"), SubResource("Resource_lxk5d"), SubResource("Resource_bpidd"), SubResource("Resource_5hb7d"), SubResource("Resource_nf71e")])
 reward_pool_id = "han_early"
+shop_pool_id = "han_shop"
+position_offset = Vector2(0, 0)
+allow_camp = true
