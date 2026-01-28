@@ -1,12 +1,12 @@
 ~ start
-YellowTurban: 杀！杀光这些腐朽的汉狗！黄天当立！黄天当立！[#bg:battle_bg,#pos:right]
-Player01: 敌军卡牌上覆盖着一层诡异的黑雾…这股力量在扭曲他们的意志。 [#pos:left]
-Player01: 这不是愤怒，这是纯粹的腐化。我必须净化他们。 
-Player01: (战斗胜利后) 混沌残留物…它正在污染这片土地。 
-Player01: 如果放任不管，它会像瘟疫一样蔓延。 
-Player01: 我必须找到源头。 
-
-do set_shop_pool_for_next_camp("generic_shop")
-do enter_camp_before_level("1_0_2")
-# do start_level_id("1_0_2")
+WuZhang: ……遍地尸首。刚才那个领头的，我记得他，以前是个老实的佃户。 [#bg:village_dusk,#pos:right]
+GongShouLi: 搜过了，兜里比脸还干净。伍长，咱们杀的到底是贼，还是民啊？ [#pos:right]
+WuZhang: (沉默) 拿起了武器，就是贼。不管他们以前是谁……继续前进，去村里看看。 [#pos:right]
+XiaoBingZhang: (突然停下，举盾) 伍长！前面的路被堵住了！ [#bg:village_dusk, #pos:right]
+YTArmy_soliders: (挥舞着带着血迹的长竹竿) 苍天已死！狗官兵，把命留下！ [#pos:left]
+XiaoBingZhang: 伍长，他们人太多，我怕顶不住！ [#pos:right]
+WuZhang: 阿张！别退！竹竿再长也怕盾牌，你顶在最前面吸引火力！ [#pos:right]
+GongShouLi: 伍长，把阿张放我前面，只要没东西捅到我的脸，我能隔着阿张的头顶，把这帮拿竹竿的全部射穿！ [#pos:right]
+WuZhang: 听令！盾兵在前抗线，弓手在后输出！别让敌人靠近老李！ [#pos:right]
+do start_level_id("1_0_2")
 => END

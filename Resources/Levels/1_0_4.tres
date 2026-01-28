@@ -1,25 +1,20 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=13 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
 
 [ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="4_youqi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="5_qvjkk"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="6_l7bdb"]
-
-[sub_resource type="Resource" id="Resource_qvjkk"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("5_daoshi")
-grid_pos = Vector2i(2, 1)
 
 [sub_resource type="Resource" id="Resource_l7bdb"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("5_daoshi")
-grid_pos = Vector2i(2, 0)
+unit_data = ExtResource("3_lishi")
+grid_pos = Vector2i(1, 0)
 
 [sub_resource type="Resource" id="Resource_cwqy6"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("6_l7bdb")
+unit_data = ExtResource("5_daoshi")
 grid_pos = Vector2i(3, 0)
 
 [sub_resource type="Resource" id="Resource_wln2l"]
@@ -29,20 +24,17 @@ grid_pos = Vector2i(3, 1)
 
 [sub_resource type="Resource" id="Resource_rkhjh"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_lishi")
-grid_pos = Vector2i(0, 1)
+unit_data = ExtResource("5_qvjkk")
+grid_pos = Vector2i(2, 2)
 
 [sub_resource type="Resource" id="Resource_s4uiy"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_youqi")
+unit_data = ExtResource("5_qvjkk")
+grid_pos = Vector2i(3, 2)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_0_4"
 level_name = "序章 第 4 关 - 关键抉择点"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_qvjkk"), SubResource("Resource_l7bdb"), SubResource("Resource_cwqy6"), SubResource("Resource_wln2l"), SubResource("Resource_rkhjh"), SubResource("Resource_s4uiy")])
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_l7bdb"), SubResource("Resource_cwqy6"), SubResource("Resource_wln2l"), SubResource("Resource_rkhjh"), SubResource("Resource_s4uiy")])
 reward_pool_id = "generic_early"
-grid_width = 4
-grid_height = 4
-position_offset = Vector2(0, 0)
-allow_camp = true

@@ -1,24 +1,16 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://bwbtenllive4"]
+[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://bwbtenllive4"]
 
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
 
 [resource]
 script = ExtResource("1_data")
 name = "弓箭手"
-icon = null
-rarity = "common"
-civilization = "neutral"
 unit_class = "archer"
 color = Color(0.5, 0.5, 0.5, 1)
 tags = Array[String](["sniper"])
-grid_shape = Array[Vector2i]([Vector2i(0, 0)])
 max_hp = 10.0
 manpower_cost = 2.0
 cooldown = 2.5
 attack_damage = 5.0
-defense = 0.0
 attack_range = 5
-is_injured = false
-charge_count = 0
-adjacency_rules = Array[Dictionary]([])
 story = "远程打击单位，距离越远伤害越高。注意保护。"

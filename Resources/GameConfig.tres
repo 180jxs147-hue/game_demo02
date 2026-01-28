@@ -6,9 +6,4 @@
 
 [resource]
 script = ExtResource("1_script")
-initial_gold = 20
-initial_manpower_bonus = 0
-initial_prestige = 0
-initial_grid_rows = 3
-initial_grid_cols = 2
 initial_cards = Array[Resource]([ExtResource("2_han"), ExtResource("3_camp")])

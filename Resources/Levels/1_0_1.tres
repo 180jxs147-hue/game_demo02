@@ -1,7 +1,7 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=6 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" format=3 uid="uid://cwtoym5d2aah7"]
 
-[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="4_c52in"]
 
 [sub_resource type="Resource" id="Resource_yba0d"]
@@ -19,8 +19,5 @@ script = ExtResource("1_level")
 level_id = "1_0_1"
 level_name = "序章 第 1 关 - 使命与净化测试"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_yba0d"), SubResource("Resource_r334h")])
-reward_pool_id = "generic_early"
-grid_width = 4
-grid_height = 4
-position_offset = Vector2(0, 0)
+reward_pool_id = "generic_early0_1"
 allow_camp = false

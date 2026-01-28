@@ -1,9 +1,9 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=21 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" format=3 uid="uid://bpxrqeonjy7l1"]
 
-[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="4_5ryu5"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
+[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" uid="uid://di7a6p1bc0f2c" path="res://Resources/DataFiles/camp.tres" id="4_5ryu5"]
+[ext_resource type="Resource" uid="uid://dhr6o214wk8r3" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="6_qimin"]
 
 [sub_resource type="Resource" id="Resource_nqgsn"]
@@ -89,5 +89,3 @@ grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_nqgsn"), SubResource("Resource_is85u"), SubResource("Resource_jsat6"), SubResource("Resource_og5r6"), SubResource("Resource_xbso4"), SubResource("Resource_u8auf"), SubResource("Resource_g0d6t"), SubResource("Resource_1nfuu"), SubResource("Resource_j4yrm"), SubResource("Resource_cdykx"), SubResource("Resource_f4mp0"), SubResource("Resource_lxk5d"), SubResource("Resource_bpidd"), SubResource("Resource_5hb7d"), SubResource("Resource_nf71e")])
 reward_pool_id = "han_early"
 shop_pool_id = "han_shop"
-position_offset = Vector2(0, 0)
-allow_camp = true

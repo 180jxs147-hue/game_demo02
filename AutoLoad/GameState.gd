@@ -10,6 +10,7 @@ var current_rows: int = 3
 var current_cols: int = 2
 var slot_select_mode: String = "new"
 var skip_intro: bool = false
+var use_autosave_library: bool = false
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"
@@ -17,6 +18,8 @@ const UNIT_DATABASE_PATH := "res://Resources/UnitDatabase.tres"
 const LEVEL_DATABASE_PATH := "res://Resources/EnemyLevels.tres"
 const GAME_CONFIG_PATH := "res://Resources/GameConfig.tres"
 const SAVE_GAME_PATH := "user://savegame.cfg"
+const AUTO_SAVE_PROGRESS_PATH := "user://autosave_progress.cfg"
+const AUTO_LIBRARY_PATH := "user://Autosave_PlayerLibrary.tres"
 var current_slot: int = 1
 
 # Caches for price configuration
@@ -254,7 +257,7 @@ func load_player_library(force_reload: bool = false) -> CardLibrary:
 	# - 优先加载 user:// 下的玩家存档（每台机器/每个用户独立）
 	# - 如果第一次运行或存档不存在，则回退到 res:// 的默认库
 	var lib: CardLibrary = null
-	var lib_path := _library_path()
+	var lib_path := AUTO_LIBRARY_PATH if use_autosave_library else _library_path()
 	
 	var cache_mode = ResourceLoader.CACHE_MODE_REUSE
 	if force_reload:
@@ -276,7 +279,9 @@ func save_player_library(library: CardLibrary) -> int:
 	# 将卡牌收集进度写入 user://，导出的 EXE 分发给其他用户也不会写到游戏目录。
 	if not library:
 		return ERR_INVALID_DATA
-	return ResourceSaver.save(library, _library_path())
+	var rc_slot = ResourceSaver.save(library, _library_path())
+	var rc_auto = ResourceSaver.save(library, AUTO_LIBRARY_PATH)
+	return rc_slot if rc_slot != OK else rc_auto
 
 func save_progress() -> int:
 	var config = ConfigFile.new()
@@ -286,7 +291,9 @@ func save_progress() -> int:
 	config.set_value("progress", "run_gold", run_gold)
 	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
 	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
-	return config.save(_save_path())
+	var rc_slot = config.save(_save_path())
+	var rc_auto = config.save(AUTO_SAVE_PROGRESS_PATH)
+	return rc_slot if rc_slot != OK else rc_auto
 
 func save_meta() -> int:
 	var cfg := ConfigFile.new()
@@ -336,6 +343,29 @@ func load_progress():
 		run_gold = 0
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
+
+func load_autosave_progress():
+	var config = ConfigFile.new()
+	var err = config.load(AUTO_SAVE_PROGRESS_PATH)
+	if err == OK:
+		selected_level_index = config.get_value("progress", "level_index", 0)
+		current_rows = config.get_value("progress", "current_rows", 3)
+		current_cols = config.get_value("progress", "current_cols", 2)
+		run_gold = config.get_value("progress", "run_gold", 0)
+		run_manpower_bonus = config.get_value("progress", "run_manpower_bonus", 0)
+		next_level_id_from_camp = config.get_value("progress", "next_level_id_from_camp", "")
+	else:
+		selected_level_index = 0
+		current_rows = 3
+		current_cols = 2
+		run_gold = 0
+		run_manpower_bonus = 0
+		next_level_id_from_camp = ""
+
+func load_autosave_all():
+	use_autosave_library = true
+	load_autosave_progress()
+	load_meta()
 
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。

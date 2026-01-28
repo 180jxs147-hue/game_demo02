@@ -12,6 +12,13 @@ const UNITS_DIR = "res://Resources/DataFiles/"
 @onready var save_btn: Button = $MainLayout/TopBar/SaveButton
 @onready var feedback_label: Label = $MainLayout/TopBar/FeedbackLabel
 
+# Settings UI
+@onready var spin_enemy_w: SpinBox = $MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxEnemyGrid/SpinEnemyW
+@onready var spin_enemy_h: SpinBox = $MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxEnemyGrid/SpinEnemyH
+@onready var spin_player_w: SpinBox = $MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxPlayerGrid/SpinPlayerW
+@onready var spin_player_h: SpinBox = $MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxPlayerGrid/SpinPlayerH
+@onready var spin_power: SpinBox = $MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/SpinPower
+
 const UnitCard = preload("res://Scripts/Editor/UnitCard.gd")
 const EditorGridInput = preload("res://Scripts/Editor/EditorGridInput.gd")
 const DraggableUnitVisual = preload("res://Scripts/Editor/DraggableUnitVisual.gd")
@@ -38,6 +45,30 @@ func _ready():
 	grid_overlay.place_unit_requested.connect(_on_place_unit_requested)
 	grid_overlay.move_unit_requested.connect(_on_move_unit_requested)
 	grid_overlay.grid_clicked.connect(_on_grid_clicked)
+	
+	# Connect Settings UI
+	spin_enemy_w.value_changed.connect(func(v): 
+		if current_level_config: 
+			current_level_config.grid_width = int(v)
+			draw_level()
+	)
+	spin_enemy_h.value_changed.connect(func(v): 
+		if current_level_config: 
+			current_level_config.grid_height = int(v)
+			draw_level()
+	)
+	spin_player_w.value_changed.connect(func(v): 
+		if current_level_config: 
+			current_level_config.formation_cols = int(v)
+	)
+	spin_player_h.value_changed.connect(func(v): 
+		if current_level_config: 
+			current_level_config.formation_rows = int(v)
+	)
+	spin_power.value_changed.connect(func(v): 
+		if current_level_config: 
+			current_level_config.enemy_power = int(v)
+	)
 
 func refresh_file_list():
 	level_list.clear()
@@ -119,6 +150,9 @@ func draw_level():
 	if not current_level_config:
 		return
 
+	# Update UI from config
+	_update_ui_from_config()
+
 	# Draw grid lines (Visual only)
 	_draw_grid_cells()
 	
@@ -126,6 +160,27 @@ func draw_level():
 	for spawn in current_level_config.enemy_units:
 		if spawn and spawn.unit_data:
 			_create_unit_visual(spawn.unit_data, spawn.grid_pos)
+
+func _update_ui_from_config():
+	if not current_level_config: return
+	
+	spin_enemy_w.set_value_no_signal(current_level_config.grid_width)
+	spin_enemy_h.set_value_no_signal(current_level_config.grid_height)
+	
+	if "formation_cols" in current_level_config:
+		spin_player_w.set_value_no_signal(current_level_config.formation_cols)
+	else:
+		spin_player_w.set_value_no_signal(0)
+		
+	if "formation_rows" in current_level_config:
+		spin_player_h.set_value_no_signal(current_level_config.formation_rows)
+	else:
+		spin_player_h.set_value_no_signal(0)
+		
+	if "enemy_power" in current_level_config:
+		spin_power.set_value_no_signal(current_level_config.enemy_power)
+	else:
+		spin_power.set_value_no_signal(50)
 
 func _draw_grid_cells():
 	for x in range(current_level_config.grid_width):
@@ -243,6 +298,10 @@ func _remove_unit(grid_pos: Vector2i):
 
 func _on_save_pressed():
 	if current_level_config and current_level_path != "":
+		print("[LevelEditor] Saving level to ", current_level_path)
+		if "enemy_power" in current_level_config:
+			print("[LevelEditor] Saving enemy_power: ", current_level_config.enemy_power)
+			
 		var err = ResourceSaver.save(current_level_config, current_level_path)
 		if err == OK:
 			feedback_label.text = "Saved: " + current_level_path.get_file()

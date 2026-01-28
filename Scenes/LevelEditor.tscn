@@ -66,6 +66,73 @@ horizontal_alignment = 1
 layout_mode = 2
 size_flags_vertical = 3
 
+[node name="HSeparator" type="HSeparator" parent="MainLayout/ContentSplit/LeftPanel"]
+layout_mode = 2
+
+[node name="SettingsLabel" type="Label" parent="MainLayout/ContentSplit/LeftPanel"]
+layout_mode = 2
+text = "Level Settings"
+horizontal_alignment = 1
+
+[node name="SettingsScroll" type="ScrollContainer" parent="MainLayout/ContentSplit/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SettingsBox" type="VBoxContainer" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="LabelEnemyGrid" type="Label" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+text = "Enemy Grid (WxH)"
+
+[node name="HBoxEnemyGrid" type="HBoxContainer" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+
+[node name="SpinEnemyW" type="SpinBox" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxEnemyGrid"]
+layout_mode = 2
+min_value = 1.0
+max_value = 20.0
+value = 4.0
+prefix = "W:"
+
+[node name="SpinEnemyH" type="SpinBox" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxEnemyGrid"]
+layout_mode = 2
+min_value = 1.0
+max_value = 20.0
+value = 4.0
+prefix = "H:"
+
+[node name="LabelPlayerGrid" type="Label" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+text = "Player Grid (WxH)"
+tooltip_text = "0 means use global default"
+
+[node name="HBoxPlayerGrid" type="HBoxContainer" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+
+[node name="SpinPlayerW" type="SpinBox" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxPlayerGrid"]
+layout_mode = 2
+max_value = 20.0
+value = 0.0
+prefix = "W:"
+
+[node name="SpinPlayerH" type="SpinBox" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox/HBoxPlayerGrid"]
+layout_mode = 2
+max_value = 20.0
+value = 0.0
+prefix = "H:"
+
+[node name="LabelPower" type="Label" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+text = "Enemy Power"
+
+[node name="SpinPower" type="SpinBox" parent="MainLayout/ContentSplit/LeftPanel/SettingsScroll/SettingsBox"]
+layout_mode = 2
+max_value = 9999.0
+value = 50.0
+
+
 [node name="GridContainer" type="Control" parent="MainLayout/ContentSplit"]
 layout_mode = 2
 size_flags_horizontal = 3

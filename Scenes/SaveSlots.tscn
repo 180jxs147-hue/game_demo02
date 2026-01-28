@@ -66,6 +66,23 @@ theme_override_font_sizes/font_size = 20
 layout_mode = 2
 theme_override_constants/separation = 14
 
+[node name="SAuto" type="HBoxContainer" parent="VBox/Slots"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SAutoInfo" type="Label" parent="VBox/Slots/SAuto"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "自动存档"
+theme_override_font_sizes/font_size = 18
+
+[node name="SAutoStart" type="Button" parent="VBox/Slots/SAuto"]
+layout_mode = 2
+text = "读取"
+custom_minimum_size = Vector2(0, 50)
+theme_override_font_sizes/font_size = 24
+
 [node name="S1" type="HBoxContainer" parent="VBox/Slots"]
 layout_mode = 2
 theme_override_constants/separation = 12

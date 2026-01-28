@@ -10,7 +10,7 @@ class_name GameConfig
 
 @export_group("Grid")
 @export var initial_grid_rows: int = 3
-@export var initial_grid_cols: int = 2
+@export var initial_grid_cols: int = 3
 
 @export_group("Cards")
 @export var initial_cards: Array[Resource] = [] # Array of UnitData
@@ -27,9 +27,9 @@ class_name GameConfig
 
 ## Sell prices for cards (e.g. when sold as reward)
 @export var rarity_sell_prices: Dictionary = {
-	"common": 1,
-	"uncommon": 2,
-	"rare": 4,
-	"epic": 6,
-	"legendary": 10
+	"common": 2,
+	"uncommon": 3,
+	"rare": 5,
+	"epic": 8,
+	"legendary": 12
 }

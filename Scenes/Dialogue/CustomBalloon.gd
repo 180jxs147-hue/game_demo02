@@ -76,6 +76,27 @@ var mutation_cooldown: Timer = Timer.new()
 ## The right portrait texture rect
 @onready var right_portrait: TextureRect = %RightPortrait
 
+const CHARACTER_NAMES_ZH = {
+	"XiaoBingZhang": "小兵张",
+	"GongShouLi": "弓手李",
+	"RefugeeLeader": "流民首领",
+	"WuZhang": "伍长",
+	"YellowTurban": "黄巾军",
+	"Player01": "指挥官",
+	"Huangfusong": "皇甫嵩",
+	"System": "系统",
+	"Guide": "引导者",
+	"HanScout": "汉军斥候",
+	"Eunuch": "宦官",
+	"ZhuJun": "朱儁",
+	"ZhangBao": "张宝",
+	"ZhangJue": "张角",
+	"YellowTurbanGeneral": "黄巾将领",
+	"RebelGeneral": "叛军将领",
+	"ZhangLiang": "张梁",
+	"Narrator": "旁白"
+}
+
 var _left_base_pos: Vector2
 var _right_base_pos: Vector2
 
@@ -187,7 +208,12 @@ func apply_dialogue_line() -> void:
 	balloon.grab_focus()
 
 	character_label.visible = not dialogue_line.character.is_empty()
-	character_label.text = tr(dialogue_line.character, "dialogue")
+	var char_text = dialogue_line.character
+	if CHARACTER_NAMES_ZH.has(char_text):
+		char_text = CHARACTER_NAMES_ZH[char_text]
+	else:
+		char_text = tr(char_text, "dialogue")
+	character_label.text = char_text
 
 	for tag in dialogue_line.tags:
 		if tag.begins_with("bg:"):

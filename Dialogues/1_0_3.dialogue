@@ -1,11 +1,18 @@
 ~ start
-HanScout: 救…救命！前面有黄巾军！他们像疯了一样，连自己人都杀！[#bg:battle_bg,#pos:right]
-Player01: 你受伤了。告诉我，发生了什么？那股力量是什么？ [#pos:left]
-HanScout: 我不知道！我奉命去联络皇甫嵩将军，但被截击。他们还喊着苍天已死！ 
-HanScout: 他们的眼神没有信仰，只有疯狂，甚至攻击了他们的同伴！ 
-Player01: 混沌…它已经开始影响双方了。 
-HanScout: 你必须做出选择，是为汉室效力，还是加入他们？ 
-HanScout: 我已将汉军主帅的行军路线告知你。现在，你的选择是什么？ 
-Player01: 我的选择，将决定这片历史碎片的命运。 
+YTArmy_soliders: 大贤……良师……救我…… [#pos:left]
+XiaoBingZhang: (看着盾牌上的深深划痕) 好险……要是没老李在后面掩护，我这盾牌早晚被捅穿。 [#pos:right]
+GongShouLi: (收起弓) 哼，这就是配合。你的盾保了我的命，我的箭救了你的命。 [#pos:right]
+WuZhang: 别松懈。这只是村子的外围，里面的火光越来越大了。去广场！ [#pos:right]
+
+XiaoBingZhang: 那是什么怪物？！浑身冒金光，堵住了出口！ [#bg:village_dusk, #pos:right]
+GongShouLi: 是黄巾力士！那是妖法护体，普通的刀剑根本砍不动！ [#pos:right]
+GongShouLi: 伍长，快看！那怪物后面有个法坛帐篷，有人在做法”！ [#pos:right]
+WuZhang: 正面打不穿。那就走侧路！ [#pos:right]
+WuZhang: 阿张！看见侧翼那条空路了吗？ [#pos:right]
+XiaoBingZhang: 看见了！那边没人防守！ [#pos:right]
+WuZhang: 别管那个大块头，骑马从侧翼空行冲过去！你的目标只有一个——烧了那个法坛帐篷！ [#pos:right]
+GongShouLi: 对！只要断了供给，神仙也得变凡人！ [#pos:right]
+YTArmy_soliders: 凡人！休想通过！ [#pos:left]
+
 do start_level_id("1_0_3")
 => END

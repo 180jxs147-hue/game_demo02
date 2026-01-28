@@ -1,14 +1,20 @@
 ~ start
+WuZhang: 贼兵越来越多了……这是最后的包围圈。冲出去，我们就能活！ [#bg:village_dusk, #pos:right]
+XiaoBingZhang: 伍长，你身上的伤口裂开了，血止不住啊！ [#pos:right]
+WuZhang: 别管我！把剩下的力气都用上！狭路相逢勇者胜，杀！ [#pos:right]
+
 System: 【关键抉择：你的选择将决定本章的命运】 [#bg:battle_bg]
 Guide: 命运的岔路口就在眼前。汉室衰微，黄巾起义。你将何去何从？[#pos:left]
 Player01: 我的选择，由我来捍卫。让开！
 
 - 投身汉军，匡扶社稷
 	Guide: 你选择了守护秩序。前往汉军营地。
+	do set_shop_pool_for_next_camp("han_shop")
 	do enter_camp_before_level("1_1_1")
 
 - 加入黄巾，苍天已死
 	Guide: 你选择了变革。前往黄巾阵地。
+	do set_shop_pool_for_next_camp("huangjin_shop")
 	do enter_camp_before_level("1_2_1")
 
 => END

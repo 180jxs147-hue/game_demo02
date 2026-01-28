@@ -1,10 +1,10 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=10 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" format=3 uid="uid://ry2alli25ily"]
 
-[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/junguo_bing.tres" id="3_junguo"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="4_8nbis"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="4_shesheng"]
+[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" uid="uid://cicayjonphiu2" path="res://Resources/DataFiles/junguo_bing.tres" id="3_junguo"]
+[ext_resource type="Resource" uid="uid://di7a6p1bc0f2c" path="res://Resources/DataFiles/camp.tres" id="4_8nbis"]
+[ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="4_shesheng"]
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
@@ -33,6 +33,3 @@ grid_height = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("Resource_wuyq2"), SubResource("Resource_c6y3w"), SubResource("Resource_dy5qq")])
 reward_pool_id = "huangjin_early"
 shop_pool_id = "huangjin_shop"
-grid_width = 4
-position_offset = Vector2(0, 0)
-allow_camp = true

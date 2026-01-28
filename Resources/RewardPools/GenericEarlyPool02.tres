@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="RewardPoolData" format=3 uid="uid://bavc15bqrm0e4"]
+
+[ext_resource type="Script" uid="uid://djybbfun8na35" path="res://Resources/RewardPoolData.gd" id="1"]
+[ext_resource type="Resource" uid="uid://dftd24kpmy2dq" path="res://Resources/DataFiles/sanhe_qishi.tres" id="1_j0klb"]
+
+[resource]
+script = ExtResource("1")
+pool_id = "generic_early0_2"
+display_name = "通用前期池"
+entries = Array[Dictionary]([{
+"min_level": 1,
+"prob": 20.0,
+"tags": [],
+"unit": ExtResource("1_j0klb")
+}])

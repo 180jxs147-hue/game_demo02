@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="RewardPoolData" load_steps=9 format=3 uid="uid://dkhq00o3fppmj"]
+[gd_resource type="Resource" script_class="RewardPoolData" format=3 uid="uid://dkhq00o3fppmj"]
 
 [ext_resource type="Script" uid="uid://djybbfun8na35" path="res://Resources/RewardPoolData.gd" id="1"]
 [ext_resource type="Resource" uid="uid://ccrs53oj1bhbd" path="res://Resources/DataFiles/soldier.tres" id="2"]

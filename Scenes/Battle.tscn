@@ -1,11 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://c1k11wlkwvsqm"]
+[gd_scene format=3 uid="uid://c1k11wlkwvsqm"]
 
 [ext_resource type="Script" uid="uid://dv6ra6rxgdm5g" path="res://Scripts/BattleManager.gd" id="1_p46lj"]
 [ext_resource type="Resource" path="res://Resources/PlayerLibrary.tres" id="4_library"]
 [ext_resource type="Resource" uid="uid://durniktkpk52p" path="res://Resources/EnemyLevels.tres" id="5_levels"]
 [ext_resource type="Script" uid="uid://u1q5ipdswswu" path="res://Scripts/GridPaint.gd" id="6_8teo4"]
 
-[node name="Battle" type="Node2D" node_paths=PackedStringArray("manpower_label", "enemy_manpower_label", "synergy_label")]
+[node name="Battle" type="Node2D" unique_id=1806915087 node_paths=PackedStringArray("manpower_label", "enemy_manpower_label", "synergy_label")]
 script = ExtResource("1_p46lj")
 manpower_label = NodePath("CanvasLayer/HUD/ManpowerLabel")
 enemy_manpower_label = NodePath("CanvasLayer/HUD/EnemyManpowerLabel")
@@ -13,9 +13,9 @@ synergy_label = NodePath("CanvasLayer/HUD/SynergyLabel")
 player_library = ExtResource("4_library")
 level_database = ExtResource("5_levels")
 
-[node name="CanvasLayer" type="CanvasLayer" parent="."]
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=399964123]
 
-[node name="HUD" type="Control" parent="CanvasLayer"]
+[node name="HUD" type="Control" parent="CanvasLayer" unique_id=719066790]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -24,7 +24,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="BenchPanel" type="PanelContainer" parent="CanvasLayer/HUD"]
+[node name="BenchPanel" type="PanelContainer" parent="CanvasLayer/HUD" unique_id=1895283593]
 layout_mode = 1
 anchors_preset = 12
 anchor_top = 1.0
@@ -37,27 +37,27 @@ offset_bottom = -20.0
 grow_horizontal = 2
 grow_vertical = 0
 
-[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/BenchPanel"]
+[node name="VBox" type="VBoxContainer" parent="CanvasLayer/HUD/BenchPanel" unique_id=681254842]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="Title" type="Label" parent="CanvasLayer/HUD/BenchPanel/VBox"]
+[node name="Title" type="Label" parent="CanvasLayer/HUD/BenchPanel/VBox" unique_id=800696085]
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "备战区"
 
-[node name="Scroll" type="ScrollContainer" parent="CanvasLayer/HUD/BenchPanel/VBox"]
+[node name="Scroll" type="ScrollContainer" parent="CanvasLayer/HUD/BenchPanel/VBox" unique_id=450514388]
 layout_mode = 2
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="Grid" type="GridContainer" parent="CanvasLayer/HUD/BenchPanel/VBox/Scroll"]
+[node name="Grid" type="GridContainer" parent="CanvasLayer/HUD/BenchPanel/VBox/Scroll" unique_id=80734753]
 layout_mode = 2
 theme_override_constants/h_separation = 10
 theme_override_constants/v_separation = 10
 columns = 3
 
-[node name="StartButton" type="Button" parent="CanvasLayer/HUD"]
+[node name="StartButton" type="Button" parent="CanvasLayer/HUD" unique_id=780828317]
 layout_mode = 1
 anchors_preset = 7
 anchor_left = 0.5
@@ -72,7 +72,7 @@ grow_horizontal = 2
 grow_vertical = 0
 text = "开始战斗"
 
-[node name="ManpowerLabel" type="Label" parent="CanvasLayer/HUD"]
+[node name="ManpowerLabel" type="Label" parent="CanvasLayer/HUD" unique_id=1082994403]
 clip_contents = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 0
@@ -81,7 +81,7 @@ offset_top = 35.0
 offset_right = 102.0
 offset_bottom = 58.0
 
-[node name="EnemyManpowerLabel" type="Label" parent="CanvasLayer/HUD"]
+[node name="EnemyManpowerLabel" type="Label" parent="CanvasLayer/HUD" unique_id=454079975]
 clip_contents = true
 custom_minimum_size = Vector2(100, 0)
 layout_mode = 1
@@ -95,7 +95,7 @@ offset_bottom = 58.0
 grow_horizontal = 0
 horizontal_alignment = 2
 
-[node name="SynergyLabel" type="Label" parent="CanvasLayer/HUD"]
+[node name="SynergyLabel" type="Label" parent="CanvasLayer/HUD" unique_id=2172357]
 layout_mode = 0
 offset_left = 10.0
 offset_top = 80.0
@@ -104,7 +104,7 @@ offset_bottom = 400.0
 theme_override_font_sizes/font_size = 14
 text = "当前羁绊:"
 
-[node name="TopMenuButton" type="Button" parent="CanvasLayer/HUD"]
+[node name="TopMenuButton" type="Button" parent="CanvasLayer/HUD" unique_id=2013757316]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -119,7 +119,7 @@ grow_horizontal = 0
 grow_vertical = 2
 text = "退出"
 
-[node name="SaveButton" type="Button" parent="CanvasLayer/HUD"]
+[node name="SaveButton" type="Button" parent="CanvasLayer/HUD" unique_id=392672063]
 layout_mode = 1
 anchors_preset = 3
 anchor_left = 1.0
@@ -134,7 +134,7 @@ grow_horizontal = 0
 grow_vertical = 2
 text = "存储"
 
-[node name="ResultOverlay" type="Control" parent="CanvasLayer"]
+[node name="ResultOverlay" type="Control" parent="CanvasLayer" unique_id=935517476]
 process_mode = 3
 visible = false
 layout_mode = 3
@@ -144,7 +144,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="Dim" type="ColorRect" parent="CanvasLayer/ResultOverlay"]
+[node name="Dim" type="ColorRect" parent="CanvasLayer/ResultOverlay" unique_id=2008419910]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -153,7 +153,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0, 0, 0, 0.6)
 
-[node name="Panel" type="Panel" parent="CanvasLayer/ResultOverlay"]
+[node name="Panel" type="Panel" parent="CanvasLayer/ResultOverlay" unique_id=290476886]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -167,7 +167,7 @@ offset_bottom = 250.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ResultOverlay/Panel"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CanvasLayer/ResultOverlay/Panel" unique_id=2026869512]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -180,73 +180,73 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_constants/separation = 16
 
-[node name="TitleLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=838546364]
 layout_mode = 2
 theme_override_font_sizes/font_size = 36
 text = "结算"
 horizontal_alignment = 1
 
-[node name="DetailLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer"]
+[node name="DetailLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=359889222]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
 
-[node name="RewardContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer"]
+[node name="RewardContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=26674139]
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 20
 alignment = 1
 
-[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer"]
+[node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=2030239756]
 layout_mode = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="NextLevelButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer"]
+[node name="NextLevelButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer" unique_id=2134236902]
 visible = false
 custom_minimum_size = Vector2(160, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "下一关"
 
-[node name="RetryButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer"]
+[node name="RetryButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer" unique_id=1109593866]
 custom_minimum_size = Vector2(160, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "再来一次"
 
-[node name="MenuButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer"]
+[node name="MenuButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer" unique_id=1045018941]
 custom_minimum_size = Vector2(160, 50)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "返回主菜单"
 
-[node name="Battlefield" type="Node2D" parent="."]
+[node name="Battlefield" type="Node2D" parent="." unique_id=650146051]
 position = Vector2(0, 90)
 
-[node name="FriendlyField" type="Node2D" parent="Battlefield"]
+[node name="FriendlyField" type="Node2D" parent="Battlefield" unique_id=730339876]
 
-[node name="GridVisualizer" type="Node2D" parent="Battlefield/FriendlyField"]
+[node name="GridVisualizer" type="Node2D" parent="Battlefield/FriendlyField" unique_id=1850447624]
 script = ExtResource("6_8teo4")
 
-[node name="UnitsContainer" type="Node2D" parent="Battlefield/FriendlyField"]
+[node name="UnitsContainer" type="Node2D" parent="Battlefield/FriendlyField" unique_id=132116470]
 
-[node name="BattleLine" type="ColorRect" parent="Battlefield/FriendlyField"]
+[node name="BattleLine" type="ColorRect" parent="Battlefield/FriendlyField" unique_id=738213596]
 custom_minimum_size = Vector2(2, 1000)
 offset_right = 3.0
 offset_bottom = 1000.0
 color = Color(0.77096003, 0, 0.114372455, 1)
 
-[node name="EnemyField" type="Node2D" parent="Battlefield"]
+[node name="EnemyField" type="Node2D" parent="Battlefield" unique_id=2072864612]
 
-[node name="GridVisualizer" type="Node2D" parent="Battlefield/EnemyField"]
+[node name="GridVisualizer" type="Node2D" parent="Battlefield/EnemyField" unique_id=638202286]
 script = ExtResource("6_8teo4")
 
-[node name="UnitsContainer" type="Node2D" parent="Battlefield/EnemyField"]
+[node name="UnitsContainer" type="Node2D" parent="Battlefield/EnemyField" unique_id=1888501794]
 
-[node name="BattleLine" type="ColorRect" parent="Battlefield/EnemyField"]
+[node name="BattleLine" type="ColorRect" parent="Battlefield/EnemyField" unique_id=1507634682]
 custom_minimum_size = Vector2(2, 1000)
 offset_right = 3.0
 offset_bottom = 1000.0

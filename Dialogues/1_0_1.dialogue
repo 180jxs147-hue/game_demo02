@@ -1,12 +1,12 @@
 ~ start
-Narrator: 你，被召唤而来。你承载着历史的记忆，人类的渴望。 [#bg:battle_bg]
-Narrator: 你所见的世界，是一块被“混沌”侵蚀的历史碎片。 
-Narrator: 你的心智是清明的，但你的力量需要被验证。 
-Narrator: 现在，进行你的净化测试。证明你能驾驭这股力量。 
-Player01: (感受到一股强大的力量涌入军阵) 
-Narrator: 通过测试。你的军阵已准备就绪。 
-Narrator: 去吧，去那黄巾初起之地，开始你的净化之旅。 
-
+XiaoBingZhang: 伍长，这村子静得吓人，连声狗叫都没有。 [#bg:village_dusk, #pos:left]
+GongShouLi: 哼，洛阳那帮十常侍把税收到了三十年后，狗早就被人吃了。这世道，人吃人都不稀奇。 [#pos:left]
+RefugeeLeader: 官爷……行行好……留下军粮，放你们过去。 [#pos:right]
+WuZhang: 我们是边军第十三巡逻队，哪有多余的粮食？让开！ [#pos:left]
+RefugeeLeader: ……不给活路？既然朝廷不让我们活，那就拿你们的肉祭天！苍天已死，黄天当立！ [#pos:right]
+RefugeeLeader: 苍天已死，黄天当立！ [#pos:right]
+GongShouLi: 该死，是黄巾贼！他们虽然拿的是锄头，但人多势众。伍长，快结阵！ [#pos:left]
+WuZhang: 别落单！肩并肩站在一起，这帮流民就冲不散我们！ [#pos:left]
 # 强制指定为汉军补给点
 # do set_shop_pool_for_next_camp("han_shop")
 # 强制指定为黄巾集市

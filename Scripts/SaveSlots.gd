@@ -4,6 +4,9 @@ extends Control
 @onready var back_button = $VBox/Bottom/BackButton
 var load_mode: bool = false
 @onready var mode_label = $VBox/Header/ModeLabel
+@onready var s_auto = $VBox/Slots/SAuto
+@onready var s_auto_info = $VBox/Slots/SAuto/SAutoInfo
+@onready var s_auto_btn = $VBox/Slots/SAuto/SAutoStart
 @onready var s1_info = $VBox/Slots/S1/S1Info
 @onready var s2_info = $VBox/Slots/S2/S2Info
 @onready var s3_info = $VBox/Slots/S3/S3Info
@@ -30,6 +33,14 @@ func _ready():
 		back_button.pressed.connect(func():
 			get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 		)
+	
+	if s_auto_btn:
+		s_auto_btn.pressed.connect(_load_autosave)
+	
+	if load_mode:
+		if s_auto: s_auto.visible = true
+	else:
+		if s_auto: s_auto.visible = false
 
 func _apply_theme():
 	if not GameState:
@@ -54,10 +65,26 @@ func _slot_info(i: int) -> String:
 		return "槽位 %d · 关卡索引 %d" % [i, idx]
 	return "槽位 %d · 空" % i
 
+func _autosave_info() -> String:
+	var cfg := ConfigFile.new()
+	var err = cfg.load("user://autosave_progress.cfg")
+	if err == OK:
+		var idx = int(cfg.get_value("progress", "level_index", 0))
+		return "自动存档 · 关卡索引 %d" % idx
+	return "自动存档 · 空"
+
 func _refresh():
 	s1_info.text = _slot_info(1)
 	s2_info.text = _slot_info(2)
 	s3_info.text = _slot_info(3)
+	
+	if s_auto_info:
+		s_auto_info.text = _autosave_info()
+	if s_auto_btn:
+		s_auto_btn.disabled = not _autosave_exists()
+
+func _autosave_exists() -> bool:
+	return FileAccess.file_exists("user://autosave_progress.cfg") or FileAccess.file_exists("user://Autosave_PlayerLibrary.tres")
 
 func _choose_slot(i: int):
 	if not GameState: return
@@ -66,6 +93,11 @@ func _choose_slot(i: int):
 		GameState.load_all()
 	else:
 		GameState.clear_save()
+	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
+
+func _load_autosave():
+	if not GameState: return
+	GameState.load_autosave_all()
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 
 func _delete_slot(i: int):

@@ -1,11 +1,11 @@
-[gd_resource type="Resource" script_class="LevelConfig" load_steps=14 format=3]
+[gd_resource type="Resource" script_class="LevelConfig" format=3 uid="uid://omdkkfs57lxt"]
 
-[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
-[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
+[ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" uid="uid://b5ia3pbqd8yge" path="res://Resources/DataFiles/huangjin_lishi.tres" id="3_lishi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="4_youqi"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="5_ojjba"]
+[ext_resource type="Resource" uid="uid://dhr6o214wk8r3" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
+[ext_resource type="Resource" uid="uid://di7a6p1bc0f2c" path="res://Resources/DataFiles/camp.tres" id="5_ojjba"]
 
 [sub_resource type="Resource" id="Resource_cnrxd"]
 script = ExtResource("2_spawn")
@@ -49,7 +49,3 @@ level_name = "汉军线 第 1 关 - 会师与异常"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_cnrxd"), SubResource("Resource_qtqyj"), SubResource("Resource_4axd7"), SubResource("Resource_lj34j"), SubResource("Resource_hxqvv"), SubResource("Resource_q034j"), SubResource("Resource_i1v73")])
 reward_pool_id = "han_early"
 shop_pool_id = "han_shop"
-grid_width = 4
-grid_height = 4
-position_offset = Vector2(0, 0)
-allow_camp = true

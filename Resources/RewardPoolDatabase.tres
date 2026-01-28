@@ -1,12 +1,14 @@
-[gd_resource type="Resource" script_class="RewardPoolDatabase" load_steps=5 format=3]
+[gd_resource type="Resource" script_class="RewardPoolDatabase" load_steps=7 format=3]
 
 [ext_resource type="Script" path="res://Resources/RewardPoolDatabase.gd" id="1"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/HanEarlyPool.tres" id="2"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/HuangjinEarlyPool.tres" id="3"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/GenericEarlyPool.tres" id="4"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/GenericEarlyPool01.tres" id="5"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/GenericEarlyPool02.tres" id="6"]
+
 
 [resource]
 script = ExtResource("1")
-
-pools = [ExtResource("2"), ExtResource("3"), ExtResource("4")]
+pools = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
 

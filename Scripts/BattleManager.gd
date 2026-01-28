@@ -102,6 +102,8 @@ func _ready():
 	print("BattleManager: _ready started")
 	if instance == null:
 		instance = self
+	if GameState:
+		GameState.use_autosave_library = false
 	
 	# 初始化战斗日志UI
 	if battle_log_ui_scene:
@@ -323,10 +325,23 @@ func start_level(index: int):
 	
 	current_manpower = max_manpower
 	
+	enemy_max_manpower = 50.0
+	if "enemy_power" in level:
+		enemy_max_manpower = float(level.enemy_power)
+		print("[BattleManager] Loaded enemy_power: ", level.enemy_power, " -> enemy_max_manpower: ", enemy_max_manpower)
+	else:
+		print("[BattleManager] enemy_power not found in level config, using default 50.0")
+	enemy_current_manpower = enemy_max_manpower
+	
 	# 3. 调整格子大小 (分别设置)
-	# 玩家格子大小：只受 GameState 影响
+	# 玩家格子大小：只受 GameState 影响 (除非关卡特别指定)
 	var player_cols = GameState.current_cols if GameState else GameConst.MAP_COLUMNS
 	var player_rows = GameState.current_rows if GameState else GameConst.MAP_ROWS
+	
+	if "formation_cols" in level and level.formation_cols > 0:
+		player_cols = level.formation_cols
+	if "formation_rows" in level and level.formation_rows > 0:
+		player_rows = level.formation_rows
 	
 	# 敌人格子大小：受关卡配置影响
 	var enemy_cols = GameConst.MAP_COLUMNS
