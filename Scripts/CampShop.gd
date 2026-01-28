@@ -96,6 +96,32 @@ func _ready():
 		btn_expand_cols.pressed.connect(func(): _try_upgrade("cols", COST_EXPAND_COLS))
 	if btn_max_manpower:
 		btn_max_manpower.pressed.connect(func(): _try_upgrade("manpower", COST_MAX_MANPOWER))
+	
+	_setup_save_button()
+
+func _setup_save_button():
+	var header = $Header
+	if header:
+		var btn_save = Button.new()
+		btn_save.text = "保存进度"
+		btn_save.custom_minimum_size = Vector2(120, 0)
+		if GameState:
+			GameState.apply_button_style(btn_save)
+		
+		# Insert before NextLevelBtn
+		if next_level_btn:
+			header.add_child(btn_save)
+			header.move_child(btn_save, next_level_btn.get_index())
+		else:
+			header.add_child(btn_save)
+			
+		btn_save.pressed.connect(_on_save_pressed)
+
+func _on_save_pressed():
+	var save_scene = preload("res://Scenes/SaveSlots.tscn").instantiate()
+	save_scene.is_popup = true
+	save_scene.mode = "save"
+	add_child(save_scene)
 
 func _refresh_ui():
 	if not GameState: return
@@ -135,6 +161,7 @@ func _try_upgrade(type: String, cost: int):
 			GameState.add_run_manpower_bonus(10)
 			
 		GameState.save_progress()
+		GameState.trigger_autosave()
 		_refresh_ui()
 
 func _refresh_hospital():
@@ -166,6 +193,7 @@ func _refresh_hospital():
 				if GameState.spend_run_gold(COST_HEAL):
 					unit.is_injured = false
 					GameState.save_player_library(lib)
+					GameState.trigger_autosave()
 					_refresh_ui()
 					_refresh_hospital()
 			)
@@ -242,6 +270,7 @@ func _refresh_shop(free: bool = false):
 				if lib:
 					lib.collected_cards.append(card.duplicate())
 					GameState.save_player_library(lib)
+					GameState.trigger_autosave()
 				
 				# Disable button
 				btn.disabled = true
@@ -275,13 +304,26 @@ func _on_next_level_pressed():
 	# 检查是否有挂起的目标关卡（从剧情跳转过来的情况）
 	var target_level_id = ""
 	var is_from_dialogue = false
+	
+	# Prevent loop: If pending ID is same as current level, ignore it
+	var level_db = GameState.get_level_database()
 	if GameState.next_level_id_from_camp != "":
-		target_level_id = GameState.next_level_id_from_camp
-		is_from_dialogue = true
-		print("CampShop: Using next_level_id_from_camp: ", target_level_id)
-	else:
+		var pending_id = GameState.next_level_id_from_camp
+		var current_level_id = ""
+		if level_db:
+			var lvl = level_db.get_level(GameState.selected_level_index)
+			if lvl: current_level_id = lvl.level_id
+			
+		if pending_id == current_level_id:
+			print("CampShop: Pending ID same as current. Ignoring to prevent loop.")
+			GameState.next_level_id_from_camp = ""
+		else:
+			target_level_id = pending_id
+			is_from_dialogue = true
+			print("CampShop: Using next_level_id_from_camp: ", target_level_id)
+	
+	if target_level_id == "":
 		# 正常流程：当前关卡的下一关
-		var level_db = GameState.get_level_database()
 		if not level_db: 
 			print("CampShop: No level database")
 			return
@@ -299,7 +341,6 @@ func _on_next_level_pressed():
 	
 	if target_level_id != "":
 		# 更新 GameState 索引，确保加载正确的环境
-		var level_db = GameState.get_level_database()
 		if level_db:
 			var idx = level_db.get_index_by_id(target_level_id)
 			if idx != -1:

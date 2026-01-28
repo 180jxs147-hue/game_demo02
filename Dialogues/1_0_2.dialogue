@@ -1,12 +1,12 @@
 ~ start
-WuZhang: ……遍地尸首。刚才那个领头的，我记得他，以前是个老实的佃户。 [#bg:village_dusk,#pos:right]
-GongShouLi: 搜过了，兜里比脸还干净。伍长，咱们杀的到底是贼，还是民啊？ [#pos:right]
-WuZhang: (沉默) 拿起了武器，就是贼。不管他们以前是谁……继续前进，去村里看看。 [#pos:right]
-XiaoBingZhang: (突然停下，举盾) 伍长！前面的路被堵住了！ [#bg:village_dusk, #pos:right]
-YTArmy_soliders: (挥舞着带着血迹的长竹竿) 苍天已死！狗官兵，把命留下！ [#pos:left]
-XiaoBingZhang: 伍长，他们人太多，我怕顶不住！ [#pos:right]
-WuZhang: 阿张！别退！竹竿再长也怕盾牌，你顶在最前面吸引火力！ [#pos:right]
-GongShouLi: 伍长，把阿张放我前面，只要没东西捅到我的脸，我能隔着阿张的头顶，把这帮拿竹竿的全部射穿！ [#pos:right]
-WuZhang: 听令！盾兵在前抗线，弓手在后输出！别让敌人靠近老李！ [#pos:right]
+WuZhang: ……遍地尸首。刚才那个领头的，我记得他，以前是个老实的佃户。 [#bg:village_dusk,#pos:left]
+GongShouLi: 搜过了，兜里比脸还干净。伍长，咱们杀的到底是贼，还是民啊？ [#pos:left]
+WuZhang: (沉默) 拿起了武器，就是贼。不管他们以前是谁……继续前进，去村里看看。 [#pos:left]
+XiaoBingZhang: (突然停下，举盾) 伍长！前面的路被堵住了！ [#bg:village_dusk, #pos:left]
+YTArmy_soliders: (挥舞着带着血迹的长竹竿) 苍天已死！狗官兵，把命留下！ [#pos:right]
+XiaoBingZhang: 伍长，他们人太多，我怕顶不住！ [#pos:left]
+WuZhang: 阿张！别退！竹竿再长也怕盾牌，你顶在最前面吸引火力！ [#pos:left]
+GongShouLi: 伍长，把阿张放我前面，只要没东西捅到我的脸，我能隔着阿张的头顶，把这帮拿竹竿的全部射穿！ [#pos:left]
+WuZhang: 听令！盾兵在前抗线，弓手在后输出！别让敌人靠近老李！ [#pos:left]
 do start_level_id("1_0_2")
 => END

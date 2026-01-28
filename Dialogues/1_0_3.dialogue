@@ -1,18 +1,18 @@
 ~ start
-YTArmy_soliders: 大贤……良师……救我…… [#pos:left]
-XiaoBingZhang: (看着盾牌上的深深划痕) 好险……要是没老李在后面掩护，我这盾牌早晚被捅穿。 [#pos:right]
-GongShouLi: (收起弓) 哼，这就是配合。你的盾保了我的命，我的箭救了你的命。 [#pos:right]
-WuZhang: 别松懈。这只是村子的外围，里面的火光越来越大了。去广场！ [#pos:right]
+YTArmy_soliders: 大贤……良师……救我…… [#bg:village_dusk, #pos:right]
+XiaoBingZhang: (看着盾牌上的深深划痕) 好险……要是没老李在后面掩护，我这盾牌早晚被捅穿。 [#pos:left]
+GongShouLi: (收起弓) 哼，这就是配合。你的盾保了我的命，我的箭救了你的命。 [#pos:left]
+WuZhang: 别松懈。这只是村子的外围，里面的火光越来越大了。去广场！ [#pos:left]
 
-XiaoBingZhang: 那是什么怪物？！浑身冒金光，堵住了出口！ [#bg:village_dusk, #pos:right]
-GongShouLi: 是黄巾力士！那是妖法护体，普通的刀剑根本砍不动！ [#pos:right]
-GongShouLi: 伍长，快看！那怪物后面有个法坛帐篷，有人在做法”！ [#pos:right]
-WuZhang: 正面打不穿。那就走侧路！ [#pos:right]
-WuZhang: 阿张！看见侧翼那条空路了吗？ [#pos:right]
-XiaoBingZhang: 看见了！那边没人防守！ [#pos:right]
-WuZhang: 别管那个大块头，骑马从侧翼空行冲过去！你的目标只有一个——烧了那个法坛帐篷！ [#pos:right]
-GongShouLi: 对！只要断了供给，神仙也得变凡人！ [#pos:right]
-YTArmy_soliders: 凡人！休想通过！ [#pos:left]
+XiaoBingZhang: 那是什么怪物？！浑身冒金光，堵住了出口！ [#bg:village_dusk, #pos:left]
+GongShouLi: 是黄巾力士！那是妖法护体，普通的刀剑根本砍不动！ [#pos:left]
+GongShouLi: 伍长，快看！那怪物后面有个法坛帐篷，有人在做法！ [#pos:left]
+WuZhang: 正面打不穿。那就走侧路！ [#pos:left]
+WuZhang: 阿张！看见侧翼那条空路了吗？ [#pos:left]
+XiaoBingZhang: 看见了！那边没人防守！ [#pos:left]
+WuZhang: 别管那个大块头，你之前说你是河东人，自小骑马。现在你骑马从侧翼空行冲过去！你的目标只有一个——烧了那个法坛帐篷！ [#pos:left]
+GongShouLi: 对！只要断了供给，神仙也得变凡人！ [#pos:left]
+YTArmy_soliders: 凡人！休想通过！ [#pos:right]
 
 do start_level_id("1_0_3")
 => END

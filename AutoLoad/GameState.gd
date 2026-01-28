@@ -65,11 +65,8 @@ func _library_path(i: int = -1) -> String:
 
 # --- 恢复逻辑 ---
 func recover_all_injured_units():
-	var path = _library_path()
-	if not FileAccess.file_exists(path):
-		return # 没有存档，不做处理
-	
-	var lib = ResourceLoader.load(path) as CardLibrary
+	# Use standard load function which handles new/old formats
+	var lib = load_player_library()
 	if not lib:
 		return
 		
@@ -80,7 +77,8 @@ func recover_all_injured_units():
 			changed = true
 			
 	if changed:
-		ResourceSaver.save(lib, path)
+		# save_player_library now updates the ConfigFile safely
+		save_player_library(lib)
 		print("All units recovered and saved.")
 
 # --- UI 样式常量与缓存 ---
@@ -257,17 +255,35 @@ func load_player_library(force_reload: bool = false) -> CardLibrary:
 	# - 优先加载 user:// 下的玩家存档（每台机器/每个用户独立）
 	# - 如果第一次运行或存档不存在，则回退到 res:// 的默认库
 	var lib: CardLibrary = null
-	var lib_path := AUTO_LIBRARY_PATH if use_autosave_library else _library_path()
+	# 注意：现在统一使用 ConfigFile (.cfg) 存储 Library
+	var save_path := AUTO_SAVE_PROGRESS_PATH if use_autosave_library else _save_path()
+	var legacy_lib_path := AUTO_LIBRARY_PATH if use_autosave_library else _library_path()
 	
-	var cache_mode = ResourceLoader.CACHE_MODE_REUSE
-	if force_reload:
-		cache_mode = ResourceLoader.CACHE_MODE_REPLACE
+	# 1. 尝试从 ConfigFile 加载 (新格式)
+	var config = ConfigFile.new()
+	var err = config.load(save_path)
+	if err == OK:
+		var data = config.get_value("library", "data", null)
+		if data is Dictionary:
+			lib = _deserialize_library(data)
+			print("GameState: Loaded library from ConfigFile: ", save_path)
 
-	if FileAccess.file_exists(lib_path):
-		lib = ResourceLoader.load(lib_path, "", cache_mode)
+	# 2. 如果 ConfigFile 中没有 Library 数据 (可能是旧存档迁移)，尝试加载 .tres (旧格式)
+	if not lib and FileAccess.file_exists(legacy_lib_path):
+		var cache_mode = ResourceLoader.CACHE_MODE_REUSE
+		if force_reload or use_autosave_library:
+			cache_mode = ResourceLoader.CACHE_MODE_REPLACE
+		lib = ResourceLoader.load(legacy_lib_path, "", cache_mode)
+		print("GameState: Loaded library from Legacy .tres: ", legacy_lib_path)
 	
+	# 3. 尝试回退到默认库
 	if not lib:
+		# 尝试回退到默认库
+		var cache_mode = ResourceLoader.CACHE_MODE_REUSE
+		if force_reload:
+			cache_mode = ResourceLoader.CACHE_MODE_REPLACE
 		lib = ResourceLoader.load(DEFAULT_LIBRARY_PATH, "", cache_mode) as CardLibrary
+		print("GameState: Loaded default library")
 		
 	# 如果库是空的（可能是默认库也没配置，或者新档），强制发放初始阵容
 	if lib and lib.collected_cards.is_empty():
@@ -276,24 +292,166 @@ func load_player_library(force_reload: bool = false) -> CardLibrary:
 	return lib
 
 func save_player_library(library: CardLibrary) -> int:
-	# 将卡牌收集进度写入 user://，导出的 EXE 分发给其他用户也不会写到游戏目录。
+	# 将卡牌收集进度写入当前槽位文件（或自动存档）
 	if not library:
 		return ERR_INVALID_DATA
-	var rc_slot = ResourceSaver.save(library, _library_path())
-	var rc_auto = ResourceSaver.save(library, AUTO_LIBRARY_PATH)
-	return rc_slot if rc_slot != OK else rc_auto
+	var path = AUTO_SAVE_PROGRESS_PATH if use_autosave_library else _save_path()
+	
+	var config = ConfigFile.new()
+	# 尝试加载现有文件以保留其他数据（如进度）
+	config.load(path)
+	
+	var lib_data = _serialize_library(library)
+	config.set_value("library", "data", lib_data)
+	
+	return config.save(path)
+
+func save_autosave_library(library: CardLibrary) -> int:
+	# 将卡牌收集进度写入自动存档文件
+	if not library:
+		return ERR_INVALID_DATA
+	var path = AUTO_SAVE_PROGRESS_PATH
+	
+	var config = ConfigFile.new()
+	config.load(path)
+	
+	var lib_data = _serialize_library(library)
+	config.set_value("library", "data", lib_data)
+	
+	return config.save(path)
 
 func save_progress() -> int:
+	var path = AUTO_SAVE_PROGRESS_PATH if use_autosave_library else _save_path()
 	var config = ConfigFile.new()
+	config.load(path) # 保留 Library 数据
+	
 	config.set_value("progress", "level_index", selected_level_index)
 	config.set_value("progress", "current_rows", current_rows)
 	config.set_value("progress", "current_cols", current_cols)
 	config.set_value("progress", "run_gold", run_gold)
 	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
 	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
-	var rc_slot = config.save(_save_path())
-	var rc_auto = config.save(AUTO_SAVE_PROGRESS_PATH)
-	return rc_slot if rc_slot != OK else rc_auto
+	
+	return config.save(path)
+
+func save_autosave_progress() -> int:
+	var path = AUTO_SAVE_PROGRESS_PATH
+	var config = ConfigFile.new()
+	config.load(path)
+	
+	config.set_value("progress", "level_index", selected_level_index)
+	config.set_value("progress", "current_rows", current_rows)
+	config.set_value("progress", "current_cols", current_cols)
+	config.set_value("progress", "run_gold", run_gold)
+	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
+	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
+	
+	return config.save(path)
+
+# --- Serialization Helpers ---
+func _serialize_library(lib: CardLibrary) -> Dictionary:
+	var data = { "collected_cards": [] }
+	for unit in lib.collected_cards:
+		if unit:
+			data.collected_cards.append(_serialize_unit(unit))
+	return data
+
+func _deserialize_library(data: Dictionary) -> CardLibrary:
+	var lib = CardLibrary.new()
+	var cards = data.get("collected_cards", [])
+	if cards is Array:
+		for unit_data in cards:
+			if unit_data is Dictionary:
+				var unit = _deserialize_unit(unit_data)
+				if unit:
+					lib.collected_cards.append(unit)
+	return lib
+
+func _serialize_unit(unit: UnitData) -> Dictionary:
+	var dict = {}
+	# 显式保存关键字段，确保版本兼容性
+	dict["name"] = unit.name
+	dict["max_hp"] = unit.max_hp
+	dict["manpower_cost"] = unit.manpower_cost
+	dict["cooldown"] = unit.cooldown
+	dict["attack_damage"] = unit.attack_damage
+	dict["defense"] = unit.defense
+	dict["attack_range"] = unit.attack_range
+	dict["is_injured"] = unit.is_injured
+	dict["charge_count"] = unit.charge_count
+	dict["unit_class"] = unit.unit_class
+	dict["civilization"] = unit.civilization
+	dict["rarity"] = unit.rarity
+	dict["tags"] = unit.tags
+	dict["grid_shape"] = unit.grid_shape
+	dict["adjacency_rules"] = unit.adjacency_rules
+	dict["story"] = unit.story
+	
+	# 保存资源路径以便恢复引用（如 Icon）
+	if unit.icon and unit.icon.resource_path != "":
+		dict["icon_path"] = unit.icon.resource_path
+		
+	# 尝试保存原始资源路径（如果是从文件加载的）
+	# 注意：Duplicate 的资源没有 path，所以我们可能需要依靠 name 来查找原始资源？
+	# 或者我们假设 icon_path 指向了原始文件所在位置附近？
+	# 目前只能尽力而为。如果 name 对应文件名，可以恢复。
+	
+	return dict
+
+func _deserialize_unit(data: Dictionary) -> UnitData:
+	var unit = UnitData.new()
+	unit.name = data.get("name", "Unknown")
+	unit.max_hp = data.get("max_hp", 100.0)
+	unit.manpower_cost = data.get("manpower_cost", 1.0)
+	unit.cooldown = data.get("cooldown", 2.0)
+	unit.attack_damage = data.get("attack_damage", 10.0)
+	unit.defense = data.get("defense", 0.0)
+	unit.attack_range = data.get("attack_range", 1)
+	unit.is_injured = data.get("is_injured", false)
+	unit.charge_count = data.get("charge_count", 0)
+	unit.unit_class = data.get("unit_class", "infantry")
+	unit.civilization = data.get("civilization", "neutral")
+	unit.rarity = data.get("rarity", "common")
+	unit.tags = data.get("tags", [])
+	
+	# 恢复 grid_shape (Array[Vector2i] 可能会被存为 Array[String] via ConfigFile?)
+	# ConfigFile 支持 Vector2i，所以应该没问题。
+	var shape = data.get("grid_shape", [])
+	if shape is Array:
+		var typed_shape: Array[Vector2i] = []
+		for p in shape:
+			if p is Vector2i: typed_shape.append(p)
+			elif p is Vector2: typed_shape.append(Vector2i(p))
+		unit.grid_shape = typed_shape
+	
+	unit.adjacency_rules = data.get("adjacency_rules", [])
+	unit.story = data.get("story", "")
+	
+	if data.has("icon_path"):
+		var path = data["icon_path"]
+		if ResourceLoader.exists(path):
+			unit.icon = load(path)
+			
+	return unit
+
+func trigger_autosave() -> int:
+	# 触发自动存档：保存进度和卡牌库到自动存档路径
+	var rc1 = save_autosave_progress()
+	var rc2 = OK
+	# 注意：这里我们重新加载当前的库（可能是槽位的，也可能是自动存档的）
+	# 然后将其保存到自动存档位置。
+	# 为了确保一致性，我们应该保存内存中当前正在使用的状态。
+	# 由于 GameState 不持有 library 实例，我们必须 load 一次。
+	# 但 load 会根据 use_autosave_library 决定路径。
+	# 如果当前在玩槽位1，use_autosave_library=false，load 返回槽位1的库。
+	# 我们把这个库保存到 Autosave。这正是自动存档的定义：保存当前游玩状态。
+	var lib = load_player_library() 
+	if lib:
+		rc2 = save_autosave_library(lib)
+	
+	print("Autosave triggered.")
+	return rc1 if rc1 != OK else rc2
+
 
 func save_meta() -> int:
 	var cfg := ConfigFile.new()
@@ -323,6 +481,10 @@ func save_all() -> int:
 	return rc1 if rc1 != OK else (rc2 if rc2 != OK else rc3)
 
 func load_all():
+	# Reset transient flags to prevent state leakage
+	next_level_id_from_camp = ""
+	skip_intro = false
+	
 	load_progress()
 	load_meta()
 
@@ -361,6 +523,75 @@ func load_autosave_progress():
 		run_gold = 0
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
+
+func load_from_slot_and_init_autosave(slot_idx: int):
+	# 1. 临时设置环境以读取指定的 Slot 文件
+	current_slot = slot_idx
+	use_autosave_library = false 
+	
+	# 2. 读取该槽位的所有数据到内存 (Progress + Library + Meta)
+	# load_all() 内部会调用 load_progress() 和 load_player_library()
+	# 它们会根据 use_autosave_library=false 读取 _save_path(slot_idx)
+	load_all()
+	
+	print("GameState: Loaded data from Slot ", slot_idx, " into memory.")
+	
+	# 3. 立即切换到 Autosave 模式
+	use_autosave_library = true
+	
+	# 4. 将内存中的数据写入 Autosave 文件
+	# 这样后续的游戏进程将基于 Autosave 文件进行读写，而不会影响原始 Slot 文件
+	save_autosave_progress()
+	
+	# 注意：Library 数据现在也是通过 save_autosave_progress (如果是单文件) 
+	# 或者我们需要显式保存 Library？
+	# 在新架构下，save_autosave_progress() 只保存 progress 字典。
+	# Library 是通过 save_autosave_library 保存的。
+	# 为了确保完整性，我们调用 trigger_autosave() 或者手动调用两者。
+	# trigger_autosave() 会保存 progress 和 library 到 autosave 路径。
+	trigger_autosave()
+	
+	print("GameState: Initialized Autosave from Slot ", slot_idx)
+
+func save_to_slot(i: int):
+	# 显式保存当前状态到指定槽位
+	# 这通常是玩家手动点击“保存”时调用
+	
+	var target_slot = i
+	var target_path = _save_path(target_slot)
+	
+	# 1. 获取当前内存中的 Library (可能是 Autosave 的，也可能是刚加载的)
+	# 我们直接从内存获取吗？GameState 不持有 Library 实例。
+	# 所以我们必须 load_player_library()。
+	# 此时 use_autosave_library 应该是 true (如果我们正在玩游戏)。
+	var current_lib = load_player_library()
+	
+	# 2. 保存到目标槽位文件
+	var config = ConfigFile.new()
+	# 尝试加载目标文件以保留可能的其他元数据（虽然我们其实是覆盖模式）
+	config.load(target_path)
+	
+	# 写入 Progress
+	config.set_value("progress", "level_index", selected_level_index)
+	config.set_value("progress", "current_rows", current_rows)
+	config.set_value("progress", "current_cols", current_cols)
+	config.set_value("progress", "run_gold", run_gold)
+	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
+	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
+	
+	# 写入 Library
+	if current_lib:
+		var lib_data = _serialize_library(current_lib)
+		config.set_value("library", "data", lib_data)
+		
+	var rc = config.save(target_path)
+	
+	# 3. 保存 Meta (Meta 是全局的，不需要区分槽位，但 save_to_slot 原始逻辑也保存了它)
+	save_meta()
+	
+	print("GameState: Manual Save to Slot ", target_slot, " completed. RC: ", rc)
+	return rc
+
 
 func load_autosave_all():
 	use_autosave_library = true

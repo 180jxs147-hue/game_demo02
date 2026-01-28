@@ -1542,9 +1542,14 @@ func _on_menu_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 func _on_save_button_pressed():
-	if GameState and GameState.has_method("save_all"):
-		var rc = GameState.save_all()
-		_update_ui()
+	var save_scene = preload("res://Scenes/SaveSlots.tscn").instantiate()
+	save_scene.is_popup = true
+	save_scene.mode = "save"
+	# Add to CanvasLayer to ensure it's on top of everything
+	if has_node("CanvasLayer"):
+		$CanvasLayer.add_child(save_scene)
+	else:
+		add_child(save_scene)
 
 # --- 奖励相关 ---
 
@@ -1860,6 +1865,8 @@ func _on_reward_sold(item: Dictionary):
 	
 	if GameState:
 		GameState.add_run_gold(sell_value)
+		# 触发自动存档
+		GameState.trigger_autosave()
 		
 	# 隐藏奖励界面
 	reward_container.visible = false
@@ -1905,6 +1912,9 @@ func _on_reward_selected(item: Dictionary):
 		if GameState:
 			GameState.current_cols = min(GameState.current_cols + 1, GameConst.MAP_COLUMNS)
 			GameState.save_progress()
+
+	if GameState:
+		GameState.trigger_autosave()
 
 	# 隐藏奖励界面
 	reward_container.visible = false

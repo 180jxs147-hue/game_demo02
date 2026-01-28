@@ -6,8 +6,8 @@ Huangfusong: 用兵之道？现在是乱世！你只需执行命令！
 Huangfusong: 去！查清后方捣鬼的宦官内应！ 
 Player01: (心中警觉) 他似乎在刻意转移我的注意力。但我必须先完成任务。 
 System: 【任务：清除宦官内应】 
-Huangfusong: 去吧，别让我失望。
+Huangfusong: 去吧，别让我失望。在这之前，先休整一下。
 # 示例：强制指定下一个营地为汉军补给点（尽管 1_1_1 默认也是，但这里演示用法）
 # do set_shop_pool_for_next_camp("han_shop")
-do start_level_id("1_1_1")
+do enter_camp_before_level("1_1_1")
 => END

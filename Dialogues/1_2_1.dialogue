@@ -5,5 +5,5 @@ ZhangJue: 黄天当立，但人心中的混沌…比汉室的腐败更可怕。
 ZhangJue: 我已命张宝去截击汉军主力。你帮我查清，谁在黄巾军中散布极端的杀戮思想？那不是我的教义！ 
 Player01: 我明白了。我将为您清除这些污秽。 [#pos:left]
 System: 【任务：清除黄巾军中的极端混沌】 
-ZhangJue: 去吧，我的时间不多了… 
-do start_level_id("1_2_1")
+ZhangJue: 去吧，我的时间不多了… 在这之前，先休整一下。
+do enter_camp_before_level("1_2_1")
