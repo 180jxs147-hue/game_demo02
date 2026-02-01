@@ -7,4 +7,4 @@ func on_death(unit, manager):
 		# 改为对随机敌人造成伤害
 		if manager.has_method("deal_damage_to_random_enemy"):
 			manager.deal_damage_to_random_enemy(dmg, true)
-		unit._pop_text("BOOM!")
+		unit._pop_text("BOOM!", Color.RED)

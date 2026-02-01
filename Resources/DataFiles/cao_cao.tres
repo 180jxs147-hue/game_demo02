@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/cao_cao.png" id="1_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "曹操(青年)"
+icon = ExtResource("1_icon")
+rarity = "legendary"
+civilization = "dynasty"
+unit_class = "infantry"
+color = Color(0.6, 0.2, 0.8, 1)
+tags = Array[String](["hero", "dynasty", "leader"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 40.0
+manpower_cost = 3.0
+cooldown = 2.0
+attack_damage = 8.0
+defense = 1.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([{
+"effect_stat": "cooldown_speed",
+"effect_value": 0.2,
+"req_type": "civ",
+"req_value": "dynasty",
+"type": "give"
+}])
+story = "治世之能臣，乱世之奸雄。此刻的他，满怀报国之志，却已看透朝堂的腐朽。"

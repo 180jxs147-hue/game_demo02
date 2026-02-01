@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagStatusApply.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "poison"
+name = "尸毒"
+description = "攻击使目标中毒，每秒受到15点伤害，持续5秒。"
+status_type = "poison"
+duration = 5.0
+value = 15.0

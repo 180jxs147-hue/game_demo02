@@ -99,15 +99,15 @@ func _get_center_crop_src(tex: Texture2D, target_aspect: float) -> Rect2:
 
 func _get_civ_color(civ_key: String) -> Color:
 	match civ_key:
-		"han":
+		"dynasty":
 			return Color("c83f2b")
-		"roman":
+		"warlord":
 			return Color("3b1b5a")
-		"greek":
+		"predator":
 			return Color("1b5ea8")
 		"french":
 			return Color("234aa5")
-		"huangjin":
+		"rebel":
 			return Color("d1a322")
 		_:
 			return unit_data.color

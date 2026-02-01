@@ -20,6 +20,9 @@ var battle_manager: BattleManager
 # 动态属性
 var current_cooldown: float
 var current_hp: float
+var buffer_hp: float # 缓冲血量 (用于表现扣血延迟)
+var _buffer_decay_timer: float = 0.0 # 缓冲条停留计时器
+
 var current_attack_damage: float # 实际攻击力 (含加成)
 var bonus_max_hp: float = 0.0
 var bonus_attack_damage: float = 0.0
@@ -30,6 +33,7 @@ var visual_blocks: Array[ColorRect] = []
 var _processed_death_ids: Dictionary = {}
 var _last_stand_triggered: bool = false
 var current_charge_stacks: int = 0 # 剩余冲锋次数
+var active_status_effects: Dictionary = {} # type -> {duration, value, tick_timer}
 
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
@@ -150,6 +154,7 @@ func reset_stats():
 	_recalculate_stats()
 	if not BattleManager.is_battle_started:
 		current_hp = get_max_hp()
+		buffer_hp = current_hp
 		
 		# Tag init
 		for tag in _cached_tag_defs:
@@ -189,6 +194,7 @@ func _ready():
 	
 	_recalculate_stats()
 	current_hp = get_max_hp()
+	buffer_hp = current_hp # 初始化缓冲血量
 	# 1. 记录初始位置作为"老家" (假设你在编辑器里把它们放在了格子外面)
 	bench_position = position
 	
@@ -277,6 +283,33 @@ func _create_cooldown_bar(bounds: Rect2):
 	
 	cooldown_bar.set_meta("max_width", bar_width)
 
+func take_damage_visual():
+	# 1. Flash (Shader + Modulate)
+	# Modulate for overall brightness (HDR)
+	modulate = Color(2.0, 2.0, 2.0)
+	var tw_mod = create_tween()
+	tw_mod.tween_property(self, "modulate", Color.WHITE, 0.1).set_ease(Tween.EASE_OUT)
+	
+	# Shader flash for blocks
+	for block in visual_blocks:
+		if block.material is ShaderMaterial:
+			var tw_s = block.create_tween()
+			block.material.set_shader_parameter("flash_intensity", 0.8)
+			tw_s.tween_method(func(v): if is_instance_valid(block): block.material.set_shader_parameter("flash_intensity", v), 0.8, 0.0, 0.15)
+			
+	# 2. Shake (Visual Blocks)
+	# If Faction.FRIENDLY (me, left side) gets hit -> push Left (negative x)
+	# If Faction.ENEMY (enemy, right side) gets hit -> push Right (positive x)
+	var knockback_dir = Vector2.LEFT if faction == Faction.FRIENDLY else Vector2.RIGHT
+	
+	for block in visual_blocks:
+		var start_p = block.position
+		var tw_shake = block.create_tween()
+		# Knockback slightly
+		tw_shake.tween_property(block, "position", start_p + knockback_dir * 5.0, 0.05).set_trans(Tween.TRANS_QUART)
+		# Return
+		tw_shake.tween_property(block, "position", start_p, 0.1).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
 func take_damage(amount: float):
 	if data and data.unit_class == "equipment": return
 	if not BattleManager.is_battle_started: return # 战斗未开始或已结束，无敌
@@ -302,11 +335,24 @@ func take_damage(amount: float):
 	current_hp -= final_damage
 	_update_health_visuals()
 	
-	# 受击闪烁
-	modulate = Color(1, 0.5, 0.5)
-	var tween = create_tween()
-	tween.tween_property(self, "modulate", Color.WHITE, 0.1)
+	# 视觉反馈：Unit 自身震动与闪白
+	take_damage_visual()
 	
+	# 视觉反馈：屏幕震动与飘字
+	if battle_manager:
+		if battle_manager.has_method("trigger_shake"):
+			# 根据伤害比例或阈值决定震动
+			# 阈值：伤害 >= 5.0 触发震动
+			if final_damage >= 5.0:
+				var shake_intensity = clamp(final_damage / get_max_hp() * 20.0, 5.0, 15.0)
+				battle_manager.trigger_shake(shake_intensity)
+		
+		if battle_manager.has_method("spawn_floating_text"):
+			var txt = "-%.0f" % final_damage
+			if def > 0:
+				txt = "-%.0f (%s)" % [final_damage, "抵抗"]
+			battle_manager.spawn_floating_text(global_position, txt, Color(1, 0.2, 0.2)) # 鲜红
+
 	if current_hp <= 0:
 		current_hp = 0
 		_on_death()
@@ -315,12 +361,16 @@ func _update_health_visuals():
 	if not data: return
 	var bounds = _calculate_visual_bounds()
 	var hp_percent = current_hp / get_max_hp()
+	var buffer_percent = buffer_hp / get_max_hp()
 	
 	# 计算全局截断点 (相对于 Unit 节点)
 	# 假设从右向左扣血，即显示部分为 [min_x, min_x + width * percent]
 	var total_width = bounds.size.x
 	var visible_width = total_width * hp_percent
+	var buffer_width = total_width * buffer_percent
+	
 	var global_cutoff_x = bounds.position.x + visible_width
+	var buffer_cutoff_x = bounds.position.x + buffer_width
 	
 	for block in visual_blocks:
 		# 计算该 Block 内部的 progress (0.0 - 1.0)
@@ -328,7 +378,9 @@ func _update_health_visuals():
 		var block_start = block.position.x
 		var block_end = block.position.x + block.size.x
 		var progress = 0.0
+		var buffer_prog = 0.0
 		
+		# 计算实际血量 progress
 		if global_cutoff_x >= block_end:
 			progress = 1.0 # 完全显示
 		elif global_cutoff_x <= block_start:
@@ -336,10 +388,19 @@ func _update_health_visuals():
 		else:
 			# 部分显示
 			progress = (global_cutoff_x - block_start) / block.size.x
+		
+		# 计算缓冲血量 buffer_prog
+		if buffer_cutoff_x >= block_end:
+			buffer_prog = 1.0
+		elif buffer_cutoff_x <= block_start:
+			buffer_prog = 0.0
+		else:
+			buffer_prog = (buffer_cutoff_x - block_start) / block.size.x
 			
 		# 更新 Shader 参数
 		if block.material:
 			block.material.set_shader_parameter("progress", progress)
+			block.material.set_shader_parameter("buffer_progress", buffer_prog)
 
 func _on_death():
 	# 触发死亡状态机
@@ -363,7 +424,24 @@ func _process(_delta):
 			_end_drag()
 		return
 	
-	if is_dragging or BattleManager.is_battle_started:
+	# --- 血条缓冲逻辑 ---
+	if buffer_hp > current_hp:
+		if _buffer_decay_timer > 0:
+			_buffer_decay_timer -= _delta
+		else:
+			# 动态调整下降速度：血量差越大降得越快，或者固定速度
+			var decay_speed = max((buffer_hp - current_hp) * 2.0, get_max_hp() * 0.2)
+			buffer_hp = move_toward(buffer_hp, current_hp, decay_speed * _delta)
+			_update_health_visuals()
+	elif buffer_hp < current_hp:
+		# 如果因为治疗导致血量超过缓冲，瞬间跟上
+		buffer_hp = current_hp
+		_update_health_visuals()
+	# --------------------
+	
+	_process_status_effects(_delta)
+
+	if BattleManager.is_battle_started:
 		# 更新冷却条
 		if cooldown_bar and current_cooldown > 0:
 			var max_w = cooldown_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
@@ -375,7 +453,8 @@ func _process(_delta):
 				# 冷却完毕/未开始：满条
 				cooldown_bar.size.x = max_w
 				
-		# 拖拽中或战斗中，不检测悬停（或者你可以选择战斗中也显示）
+	if is_dragging:
+		# 拖拽中，不检测悬停
 		if _is_hovered:
 			_is_hovered = false
 			if battle_manager and battle_manager.has_method("hide_tooltip"):
@@ -387,7 +466,7 @@ func _process(_delta):
 	var mouse_pos = get_global_mouse_position()
 	var hovered = false
 	
-	if faction == Faction.FRIENDLY: # 只对我方单位生效
+	if data and data.grid_shape:
 		for grid_pos in data.grid_shape:
 			var part_pos = global_position + Vector2(grid_pos) * GameConst.GRID_SIZE
 			# 注意：ColorRect 在 _build_visuals 里有 padding，但检测可以粗略一点
@@ -401,12 +480,73 @@ func _process(_delta):
 		if battle_manager:
 			if _is_hovered:
 				if battle_manager.has_method("show_tooltip"):
-					battle_manager.show_tooltip(data)
+					battle_manager.show_tooltip(data, self)
 			else:
 				if battle_manager.has_method("hide_tooltip"):
 					battle_manager.hide_tooltip()
 
 # --- 状态机逻辑 ---
+
+func apply_status_effect(type: String, duration: float, value: float = 0.0):
+	if active_status_effects.has(type):
+		# 刷新持续时间
+		active_status_effects[type].duration = max(active_status_effects[type].duration, duration)
+		active_status_effects[type].value = max(active_status_effects[type].value, value)
+	else:
+		active_status_effects[type] = {
+			"duration": duration,
+			"value": value,
+			"tick_timer": 0.0
+		}
+	_update_status_visuals()
+
+func _process_status_effects(delta: float):
+	if not BattleManager.is_battle_started: return
+	if active_status_effects.is_empty(): return
+	
+	var keys_to_remove = []
+	for type in active_status_effects:
+		var effect = active_status_effects[type]
+		effect.duration -= delta
+		
+		# DoT 逻辑
+		if type == "poison" or type == "burn":
+			effect.tick_timer += delta
+			if effect.tick_timer >= 1.0:
+				effect.tick_timer -= 1.0
+				# 造成伤害，且无视防御 (DoT通常穿透防御)
+				take_damage(effect.value)
+				var txt = "中毒" if type == "poison" else "灼烧"
+				var col = Color.PURPLE if type == "poison" else Color.ORANGE_RED
+				_pop_text(txt, col)
+		
+		if effect.duration <= 0:
+			keys_to_remove.append(type)
+			
+	for k in keys_to_remove:
+		active_status_effects.erase(k)
+		_update_status_visuals()
+		
+		# 如果眩晕结束，立即检查状态
+		if k == "stun" and state_chart:
+			# 如果当前在 Ready 状态，尝试触发 check
+			# 但无法直接判断当前状态，只能发信号或依靠 Ready 的重试机制
+			# 上面的 _check_condition 已经有重试机制了，所以这里不用做特殊处理
+			pass
+
+func _update_status_visuals():
+	if active_status_effects.has("stun"):
+		modulate = Color(0.5, 0.5, 0.5) # 灰色
+	elif active_status_effects.has("poison"):
+		modulate = Color(0.5, 1.0, 0.5) # 绿色
+	elif active_status_effects.has("burn"):
+		modulate = Color(1.0, 0.5, 0.5) # 红色
+	else:
+		# 恢复正常颜色
+		if not is_deployed:
+			modulate = Color(0.7, 0.7, 0.7, 1)
+		else:
+			modulate = Color.WHITE
 
 # 状态 1: 进入冷却
 func _on_cooldown_entered():
@@ -431,6 +571,16 @@ func _on_ready_entered():
 func _check_condition():
 	if not BattleManager.is_battle_started:
 		return
+	
+	if active_status_effects.has("stun"):
+		status_label.text = "眩晕"
+		# 眩晕时不行动，且不重试（等待眩晕结束，或者让眩晕结束时手动触发？）
+		# 简单做法：这里 return，依靠 update loop 或者 timer 再次触发？
+		# 状态机在 Ready 状态如果不 act 也不 transition，就会卡住。
+		# 我们可以每 0.5s check 一次
+		get_tree().create_tree_timer(0.5).timeout.connect(_check_condition)
+		return
+
 	if not is_deployed:
 		return
 		
@@ -520,26 +670,6 @@ func _attack():
 	var dmg = current_attack_damage
 	var target = manager.find_target_for(self)
 	
-	# --- 攻击表现优化 ---
-	
-	# 1. 冲撞动画
-	# 为了防止 Tween 冲突，最好操作 visual_blocks 的父级或整体偏移
-	# 这里简单起见，我们做一个 visual_blocks 的整体震动
-	var punch_dir = Vector2.RIGHT if faction == Faction.FRIENDLY else Vector2.LEFT
-	
-	# 遍历移动所有方块
-	for block in visual_blocks:
-		var tw = create_tween()
-		var start_p = block.position
-		tw.tween_property(block, "position", start_p + punch_dir * 10, 0.05)
-		tw.tween_property(block, "position", start_p, 0.1)
-	
-	# 2. 弹道连线 (如果距离较远)
-	if target and is_instance_valid(target):
-		_draw_attack_line(target.global_position)
-	
-	# --------------------
-	
 	# 2. 伤害修正钩子 (如狙击、冲锋)
 	for tag in _cached_tag_defs:
 		dmg = tag.modify_damage(self, target, dmg)
@@ -549,8 +679,194 @@ func _attack():
 	else:
 		if manager.has_method("modify_enemy_manpower"):
 			manager.modify_enemy_manpower(-data.manpower_cost)
+	
+	# --- 攻击表现优化 ---
+	var punch_dir = Vector2.RIGHT if faction == Faction.FRIENDLY else Vector2.LEFT
+	var is_ranged = false
+	if data:
+		if data.unit_class in ["archer", "support", "siege", "mage"]:
+			is_ranged = true
+		elif data.attack_range > 1:
+			is_ranged = true
+	
+	# 1. 蓄力提示 (Pre-attack Cue)
+	# 让单位稍微后退一点
+	for block in visual_blocks:
+		var start_p = block.position
+		var tw = block.create_tween()
+		tw.tween_property(block, "position", start_p - punch_dir * 5.0, 0.15).set_trans(Tween.TRANS_SINE)
+	
+	# 等待蓄力完成
+	await get_tree().create_timer(0.15).timeout
+	if not is_instance_valid(self): return
+
+	# 2. 执行攻击动画与逻辑
+	if is_ranged:
+		_perform_ranged_attack(target, dmg, manager, punch_dir)
+	else:
+		_perform_melee_attack(target, dmg, manager, punch_dir)
+
+func _perform_melee_attack(target, dmg, manager, punch_dir):
+	# 强化冲锋 (Lunge)
+	var lunge_dist = GameConst.GRID_SIZE * 0.5 # 约 30-40 像素
+	
+	if visual_blocks.is_empty():
+		_apply_damage_logic(target, dmg, manager)
+		return
+
+	# --- 刀光特效 (Infantry) ---
+	if data and data.unit_class == "infantry":
+		# 在冲锋顶点或稍微提前播放特效
+		# 目标位置：如果有 target，则是 target 位置；否则是前方
+		var effect_pos = global_position + punch_dir * GameConst.GRID_SIZE
+		if target and is_instance_valid(target):
+			effect_pos = target.global_position + Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2)
 		
-	if target:
+		# 稍微延迟一点播放，配合冲锋动作
+		get_tree().create_timer(0.1).timeout.connect(func():
+			if is_instance_valid(self):
+				_play_slash_effect(effect_pos)
+		)
+	# -------------------------
+
+	for i in range(visual_blocks.size()):
+		var block = visual_blocks[i]
+		var start_p = block.position # 当前是蓄力后的位置
+		# 恢复原位并冲锋：原位是 start_p + 5.0
+		# 目标位是 (start_p + 5.0) + punch_dir * lunge_dist
+		var original_pos = start_p + punch_dir * 5.0
+		var target_pos = original_pos + punch_dir * lunge_dist
+		
+		var tw = block.create_tween()
+		# 快出 (Fast Out)
+		tw.tween_property(block, "position", target_pos, 0.1).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+		
+		# 在冲锋顶点造成伤害
+		if i == 0:
+			tw.tween_callback(func(): _apply_damage_logic(target, dmg, manager))
+			
+		# 慢回 (Slow Return)
+		tw.tween_property(block, "position", original_pos, 0.3).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
+func _perform_ranged_attack(target, dmg, manager, punch_dir):
+	# 先让身体恢复原位
+	for block in visual_blocks:
+		var start_p = block.position
+		var original_pos = start_p + punch_dir * 5.0
+		var tw = block.create_tween()
+		tw.tween_property(block, "position", original_pos, 0.1)
+		
+	# 某些特殊兵种使用连线 (如 Support / Mage 激光)
+	# 这里暂时统一用投射物，如果是 Support 且需要连线可自行判断
+	
+	# 创建投射物 (Projectile)
+	var proj = null
+	
+	if data and data.unit_class == "archer":
+		proj = _create_arrow_visual()
+	else:
+		proj = ColorRect.new()
+		proj.size = Vector2(12, 4)
+		proj.color = Color(1, 1, 0.5) # 淡黄色
+		proj.pivot_offset = Vector2(6, 2)
+	
+	proj.z_index = 20 # 确保在最上层
+	
+	# 添加到世界节点 (避免随单位移动，且不能添加到 UnitsContainer 以免干扰索敌)
+	if manager:
+		manager.add_child(proj)
+	else:
+		get_parent().add_sibling(proj) # 备用方案
+	
+	proj.global_position = global_position + Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2)
+	
+	var target_pos = Vector2.ZERO
+	if target and is_instance_valid(target):
+		target_pos = target.global_position + Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2)
+	else:
+		# 攻击基地/无目标：朝前方飞一段距离
+		target_pos = proj.global_position + punch_dir * 300.0
+	
+	proj.rotation = (target_pos - proj.global_position).angle()
+	
+	var dist = proj.global_position.distance_to(target_pos)
+	var speed = 900.0
+	var duration = clamp(dist / speed, 0.2, 0.6)
+	
+	var tw_p = proj.create_tween()
+	tw_p.tween_property(proj, "global_position", target_pos, duration).set_trans(Tween.TRANS_LINEAR)
+	tw_p.tween_callback(func():
+		if is_instance_valid(proj): proj.queue_free()
+		# 击中回调：伤害延迟 (Impact Delay)
+		_apply_damage_logic(target, dmg, manager)
+	)
+
+func _create_arrow_visual() -> Node2D:
+	var arrow = Node2D.new()
+	
+	# 绘制箭头
+	var poly = Polygon2D.new()
+	# 简单的箭头形状 ->
+	poly.polygon = PackedVector2Array([
+		Vector2(-10, 0), Vector2(-2, -4), Vector2(10, 0), Vector2(-2, 4)
+	])
+	poly.color = Color(0.9, 0.9, 0.9) # 银白色箭头
+	arrow.add_child(poly)
+	
+	# 箭杆
+	var line = Line2D.new()
+	line.points = PackedVector2Array([Vector2(-15, 0), Vector2(5, 0)])
+	line.width = 2.0
+	line.default_color = Color(0.4, 0.25, 0.1) # 木色
+	arrow.add_child(line)
+	
+	# 箭羽
+	var fletch = Line2D.new()
+	fletch.points = PackedVector2Array([Vector2(-15, -3), Vector2(-12, 0), Vector2(-15, 3)])
+	fletch.width = 1.5
+	fletch.default_color = Color(0.8, 0.2, 0.2) # 红色箭羽
+	arrow.add_child(fletch)
+	
+	return arrow
+
+func _play_slash_effect(pos: Vector2):
+	if not BattleManager.instance: return
+	var parent = BattleManager.instance.get_node_or_null("Battlefield")
+	if not parent: parent = self
+	
+	var slash = Line2D.new()
+	slash.width = 0
+	# 创建一个简单的“月牙”形状
+	var points = []
+	for i in range(10):
+		var t = i / 9.0
+		var angle = deg_to_rad(-60 + 120 * t) # -60 to +60
+		var radius = 35.0
+		points.append(Vector2(cos(angle), sin(angle)) * radius)
+	slash.points = PackedVector2Array(points)
+	
+	# 渐变宽度
+	var curve = Curve.new()
+	curve.add_point(Vector2(0, 0))
+	curve.add_point(Vector2(0.5, 5.0))
+	curve.add_point(Vector2(1, 0))
+	slash.width_curve = curve
+	
+	slash.default_color = Color(1.2, 1.2, 1.5, 1.0) # 亮蓝白 (HDR)
+	slash.z_index = 25
+	
+	parent.add_child(slash)
+	slash.global_position = pos
+	slash.rotation = randf_range(0, PI*2) # 随机角度
+	
+	var tw = create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(slash, "scale", Vector2(1.5, 1.5), 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(slash, "modulate:a", 0.0, 0.2).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(slash.queue_free)
+
+func _apply_damage_logic(target, dmg, manager):
+	if target and is_instance_valid(target):
 		if BattleManager.instance:
 			var u_name = data.name if data else name
 			var t_name = target.data.name if (target.get("data") and target.data) else target.name
@@ -558,7 +874,6 @@ func _attack():
 
 		if target.has_method("take_damage"):
 			target.take_damage(dmg)
-			# _pop_text("ATK!") # 移除旧的飘字
 	else:
 		# 没有单位目标，攻击基地
 		var u_name = data.name if data else name
@@ -572,17 +887,16 @@ func _attack():
 				# 我方攻击敌人 -> 攻击敌方基地
 				BattleManager.instance.log_message("%s 攻击敌方基地" % u_name, Color.GREEN)
 			manager.deal_damage_to_enemy(dmg)
-		# _pop_text("Base!") # 移除旧的飘字
-		
+			
 	# 3. 攻击后置钩子 (如扣除冲锋层数)
 	for tag in _cached_tag_defs:
 		tag.on_post_attack(self, target)
 
-# 绘制简单的攻击连线
+# 绘制更明显的攻击连线 (Better Tracers)
 func _draw_attack_line(target_global_pos: Vector2):
 	var line = Line2D.new()
-	line.width = 2.0
-	line.default_color = Color(1, 1, 0, 0.8) # 黄色激光
+	line.width = 4.0 # 增加宽度
+	line.default_color = Color(1, 0.8, 0.2, 0.9) # 亮金色
 	# 坐标需要转换到自己的局部坐标系下
 	line.add_point(Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2)) # 从自己中心
 	line.add_point(to_local(target_global_pos) + Vector2(GameConst.GRID_SIZE/2, GameConst.GRID_SIZE/2))
@@ -590,7 +904,9 @@ func _draw_attack_line(target_global_pos: Vector2):
 	add_child(line)
 	
 	var tw = create_tween()
-	tw.tween_property(line, "modulate:a", 0.0, 0.1) # 0.1秒消失
+	# 延长持续时间并添加淡出
+	tw.tween_property(line, "width", 0.0, 0.4).set_trans(Tween.TRANS_SINE) # 慢慢变细
+	tw.parallel().tween_property(line, "modulate:a", 0.0, 0.4) # 慢慢消失
 	tw.tween_callback(line.queue_free)
 
 # --- 外部调用与辅助函数 (之前缺失的部分) ---
@@ -665,9 +981,12 @@ func heal(amount: float):
 	current_hp = min(current_hp + amount, get_max_hp())
 	_update_health_visuals()
 	
-	# 治疗特效
+	# 治疗特效与飘字
+	if battle_manager and battle_manager.has_method("spawn_floating_text"):
+		battle_manager.spawn_floating_text(global_position, "+%.0f" % amount, Color.GREEN)
+
 	var old_mod = modulate
-	modulate = Color(0.5, 1.0, 0.5)
+	modulate = Color(0.5, 2.0, 0.5) # HDR 绿
 	var t = create_tween()
 	t.tween_property(self, "modulate", old_mod, 0.2)
 
@@ -728,6 +1047,8 @@ func _build_visuals():
 	var shader_code = """
 	shader_type canvas_item;
 	uniform float progress : hint_range(0.0, 1.0) = 1.0;
+	uniform float buffer_progress : hint_range(0.0, 1.0) = 1.0;
+	uniform float flash_intensity : hint_range(0.0, 1.0) = 0.0;
 	uniform sampler2D icon_tex;
 	uniform bool use_icon = false;
 	uniform vec2 uv_scale = vec2(1.0, 1.0);
@@ -747,12 +1068,22 @@ func _build_visuals():
 		}
 
 		// UV.x (0..1)
-		// 如果 UV.x > progress，则视为受伤部分
-		// 假设从右向左扣血，即 progress 左边是血，右边是空的
-		if (UV.x > progress) {
-			c.a *= 0.3; // 变透明
-			c.rgb *= 0.5; // 变暗
+		// progress: 当前实际血量 (绿色)
+		// buffer_progress: 缓冲血量 (白色/黄色)
+		// 假设从右向左扣血
+		
+		if (UV.x > buffer_progress) {
+			// 超过缓冲部分：完全变暗/透明
+			c.a *= 0.3; 
+			c.rgb *= 0.5; 
+		} else if (UV.x > progress) {
+			// 在缓冲部分与实际血量之间：显示白色缓冲条
+			// 这里我们使用白色叠加，或者直接设置为亮黄色
+			c.rgb = mix(c.rgb, vec3(1.0, 1.0, 1.0), 0.7);
 		}
+		
+		// 受击闪白
+		c.rgb = mix(c.rgb, vec3(1.0, 1.0, 1.0), flash_intensity);
 		
 		COLOR = c;
 	}
@@ -793,15 +1124,15 @@ func _build_visuals():
 
 func _get_civ_color(civ_key: String, fallback: Color) -> Color:
 	match civ_key:
-		"han":
+		"dynasty":
 			return Color("c83f2b")
-		"roman":
+		"warlord":
 			return Color("3b1b5a")
-		"greek":
+		"predator":
 			return Color("1b5ea8")
 		"french":
 			return Color("234aa5")
-		"huangjin":
+		"rebel":
 			return Color("d1a322")
 		_:
 			return fallback
@@ -831,12 +1162,16 @@ func _calculate_visual_bounds() -> Rect2:
 	
 	return bounds
 
-func _pop_text(txt):
+func _pop_text(txt, color: Color = Color.WHITE):
 	status_label.text = txt
+	status_label.modulate = color
 	var t = create_tween()
 	# 让状态文字跳动，不要遮挡名字
 	t.tween_property(status_label, "position:y", -50.0, 0.1)
 	t.tween_property(status_label, "position:y", -40.0, 0.1)
+	# 动画结束后恢复颜色 (可选，防止影响下一次显示)
+	t.tween_callback(func(): status_label.modulate = Color.WHITE)
+
 
 	
 #  --- 输入处理 (实现拖拽) ---

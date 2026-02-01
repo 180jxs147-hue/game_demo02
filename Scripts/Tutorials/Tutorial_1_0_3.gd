@@ -1,0 +1,120 @@
+class_name Tutorial_1_0_3 extends Node
+
+var battle_manager: BattleManager
+var current_tip: PanelContainer
+var current_target_node: Node
+
+# 阶段枚举
+enum Phase {
+	INTRO_CAVALRY,    # 介绍骑兵偷家
+	INTRO_TENT,       # 介绍优先打营帐
+	WAIT_START,       # 等待开始
+	STARTED           # 战斗开始
+}
+
+var phase: Phase = Phase.INTRO_CAVALRY
+
+func start(bm: BattleManager):
+	print("[Tutorial_1_0_3] Tutorial started")
+	battle_manager = bm
+	
+	battle_manager.log_message("新手教程: 骑兵与敌方后勤。", Color.GREEN)
+	
+	var start_btn = battle_manager.get_node_or_null("CanvasLayer/HUD/StartButton")
+	if start_btn:
+		start_btn.pressed.connect(_on_start_pressed)
+	
+	get_tree().create_timer(1.0).timeout.connect(_start_sequence)
+
+func _start_sequence():
+	# Step 1: 介绍骑兵
+	phase = Phase.INTRO_CAVALRY
+	var bench = battle_manager.get_node_or_null("CanvasLayer/HUD/BenchPanel")
+	if bench:
+		_show_tip("突骑移动速度极快！\n试着将突骑部署在没有敌人的空行，直接突袭敌方后排。", bench, Vector2(0, -50), 4.0)
+		await get_tree().create_timer(4.5).timeout
+	
+	# Step 2: 介绍营帐与黄巾力士机制
+	phase = Phase.INTRO_TENT
+	var enemy_field = battle_manager.get_node_or_null("Battlefield/EnemyField")
+	if enemy_field:
+		# 尝试指向敌方某个营帐，如果没有就指向战场
+		var target = enemy_field
+		_show_tip("那个【黄巾力士】非常强大，但攻击需要消耗大量民力。\n优先击杀敌方的【黄巾营帐】，切断民力补给，力士就会无法攻击！", target, Vector2(100, 100), 5.0)
+		await get_tree().create_timer(5.5).timeout
+
+	_start_phase_wait_start()
+
+func _start_phase_wait_start():
+	phase = Phase.WAIT_START
+	var btn = battle_manager.get_node_or_null("CanvasLayer/HUD/StartButton")
+	if btn:
+		_show_tip("利用兵种克制与断粮战术，\n击溃他们！", btn, Vector2(0, 0))
+
+func _on_start_pressed():
+	if phase == Phase.WAIT_START or phase == Phase.INTRO_CAVALRY or phase == Phase.INTRO_TENT:
+		phase = Phase.STARTED
+		if current_tip:
+			current_tip.queue_free()
+			current_tip = null
+		queue_free()
+
+func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, duration: float = 0.0):
+	if current_tip:
+		current_tip.queue_free()
+		current_tip = null
+		
+	current_target_node = target_node
+
+	var panel = PanelContainer.new()
+	var margin = MarginContainer.new()
+	margin.add_theme_constant_override("margin_top", 12)
+	margin.add_theme_constant_override("margin_left", 16)
+	margin.add_theme_constant_override("margin_bottom", 12)
+	margin.add_theme_constant_override("margin_right", 16)
+	
+	var label = Label.new()
+	label.text = text
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_font_size_override("font_size", 24)
+	
+	margin.add_child(label)
+	panel.add_child(margin)
+	
+	var style = StyleBoxFlat.new()
+	style.bg_color = Color(0, 0, 0, 0.85)
+	style.corner_radius_top_left = 8
+	style.corner_radius_top_right = 8
+	style.corner_radius_bottom_right = 8
+	style.corner_radius_bottom_left = 8
+	panel.add_theme_stylebox_override("panel", style)
+	
+	battle_manager.get_node("CanvasLayer/HUD").add_child(panel)
+	current_tip = panel
+	
+	_update_tip_position(offset)
+	
+	if duration > 0:
+		get_tree().create_timer(duration).timeout.connect(func():
+			if is_instance_valid(panel) and panel == current_tip:
+				panel.queue_free()
+				current_tip = null
+		)
+
+func _update_tip_position(offset: Vector2):
+	if not current_tip or not is_instance_valid(current_target_node):
+		return
+		
+	var target_pos = Vector2.ZERO
+	if current_target_node is Control:
+		target_pos = current_target_node.get_global_rect().position
+	elif current_target_node is Node2D:
+		target_pos = current_target_node.get_global_transform_with_canvas().origin
+		
+	current_tip.global_position = target_pos + offset
+
+func _exit_tree():
+	if current_tip:
+		current_tip.queue_free()
+		current_tip = null

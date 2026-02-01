@@ -23,7 +23,13 @@ func update_info(data: UnitData):
 	%StatsLabel.text = stats_text
 	
 	# 显示文明和兵种
-	var civ_map = { "han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西" }
+	var civ_map = { 
+		"dynasty": "王朝", 
+		"warlord": "诸侯", 
+		"rebel": "义军", 
+		"predator": "虎狼", 
+		"neutral": "中立" 
+	}
 	var cls_map = { "infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "枪兵", "civilian": "平民", "siege": "攻城" }
 	var civ_str = civ_map.get(data.civilization, data.civilization)
 	var cls_str = cls_map.get(data.unit_class, data.unit_class)

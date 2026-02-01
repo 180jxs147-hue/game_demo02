@@ -8,7 +8,7 @@ func on_battle_start(unit):
 
 func modify_damage(unit, target, damage: float) -> float:
 	if unit.current_charge_stacks > 0:
-		unit._pop_text("冲锋!")
+		unit._pop_text("冲锋!", Color.YELLOW)
 		return damage * 2.0
 	return damage
 

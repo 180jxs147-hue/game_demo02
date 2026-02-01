@@ -263,8 +263,8 @@ func load_player_library(force_reload: bool = false) -> CardLibrary:
 	var config = ConfigFile.new()
 	var err = config.load(save_path)
 	if err == OK:
-		var data = config.get_value("library", "data", null)
-		if data is Dictionary:
+		var data = config.get_value("library", "data", {})
+		if data is Dictionary and not data.is_empty():
 			lib = _deserialize_library(data)
 			print("GameState: Loaded library from ConfigFile: ", save_path)
 

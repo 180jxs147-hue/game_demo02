@@ -22,7 +22,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 1
+mouse_filter = 2
 
 [node name="BenchPanel" type="PanelContainer" parent="CanvasLayer/HUD" unique_id=1895283593]
 layout_mode = 1
@@ -233,24 +233,12 @@ script = ExtResource("6_8teo4")
 
 [node name="UnitsContainer" type="Node2D" parent="Battlefield/FriendlyField" unique_id=132116470]
 
-[node name="BattleLine" type="ColorRect" parent="Battlefield/FriendlyField" unique_id=738213596]
-custom_minimum_size = Vector2(2, 1000)
-offset_right = 3.0
-offset_bottom = 1000.0
-color = Color(0.77096003, 0, 0.114372455, 1)
-
 [node name="EnemyField" type="Node2D" parent="Battlefield" unique_id=2072864612]
 
 [node name="GridVisualizer" type="Node2D" parent="Battlefield/EnemyField" unique_id=638202286]
 script = ExtResource("6_8teo4")
 
 [node name="UnitsContainer" type="Node2D" parent="Battlefield/EnemyField" unique_id=1888501794]
-
-[node name="BattleLine" type="ColorRect" parent="Battlefield/EnemyField" unique_id=1507634682]
-custom_minimum_size = Vector2(2, 1000)
-offset_right = 3.0
-offset_bottom = 1000.0
-color = Color(0.77096003, 0, 0.114372455, 1)
 
 [connection signal="pressed" from="CanvasLayer/HUD/StartButton" to="." method="_on_start_button_pressed"]
 [connection signal="pressed" from="CanvasLayer/HUD/TopMenuButton" to="." method="_on_menu_button_pressed"]

@@ -1,0 +1,7 @@
+~ start
+SunJian: 哪里来的毛贼！竟敢挡我去路！ [#bg:battle_bg,#pos:right]
+SunJian: 我乃孙文台！谁敢与我决一死战！
+Player01: 孙将军莫慌，援军到了！ [#pos:left]
+SunJian: 援军？哼，我自己就能解决他们！不过既然来了，就比比谁杀得多吧！
+do start_level_id("1_1_3_side")
+=> END

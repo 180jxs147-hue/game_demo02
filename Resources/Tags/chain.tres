@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagChain.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "chain"
+name = "雷击"
+description = "攻击后弹射闪电，对最近敌人造成60%伤害。"
+range_limit = 300.0
+damage_percent = 0.6
+max_targets = 2

@@ -1,10 +1,11 @@
 ~ start
-Huangfusong: 朱儁！你太慢了！张角已死！但这还不够！[#bg:battle_bg,#pos:right]
-Huangfusong: 混沌告诉我，只有将所有人都拖入泥潭，才能实现真正的秩序！ 
-ZhuJun: 皇甫将军！你清醒一点！你已被混沌控制了！ [#pos:left]
-Huangfusong: 控制？不！这是解放！你看到了吗？张角的尸体…它在动！它在为我而战！ 
-Player01: 张角已死，但他的英灵被混沌利用了。这才是真正的天谴！ 
-Player01: 我必须净化它！这是我的使命！ 
-System: 【进入最终战：1_3_1】 
-do start_level_id("1_1_4")
+Narrator: 火光冲天，黄巾军大乱。 [#bg:battle_bg,#pos:left]
+CaoCao: 骑都尉曹操在此！逆贼哪里走！ [#pos:right]
+Player01: 那是...曹操？他带兵来支援了！ [#pos:left]
+BoCai: 可恶！怎会有如此大火！撤！快撤！
+Huangfusong: 贼军已乱，全军出击！不要放走波才！
+CaoCao: 诸位，随我冲杀！建功立业，就在今朝！
+System: 【友军加入：曹操 (青年)】
+System: 【Boss战：波才】
+do enter_camp_before_level("1_1_4")
 => END

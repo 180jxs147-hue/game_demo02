@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="LevelDatabase" load_steps=15 format=3 uid="uid://durniktkpk52p"]
+[gd_resource type="Resource" script_class="LevelDatabase" load_steps=22 format=3 uid="uid://durniktkpk52p"]
 
 [ext_resource type="Script" uid="uid://b3jjta8myy3pp" path="res://Resources/LevelDatabase.gd" id="1_db"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_1_1.tres" id="2_l1"]
@@ -14,7 +14,14 @@
 [ext_resource type="Resource" path="res://Resources/Levels/1_2_3.tres" id="12_yel3"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_2_4.tres" id="13_yel4"]
 [ext_resource type="Resource" path="res://Resources/Levels/1_3_1.tres" id="14_final"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_3_side.tres" id="15_side1"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_5.tres" id="16_han5"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_6.tres" id="17_han6"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_7.tres" id="18_han7"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_8.tres" id="19_han8"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_9.tres" id="20_han9"]
+[ext_resource type="Resource" path="res://Resources/Levels/1_1_10.tres" id="21_han10"]
 
 [resource]
 script = ExtResource("1_db")
-levels = Array[Resource]([ExtResource("6_pre1"), ExtResource("7_pre2"), ExtResource("8_pre3"), ExtResource("9_pre4"), ExtResource("2_l1"), ExtResource("3_l2"), ExtResource("4_l3"), ExtResource("10_han4"), ExtResource("5_l5"), ExtResource("11_yel2"), ExtResource("12_yel3"), ExtResource("13_yel4"), ExtResource("14_final")])
+levels = Array[Resource]([ExtResource("6_pre1"), ExtResource("7_pre2"), ExtResource("8_pre3"), ExtResource("9_pre4"), ExtResource("2_l1"), ExtResource("3_l2"), ExtResource("4_l3"), ExtResource("10_han4"), ExtResource("16_han5"), ExtResource("17_han6"), ExtResource("18_han7"), ExtResource("19_han8"), ExtResource("20_han9"), ExtResource("21_han10"), ExtResource("5_l5"), ExtResource("11_yel2"), ExtResource("12_yel3"), ExtResource("13_yel4"), ExtResource("14_final"), ExtResource("15_side1")])

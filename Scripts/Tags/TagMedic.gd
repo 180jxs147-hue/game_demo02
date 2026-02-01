@@ -10,7 +10,7 @@ func on_attack_start(unit, manager) -> bool:
 	if manager.has_method("heal_lowest_hp_ally"):
 		manager.heal_lowest_hp_ally(heal_val, unit.faction == 0) # 0 is FRIENDLY
 	
-	unit._pop_text("Heal!")
+	unit._pop_text("Heal!", Color.GREEN)
 	
 	# 消耗民力
 	if unit.faction == 0: # FRIENDLY

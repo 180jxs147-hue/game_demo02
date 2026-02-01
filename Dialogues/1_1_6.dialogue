@@ -1,0 +1,10 @@
+~ start
+Narrator: 汝南既平，大军北上广宗。然而战况并不乐观。 [#bg:battle_bg,#pos:left]
+Soldier: 报！董卓将军攻城不利，已被革职查办！ [#pos:right]
+Player01: 广宗城墙高厚，且黄巾贼皆如死士般疯狂，确实难打。 [#pos:left]
+Huangfusong: 董卓无能，乱我军心。
+Huangfusong: 传令下去，深沟高垒，闭门不战。我们要先耗尽他们的锐气。
+Player01: 将军是想...示敌以弱？
+Huangfusong: 正是。待其松懈，便是雷霆一击之时！
+do enter_camp_before_level("1_1_6")
+=> END

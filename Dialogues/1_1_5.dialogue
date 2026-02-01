@@ -1,0 +1,10 @@
+~ start
+Narrator: 长社大捷后，皇甫嵩转战汝南。 [#bg:battle_bg,#pos:left]
+LiuBei: 在下刘备，字玄德。闻将军讨贼，特率义兵相助。 [#pos:right]
+Player01: 刘玄德？久仰。这位红脸壮士和黑脸将军是... [#pos:left]
+LiuBei: 此乃吾弟关羽、张飞。
+Huangfusong: 很好！朝廷正是用人之际。汝南黄巾彭脱仍在负隅顽抗，随我破敌！
+System: 【友军加入：刘备】
+System: 【奖励预览：战斗结束后有机会招募 刘备/关羽/张飞】
+do enter_camp_before_level("1_1_5")
+=> END

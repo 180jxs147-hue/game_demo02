@@ -2,6 +2,7 @@ class_name LevelConfig extends Resource
 
 @export var level_id: String = ""
 @export var level_name: String = "Level"
+@export var background_texture: Texture2D # 背景图片
 @export var grid_width: int = 4
 @export var grid_height: int = 4
 @export var formation_cols: int = 0

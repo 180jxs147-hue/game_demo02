@@ -1,0 +1,42 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_liang.tres" id="3_liang"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="4_daoshi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="5_lishi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="6_youqi"]
+
+[sub_resource type="Resource" id="UnitSpawn_Boss"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("3_liang")
+grid_pos = Vector2i(4, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_daoshi")
+grid_pos = Vector2i(3, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_2"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("5_lishi")
+grid_pos = Vector2i(5, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_Add1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("6_youqi")
+grid_pos = Vector2i(2, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_Add2"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("6_youqi")
+grid_pos = Vector2i(6, 2)
+
+[resource]
+script = ExtResource("1_level")
+level_id = "1_1_9"
+level_name = "汉军线 第 9 关 - 人公将军"
+grid_width = 9
+grid_height = 6
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Boss"), SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_Add1"), SubResource("UnitSpawn_Add2")])
+reward_pool_id = "han_late"

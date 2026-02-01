@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagSplash.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "splash"
+name = "横扫"
+description = "攻击时对目标周围150范围内敌人造成50%溅射伤害。"
+radius = 150.0
+damage_percent = 0.5

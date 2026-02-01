@@ -403,6 +403,13 @@ func _get_adjacency_desc(data: UnitData) -> String:
 		return ""
 	
 	var lines: Array[String] = []
+	
+	var civ_map = {
+		"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西", "huangjin": "黄巾",
+		"dynasty": "王朝", "warlord": "诸侯", "rebel": "义军", "predator": "虎狼"
+	}
+	var cls_map = {"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "长柄", "civilian": "平民", "siege": "攻城", "equipment": "装备"}
+
 	for rule in data.adjacency_rules:
 		# 解析类型
 		var type_str = ""
@@ -425,9 +432,11 @@ func _get_adjacency_desc(data: UnitData) -> String:
 			var tag_name = TagManager.get_tag_name(rv)
 			req_str = "周围[%s]" % tag_name
 		elif rt == "class":
-			req_str = "周围[%s]" % rv
+			var c_name = cls_map.get(rv, rv)
+			req_str = "周围[%s]" % c_name
 		elif rt == "civ":
-			req_str = "周围[%s]" % rv
+			var c_name = civ_map.get(rv, rv)
+			req_str = "周围[%s]" % c_name
 			
 		# 解析效果
 		var stat_str = ""
@@ -585,13 +594,15 @@ func _refresh_synergy_list():
 	# 这里硬编码一些羁绊数据用于展示
 	# 实际项目中建议从 BattleManager 或单独的配置表读取
 	var synergies = [
-		{"name": "汉 (Han)", "desc": "2: 全体+2攻\n4: 全体+5攻"},
-		{"name": "罗马 (Roman)", "desc": "2: 全体+20血"},
-		{"name": "希腊 (Greek)", "desc": "2: 全体+1防\n4: 全体+3防"},
-		{"name": "法兰西 (French)", "desc": "2: 全体移速+10%\n4: 全体移速+20%"},
+		{"name": "王朝 (Dynasty)", "desc": "2: 全体+2攻\n4: 全体+5攻"},
+		{"name": "诸侯 (Warlord)", "desc": "2: 全体+20血\n4: 全体+50血"},
+		{"name": "义军 (Rebel)", "desc": "2: 全体-0.2s CD\n4: 全体-0.5s CD"},
+		{"name": "虎狼 (Predator)", "desc": "2: 全体+3攻\n4: 全体+8攻"},
 		{"name": "步兵 (Infantry)", "desc": "2: 步兵+10血\n4: 步兵+30血"},
-		{"name": "骑兵 (Cavalry)", "desc": "2: 骑兵+2攻\n4: 骑兵+5攻"},
-		{"name": "弓手 (Archer)", "desc": "2: 射程+50\n4: 射程+100"}
+		{"name": "骑兵 (Cavalry)", "desc": "2: 骑兵+2攻+5血"},
+		{"name": "弓手 (Archer)", "desc": "2: 弓兵+2攻"},
+		{"name": "盾兵 (Shield)", "desc": "2: 盾兵+20血"},
+		{"name": "辅助 (Support)", "desc": "2: 辅助+10血"}
 	]
 	
 	for s in synergies:

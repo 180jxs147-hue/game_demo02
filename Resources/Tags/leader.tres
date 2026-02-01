@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Data/TagDefinition.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "leader"
+name = "领袖"
+description = "领袖单位。"

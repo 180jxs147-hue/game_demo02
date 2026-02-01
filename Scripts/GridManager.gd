@@ -8,6 +8,9 @@ extends Node
 # 存储格子占用情况: { Vector2i(x,y): UnitNode }
 var grid_occupancy: Dictionary = {}
 
+signal unit_placed(unit, grid_pos)
+signal unit_removed(unit)
+
 # 当前关卡允许放置的最大列数 (默认全开，由 BattleManager 控制)
 var playable_columns: int = GameConst.MAP_COLUMNS
 var playable_rows: int = GameConst.MAP_ROWS
@@ -39,6 +42,8 @@ func place_unit(unit: Node2D, target_grid_pos: Vector2i):
 		var final_pos = target_grid_pos + offset
 		grid_occupancy[final_pos] = unit
 
+	unit_placed.emit(unit, target_grid_pos)
+
 # 移除单位的占用记录
 func clear_unit(unit: Node2D):
 	# 遍历字典，把值等于该 unit 的 key 删掉
@@ -50,6 +55,8 @@ func clear_unit(unit: Node2D):
 	
 	for key in keys_to_erase:
 		grid_occupancy.erase(key)
+		
+	unit_removed.emit(unit)
 
 # 清空所有占用 (用于关卡重置)
 func clear_all():

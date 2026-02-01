@@ -4,7 +4,7 @@ class_name UnitData extends Resource
 @export var name: String = "未命名"
 @export var icon: Texture2D
 @export var rarity: String = "common"
-@export var civilization: String = "neutral" # 文明：han, roman, greek
+@export var civilization: String = "neutral" # 文明：dynasty, rebel, warlord, predator
 @export var unit_class: String = "infantry"  # 兵种：infantry, archer, cavalry, shield
 @export var color: Color = Color.WHITE
 @export var tags: Array[String] = [] 
@@ -30,7 +30,7 @@ class_name UnitData extends Resource
 ## {
 ##   "type": "give" | "receive", 
 ##   "req_type": "tag" | "class" | "civ" | "all",
-##   "req_value": "shield" | "roman" | ... (ignored if "all"),
+##   "req_value": "shield" | "warlord" | ... (ignored if "all"),
 ##   "effect_stat": "attack_damage" | "max_hp" | "cooldown_speed",
 ##   "effect_value": 5.0
 ## }

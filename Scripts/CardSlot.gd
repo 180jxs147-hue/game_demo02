@@ -43,10 +43,10 @@ const ICON_COST_PATH := "res://Assets/UI/Cards/icon_cost.png"
 const ICON_ATK_PATH := "res://Assets/UI/Cards/icon_atk.png"
 const ICON_CD_PATH := "res://Assets/UI/Cards/icon_cd.png"
 const PATTERN_BAR_PATHS := {
-	"han": "res://Assets/UI/Cards/pattern_bars/bar_pattern_han.png",
-	"roman": "res://Assets/UI/Cards/pattern_bars/bar_pattern_roman.png",
-	"greek": "res://Assets/UI/Cards/pattern_bars/bar_pattern_greek.png",
-	"huangjin": "res://Assets/UI/Cards/pattern_bars/bar_pattern_huangjin.png",
+	"dynasty": "res://Assets/UI/Cards/pattern_bars/bar_pattern_han.png",
+	"warlord": "res://Assets/UI/Cards/pattern_bars/bar_pattern_roman.png",
+	"predator": "res://Assets/UI/Cards/pattern_bars/bar_pattern_greek.png",
+	"rebel": "res://Assets/UI/Cards/pattern_bars/bar_pattern_huangjin.png",
 	"neutral": "res://Assets/UI/Cards/pattern_bars/bar_pattern_neutral.png",
 	"french": "res://Assets/UI/Cards/pattern_bars/bar_pattern_france.png"
 }
@@ -58,9 +58,10 @@ const RARITY_BADGE_PATHS := {
 	"legendary": "res://Assets/UI/Cards/rarity_legendary.png"
 }
 const CIV_ICON_PATHS := {
-	"han": "res://Assets/UI/Cards/civ_han.png",
-	"roman": "res://Assets/UI/Cards/civ_roman.png",
-	"greek": "res://Assets/UI/Cards/civ_greek.png",
+	"dynasty": "res://Assets/UI/Cards/civ_han.png",
+	"warlord": "res://Assets/UI/Cards/civ_roman.png",
+	"predator": "res://Assets/UI/Cards/civ_greek.png",
+	"rebel": "res://Assets/UI/Cards/civ_neutral.png", # Fallback or create new? Using neutral/huangjin if available
 	"neutral": "res://Assets/UI/Cards/civ_neutral.png"
 }
 const CLASS_ICON_PATHS := {
@@ -89,6 +90,16 @@ func _ready():
 				return
 			if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
 				drag_requested.emit(_unit_data)
+		)
+		
+		# Tooltip support
+		click_button.mouse_entered.connect(func():
+			if _unit_data and BattleManager.instance:
+				BattleManager.instance.show_tooltip(_unit_data, self)
+		)
+		click_button.mouse_exited.connect(func():
+			if BattleManager.instance:
+				BattleManager.instance.hide_tooltip()
 		)
 	_apply_card_skin(null)
 	
@@ -163,7 +174,10 @@ func _apply_card_skin(data: UnitData):
 
 	if civ_class_label:
 		if data:
-			var civ_map = {"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西", "huangjin": "黄巾"}
+			var civ_map = {
+				"han": "汉", "roman": "罗马", "greek": "希腊", "neutral": "中立", "french": "法兰西", "huangjin": "黄巾",
+				"dynasty": "王朝", "warlord": "诸侯", "rebel": "义军", "predator": "虎狼"
+			}
 			var cls_map = {"infantry": "步兵", "archer": "弓兵", "cavalry": "骑兵", "shield": "盾兵", "support": "辅助", "building": "建筑", "spear": "长柄", "civilian": "平民", "siege": "攻城", "equipment": "装备"}
 			var civ_str = civ_map.get(String(data.civilization).to_lower(), String(data.civilization))
 			var cls_str = cls_map.get(String(data.unit_class).to_lower(), String(data.unit_class))
@@ -264,15 +278,15 @@ func setup(data: UnitData):
 
 func _get_civ_color(civ_key: String) -> Color:
 	match civ_key:
-		"han":
+		"dynasty":
 			return Color("c83f2b")
-		"roman":
+		"warlord":
 			return Color("3b1b5a")
-		"greek":
+		"predator":
 			return Color("1b5ea8")
 		"french":
 			return Color("234aa5")
-		"huangjin":
+		"rebel":
 			return Color("d1a322")
 		_:
 			return Color("9aa0a6")

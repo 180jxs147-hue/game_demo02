@@ -1,11 +1,9 @@
 ~ start
-Eunuch: 大胆！竟敢阻拦咱家办事！这是给皇甫将军的圣药！ [#bg:battle_bg,#pos:right]
-Player01: 你送的不是药，是混沌。你已将它植入他体内，对吗？ [#pos:left]
-Eunuch: 你…你怎么知道…不是我！是那股力量逼我！ 
-Eunuch: 它说要让汉室和黄巾一起腐烂！它许诺我无上的权力！ 
-Player01: (取出黑色晶体) 混沌之种…它已经发芽了。 
-Player01: 皇甫嵩将军危矣。我必须尽快赶到广宗。 
-System: 【关键情报：皇甫嵩已被混沌污染】 
-Player01: 朱儁将军，希望你能保持清醒。 
-do start_level_id("1_1_2")
+Soldier: 报！发现马元义踪迹！他正集结死士，准备冲击宫门！ [#bg:battle_bg,#pos:right]
+Player01: 真是胆大包天。既然被发现了，就是瓮中之鳖。 [#pos:left]
+MaYuanyi: 苍天已死！你们这些汉室走狗，气数已尽！ [#pos:right]
+MaYuanyi: 今日就算我死，大贤良师的怒火也将烧遍九州！
+Huangfusong: 冥顽不灵！传我军令，将其就地正法，车裂示众！
+System: 【Boss战：大方渠帅 马元义】
+do enter_camp_before_level("1_1_2")
 => END

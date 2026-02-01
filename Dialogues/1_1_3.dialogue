@@ -1,9 +1,13 @@
 ~ start
-ZhuJun: 皇甫将军的战术越来越激进了，他命令我们不惜一切代价攻城，甚至将伤兵作为先锋… [#bg:battle_bg,#pos:right]
-Player01: 我发现证据，他可能已被混沌侵蚀。 [#pos:left]
-ZhuJun: 混沌？这太荒谬了…但他的确变了。他的命令中充满了毁灭的欲望。 
-ZhuJun: 我们必须尽快攻下宛城，然后去广宗。我不能眼睁睁看着他毁掉自己，毁掉汉军的荣耀。 
-Player01: 我来开路。请将军准备好，我们必须在混沌彻底爆发前阻止他。 
-ZhuJun: 好！拜托你了，异人！ 
-do start_level_id("1_1_3")
+Narrator: 洛阳事毕，但豫州战事告急。波才大军围困长社，朱儁将军孤军难支。 [#bg:battle_bg,#pos:left]
+ZhuJun: 咳咳...贼势浩大，我军兵力悬殊，只能固守待援。 [#pos:right]
+Player01: 朱将军莫慌，皇甫将军的大军已在赶来的路上。 [#pos:left]
+ZhuJun: 波才此人依草结营，连绵数里。若能用火攻...
+Player01: 此时正值大风，正是天赐良机！
+Huangfusong: (远处赶来) 哈哈哈！公伟所见略同！今夜便让他们灰飞烟灭！
+System: 【任务：坚守长社，等待火攻时机】
+- 立即支援长社 (主线)
+	do enter_camp_before_level("1_1_3")
+- 救援被围困的孙坚 (支线 - 获得孙坚)
+	do start_level_id("1_1_3_side")
 => END

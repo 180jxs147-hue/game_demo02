@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/zhang_bao.png" id="1_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "张宝"
+icon = ExtResource("1_icon")
+rarity = "legendary"
+civilization = "rebel"
+unit_class = "archer"
+color = Color(0.8, 0.7, 0.2, 1)
+tags = Array[String](["hero", "rebel", "stun"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 40.0
+manpower_cost = 4.0
+cooldown = 2.5
+attack_damage = 10.0
+defense = 0.0
+attack_range = 2
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
+story = "地公将军，善使妖法，乱人心智。"

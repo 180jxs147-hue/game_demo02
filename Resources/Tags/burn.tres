@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="TagDefinition" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Scripts/Tags/TagStatusApply.gd" id="1_tag"]
+
+[resource]
+script = ExtResource("1_tag")
+id = "burn"
+name = "烈火"
+description = "攻击使目标燃烧，每秒受到20点伤害，持续3秒。"
+status_type = "burn"
+duration = 3.0
+value = 20.0

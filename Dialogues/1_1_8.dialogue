@@ -1,0 +1,8 @@
+~ start
+ZhangLiang: 不可能...我的法术...竟然被破了... [#bg:battle_bg,#pos:right]
+Player01: 邪不压正。张梁，你的死期到了。 [#pos:left]
+Huangfusong: 众将士听令！斩杀张梁者，赏千金，封万户侯！
+Narrator: 汉军士气大振，如潮水般涌向敌阵。
+System: 【Boss战：张梁 (真身)】
+do enter_camp_before_level("1_1_8")
+=> END

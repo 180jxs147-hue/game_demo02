@@ -76,6 +76,11 @@ var mutation_cooldown: Timer = Timer.new()
 ## The right portrait texture rect
 @onready var right_portrait: TextureRect = %RightPortrait
 
+## The fast forward button
+@onready var fast_forward_button: Button = %FastForwardButton
+
+var is_fast_forwarding: bool = false
+
 const CHARACTER_NAMES_ZH = {
 	"XiaoBingZhang": "小兵张",
 	"GongShouLi": "弓手李",
@@ -159,6 +164,8 @@ func _ready() -> void:
 	add_child(mutation_cooldown)
 	_left_base_pos = left_portrait.position
 	_right_base_pos = right_portrait.position
+
+	fast_forward_button.toggled.connect(_on_fast_forward_toggled)
 
 	if auto_start:
 		if not is_instance_valid(dialogue_resource):
@@ -265,7 +272,11 @@ func apply_dialogue_line() -> void:
 	dialogue_label.show()
 	if not dialogue_line.text.is_empty():
 		dialogue_label.type_out()
-		await dialogue_label.finished_typing
+		if is_fast_forwarding:
+			dialogue_label.skip_typing()
+		
+		if dialogue_label.is_typing:
+			await dialogue_label.finished_typing
 
 	# Wait for next line
 	if dialogue_line.has_tag("voice"):
@@ -274,6 +285,11 @@ func apply_dialogue_line() -> void:
 		await audio_stream_player.finished
 		next(dialogue_line.next_id)
 	elif dialogue_line.responses.size() > 0:
+		# Stop fast forward on choices
+		if is_fast_forwarding:
+			is_fast_forwarding = false
+			fast_forward_button.set_pressed_no_signal(false)
+			
 		balloon.focus_mode = Control.FOCUS_NONE
 		responses_menu.show()
 	elif dialogue_line.time != "":
@@ -284,6 +300,8 @@ func apply_dialogue_line() -> void:
 		is_waiting_for_input = true
 		balloon.focus_mode = Control.FOCUS_ALL
 		balloon.grab_focus()
+		if is_fast_forwarding:
+			_attempt_fast_forward_next()
 
 
 ## Go to the next line
@@ -331,6 +349,21 @@ func _on_balloon_gui_input(event: InputEvent) -> void:
 
 func _on_responses_menu_response_selected(response: DialogueResponse) -> void:
 	next(response.next_id)
+
+
+func _on_fast_forward_toggled(toggled_on: bool) -> void:
+	is_fast_forwarding = toggled_on
+	if is_fast_forwarding:
+		if dialogue_label.is_typing:
+			dialogue_label.skip_typing()
+		elif is_waiting_for_input:
+			next(dialogue_line.next_id)
+
+
+func _attempt_fast_forward_next() -> void:
+	await get_tree().create_timer(0.1).timeout
+	if is_fast_forwarding and is_waiting_for_input:
+		next(dialogue_line.next_id)
 
 
 #endregion

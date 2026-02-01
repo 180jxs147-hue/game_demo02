@@ -1,0 +1,16 @@
+[remap]
+
+importer="dialogue_manager"
+importer_version=15
+type="Resource"
+uid="uid://dqi6os4sjilur"
+path="res://.godot/imported/1_1_3_side_victory.dialogue-7614824ab29aa5eab000567e54f384ec.tres"
+
+[deps]
+
+source_file="res://Dialogues/1_1_3_side_victory.dialogue"
+dest_files=["res://.godot/imported/1_1_3_side_victory.dialogue-7614824ab29aa5eab000567e54f384ec.tres"]
+
+[params]
+
+defaults=true

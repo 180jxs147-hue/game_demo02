@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/danyang_bing.png" id="1_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "丹阳兵"
+icon = ExtResource("1_icon")
+rarity = "rare"
+civilization = "dynasty"
+unit_class = "infantry"
+color = Color(0.6, 0.2, 0.2, 1)
+tags = Array[String](["dynasty", "elite"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 25.0
+manpower_cost = 3.0
+cooldown = 1.8
+attack_damage = 8.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
+story = "丹阳山险，民多果劲。天下精兵，出丹阳。"

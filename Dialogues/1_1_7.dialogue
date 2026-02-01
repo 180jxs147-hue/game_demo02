@@ -1,0 +1,10 @@
+~ start
+Narrator: 深夜，军营周围突然升起诡异的黄雾。 [#bg:battle_bg,#pos:left]
+Soldier: 鬼！有鬼啊！死去的兄弟复活了！ [#pos:right]
+Player01: 镇静！这只是幻觉！ [#pos:left]
+ZhangLiang: 苍天已死！尔等逆天而行，必遭天谴！
+Player01: 是“人公将军”张梁的妖术...如果不破除这迷雾，军心必散。
+Huangfusong: 装神弄鬼！传令，以黑狗血和火油开路，直捣妖阵！
+System: 【Boss战：张梁 (妖术形态)】
+do enter_camp_before_level("1_1_7")
+=> END

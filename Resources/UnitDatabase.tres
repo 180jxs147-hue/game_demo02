@@ -29,10 +29,21 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/war_drum.tres" id="28_drum"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/supply_cart.tres" id="29_cart"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/scout_tower.tres" id="30_tower"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/bo_cai.tres" id="31_bocai"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cao_cao.tres" id="32_caocao"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/danyang_bing.tres" id="33_danyang"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/guan_yu.tres" id="34_guanyu"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/liu_bei.tres" id="35_liubei"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/ma_yuanyi.tres" id="36_mayuanyi"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/sun_jian.tres" id="37_sunjian"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_bao.tres" id="38_zhangbao"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_fei.tres" id="39_zhangfei"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_jiao.tres" id="40_zhangjiao"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_liang.tres" id="41_zhangliang"]
 
 [resource]
 script = ExtResource("1_db")
-units = Array[Resource]([ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp"), ExtResource("28_drum"), ExtResource("29_cart"), ExtResource("30_tower")])
+units = Array[Resource]([ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp"), ExtResource("28_drum"), ExtResource("29_cart"), ExtResource("30_tower"), ExtResource("31_bocai"), ExtResource("32_caocao"), ExtResource("33_danyang"), ExtResource("34_guanyu"), ExtResource("35_liubei"), ExtResource("36_mayuanyi"), ExtResource("37_sunjian"), ExtResource("38_zhangbao"), ExtResource("39_zhangfei"), ExtResource("40_zhangjiao"), ExtResource("41_zhangliang")])
 story_by_path = {
 "res://Resources/DataFiles/camp.tres": "军中休憩之所，亦是补给流转的核心。\n源源不断地提供支持，是持久战的关键。",
 "res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",
@@ -52,5 +63,16 @@ story_by_path = {
 "res://Resources/DataFiles/cangtian_qimin.tres": "乱世里被抛下的人，最终只剩一条路：向天祈求，向世复仇。",
 "res://Resources/DataFiles/huangjin_lishi.tres": "以血与土为誓，肩扛粗木，足踏乱军。",
 "res://Resources/DataFiles/taiping_daoshi.tres": "符水与咒声不分善恶，能让人站起来的，就是天意。",
-"res://Resources/DataFiles/ezei_youqi.tres": "来去如风，黄布遮面，马蹄掠过便只剩尘土。"
+"res://Resources/DataFiles/ezei_youqi.tres": "来去如风，黄布遮面，马蹄掠过便只剩尘土。",
+"res://Resources/DataFiles/cao_cao.tres": "治世之能臣，乱世之奸雄。此刻的他，满怀报国之志，却已看透朝堂的腐朽。",
+"res://Resources/DataFiles/liu_bei.tres": "虽织席贩履，心怀天下。仁德是他最锋利的武器。",
+"res://Resources/DataFiles/guan_yu.tres": "身长九尺，髯长二尺。丹凤眼一睁，便是人头落地之时。",
+"res://Resources/DataFiles/zhang_fei.tres": "燕人张翼德在此！谁敢来决死战？",
+"res://Resources/DataFiles/zhang_jiao.tres": "苍天已死，黄天当立！岁在甲子，天下大吉！",
+"res://Resources/DataFiles/zhang_bao.tres": "地公将军，善使妖法，乱人心智。",
+"res://Resources/DataFiles/zhang_liang.tres": "人公将军，统帅黄巾力士，力大无穷。",
+"res://Resources/DataFiles/ma_yuanyi.tres": "黄巾渠帅，潜伏洛阳，意图里应外合。",
+"res://Resources/DataFiles/bo_cai.tres": "统领颍川黄巾，曾大败朱儁，围皇甫嵩于长社。",
+"res://Resources/DataFiles/danyang_bing.tres": "丹阳山险，民多果劲。天下精兵，出丹阳。",
+"res://Resources/DataFiles/sun_jian.tres": "江东猛虎，古锭刀下无冤魂。他总是冲在最前线，因为他相信只有鲜血才能洗清乱世。"
 }

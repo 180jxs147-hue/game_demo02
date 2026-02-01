@@ -2,6 +2,7 @@
 
 [ext_resource type="Script" uid="uid://ocpyperkjqw0" path="res://Resources/LevelConfig.gd" id="1_level"]
 [ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/Backgrounds/battleground.png" id="3_bg"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="4_c52in"]
 
 [sub_resource type="Resource" id="Resource_yba0d"]
@@ -18,6 +19,7 @@ grid_pos = Vector2i(3, 1)
 script = ExtResource("1_level")
 level_id = "1_0_1"
 level_name = "序章 第 1 关 - 使命与净化测试"
+background_texture = ExtResource("3_bg")
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_yba0d"), SubResource("Resource_r334h")])
 reward_pool_id = "generic_early0_1"
 allow_camp = false

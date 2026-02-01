@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/liu_bei.png" id="1_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "刘备(青年)"
+icon = ExtResource("1_icon")
+rarity = "legendary"
+civilization = "dynasty"
+unit_class = "infantry"
+color = Color(0.2, 0.8, 0.2, 1)
+tags = Array[String](["hero", "dynasty", "leader"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 35.0
+manpower_cost = 3.0
+cooldown = 2.0
+attack_damage = 7.0
+defense = 1.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([{
+"effect_stat": "max_hp",
+"effect_value": 10.0,
+"req_type": "civ",
+"req_value": "dynasty",
+"type": "give"
+}])
+story = "虽织席贩履，心怀天下。仁德是他最锋利的武器。"

@@ -1,0 +1,9 @@
+~ start
+Narrator: 张梁既死，广宗黄巾群龙无首。残部逃往一下曲阳，投奔“地公将军”张宝。 [#bg:battle_bg,#pos:left]
+ZhangBao: 弟弟...皇甫嵩！我誓杀汝！ [#pos:right]
+Player01: 贼势已去，张宝不过是困兽之斗。 [#pos:left]
+ZhuJun: 困兽犹斗，最为凶险。大家小心，张宝擅长地遁之术，别让他跑了！
+Huangfusong: 跑？普天之下莫非王土。他能跑到哪去？
+System: 【Boss战：张宝】
+do enter_camp_before_level("1_1_9")
+=> END

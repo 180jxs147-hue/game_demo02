@@ -1,0 +1,11 @@
+~ start
+Narrator: 黄巾主力尽灭，只剩下最后的精神图腾——张角。 [#bg:battle_bg,#pos:left]
+Player01: 据说张角已病入膏肓，但这股压迫感...依然令人窒息。 [#pos:left]
+ZhangJiao: (虚弱但威严) 苍天...确实已死...但黄天...必将...
+ZhangJiao: 既然肉身无法承载这天命，那便化为雷霆吧！
+Huangfusong: 结束了，妖道！带着你的黄天梦，下地狱去吧！
+CaoCao: 天下大乱，始于此人。今日，便由我们亲手终结这乱世！
+LiuBei: 备愿为先锋，平定此乱，还百姓安宁！
+System: 【最终决战：天公将军 张角】
+do start_level_id("1_1_10")
+=> END

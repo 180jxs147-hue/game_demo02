@@ -43,11 +43,15 @@ var max_manpower: float = 50.0
 var enemy_current_manpower: float = 10.0
 var enemy_max_manpower: float = 50.0
 
+# --- Visual Effects ---
+var _shake_strength: float = 0.0
+var _shake_decay: float = 10.0
+@onready var _camera: Camera2D = get_viewport().get_camera_2d()
+# ----------------------
+
 @onready var battlefield = $Battlefield
 @onready var friendly_field = $Battlefield/FriendlyField
 @onready var enemy_field = $Battlefield/EnemyField
-@onready var battle_line = $Battlefield/FriendlyField/BattleLine
-@onready var enemy_battle_line = $Battlefield/EnemyField/BattleLine
 
 @onready var friendly_grid_vis = $Battlefield/FriendlyField/GridVisualizer
 @onready var enemy_grid_vis = $Battlefield/EnemyField/GridVisualizer
@@ -59,6 +63,7 @@ var enemy_max_manpower: float = 50.0
 @onready var retry_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton
 
 var _tooltip_instance: Control
+var _tooltip_target: Node = null
 
 @onready var reward_container = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/RewardContainer
 
@@ -102,16 +107,14 @@ func _ready():
 	print("BattleManager: _ready started")
 	if instance == null:
 		instance = self
-	if GameState:
-		GameState.use_autosave_library = false
 	
 	# 初始化战斗日志UI
 	if battle_log_ui_scene:
 		battle_log_ui_instance = battle_log_ui_scene.instantiate()
 		# 添加到HUD层，确保在最上层显示
-		var hud = $CanvasLayer/HUD
-		if hud:
-			hud.add_child(battle_log_ui_instance)
+		var hud_node = get_node_or_null("CanvasLayer/HUD")
+		if hud_node:
+			hud_node.add_child(battle_log_ui_instance)
 			
 			# 创建打开日志的按钮
 			var open_log_btn = Button.new()
@@ -137,10 +140,24 @@ func _ready():
 				if battle_log_ui_instance: 
 					battle_log_ui_instance.toggle()
 			)
-			hud.add_child(open_log_btn)
+			hud_node.add_child(open_log_btn)
 	
 	_apply_theme()
 	_setup_bench_ui()
+	
+	# --- 强制修复交互遮挡 ---
+	var hud = get_node_or_null("CanvasLayer/HUD")
+	if hud:
+		hud.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		print("[BattleManager] HUD mouse_filter set to IGNORE")
+	else:
+		push_error("[BattleManager] HUD node not found!")
+
+	var res_overlay = get_node_or_null("CanvasLayer/ResultOverlay")
+	if res_overlay:
+		res_overlay.visible = false
+		res_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		print("[BattleManager] ResultOverlay forced hidden and IGNORE")
 	
 	get_tree().paused = false
 	is_battle_started = false
@@ -177,6 +194,9 @@ func _ready():
 	if level_database:
 		level = level_database.get_level(level_index)
 		current_level_config = level
+	
+	# --- 设置背景图片 ---
+	_update_background()
 	
 	# --- 设定敌方网格尺寸 ---
 	var enemy_cols = GameConst.MAP_COLUMNS
@@ -228,7 +248,19 @@ func _ready():
 			GameState.skip_intro = false
 	else:
 		print("BattleManager: No next_level_id_from_camp found or it is empty.")
-	
+		# --- Fallback for testing: Auto-start Level 1_0_1 ---
+		print("[BattleManager] Debug: Auto-starting level 1_0_1 for testing/fallback.")
+		
+		# 确保 level_database 存在
+		if not level_database:
+			level_database = load("res://Resources/EnemyLevels.tres")
+			
+		if level_database:
+			# 使用 call_deferred 确保 _ready 完全结束后再开始关卡
+			call_deferred("start_level_id", "1_0_1")
+		else:
+			push_error("[BattleManager] Critical: LevelDatabase not found and cannot be loaded.")
+
 	if GameState:
 		final_cols = GameState.current_cols
 		final_rows = GameState.current_rows
@@ -278,11 +310,14 @@ func _ready():
 	call_deferred("_apply_layout")
 	call_deferred("start_intro_dialogue")
 	
+	print("[BattleManager] _ready completed successfully")
+
 	# 初始化提示框
 	var tooltip_scene = load("res://Scenes/Tooltip.tscn")
 	if tooltip_scene:
 		_tooltip_instance = tooltip_scene.instantiate()
 		_tooltip_instance.visible = false
+		_tooltip_instance.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
 		$CanvasLayer/HUD.add_child(_tooltip_instance)
 
 	if player_library:
@@ -290,6 +325,16 @@ func _ready():
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
 	_refresh_bench_ui()
+
+func _unhandled_input(event):
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+		print("[BattleManager] Click at ", event.position)
+		# 尝试检测鼠标下的节点（仅供调试）
+		# 注意：这只对 Control 节点有效，Node2D 需要物理查询
+		var viewport = get_viewport()
+		if viewport:
+			# 简单的 UI 拾取检查
+			pass
 
 func start_level(index: int):
 	print("Switching to level: ", index)
@@ -304,6 +349,7 @@ func start_level(index: int):
 		level = level_database.get_level(level_index)
 	
 	current_level_config = level
+	_update_background()
 	
 	if not level:
 		push_error("Level not found: " + str(index))
@@ -415,6 +461,7 @@ func start_level(index: int):
 
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
+	call_deferred("_check_tutorial")
 
 func _apply_layout():
 	# 根据屏幕宽度摆放战场
@@ -500,24 +547,6 @@ func _apply_layout():
 		
 		enemy_field.position = Vector2(pos_x, pos_y)
 
-		# 调整 Enemy Battle Line (红线)
-		if enemy_battle_line:
-			var line_height: float = current_enemy_rows * GameConst.GRID_SIZE
-			enemy_battle_line.visible = false
-			enemy_battle_line.custom_minimum_size = Vector2(2.0, line_height)
-			# 敌方红线在敌方战场的左侧 (x=0) = 前线
-			enemy_battle_line.position = Vector2(0.0, 0.0)
-			enemy_battle_line.size = Vector2(2.0, line_height)
-	
-	# 调整 Friendly Battle Line
-	if battle_line:
-		var line_height: float = current_rows * GameConst.GRID_SIZE
-		battle_line.visible = false
-		battle_line.custom_minimum_size = Vector2(2.0, line_height)
-		# 我方战线在右侧边缘
-		battle_line.position = Vector2(battle_field_width_actual, 0.0)
-		battle_line.size = Vector2(2.0, line_height)
-
 	# --- 调试：按 F2 测试对话 ---
 	print("按 F2 测试对话功能")
 
@@ -597,7 +626,98 @@ func _debug_add_card_to_library():
 	else:
 		push_error("Error saving player library: " + str(error))
 
+func _check_tutorial():
+	if not current_level_config:
+		return
+		
+	var level_id = current_level_config.level_id
+	var tutorial_script_path = "res://Scripts/Tutorials/Tutorial_%s.gd" % level_id
+	
+	if ResourceLoader.exists(tutorial_script_path):
+		var tutorial_script = load(tutorial_script_path)
+		if tutorial_script:
+			var tutorial = tutorial_script.new()
+			add_child(tutorial)
+			if tutorial.has_method("start"):
+				tutorial.start(self)
+
+
+
+func _update_background():
+	# 移除旧背景
+	var old_bg = get_node_or_null("BackgroundLayer")
+	if old_bg:
+		old_bg.queue_free()
+
+	var texture = null
+	if current_level_config and current_level_config.background_texture:
+		texture = current_level_config.background_texture
+	
+	# 如果没有配置背景，强制使用默认背景
+	if not texture:
+		texture = load("res://Resources/ImageFiles/Backgrounds/battleground.png")
+	
+	if texture:
+		print("[BattleManager] Loading background: ", texture.resource_path)
+		var bg_layer = CanvasLayer.new()
+		bg_layer.layer = -100 # 最底层
+		bg_layer.name = "BackgroundLayer"
+		add_child(bg_layer)
+		
+		var bg_rect = TextureRect.new()
+		bg_rect.texture = texture
+		# 确保全屏填充
+		bg_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bg_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		bg_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		
+		# 调暗背景，提高特效和网格的对比度
+		bg_rect.modulate = Color(0.6, 0.6, 0.6, 1.0)
+		
+		# 确保不遮挡
+		bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		bg_layer.add_child(bg_rect)
+		print("[BattleManager] Background created with size: ", bg_rect.size)
+	else:
+		print("[BattleManager] No background texture available (Config: ", current_level_config, ")")
+		# --- 调试：如果没有图片，显示一个深色背景 ---
+		var bg_layer = CanvasLayer.new()
+		bg_layer.layer = -100
+		bg_layer.name = "BackgroundLayer"
+		add_child(bg_layer)
+		var color_rect = ColorRect.new()
+		color_rect.color = Color(0.1, 0.1, 0.15)
+		color_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		color_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		
+		# 强制大小
+		var vp_size = get_viewport_rect().size
+		color_rect.size = vp_size
+		
+		bg_layer.add_child(color_rect)
+		print("[BattleManager] Created fallback ColorRect background")
+
 func _process(_delta):
+	# 始终更新 Tooltip 位置
+	_update_tooltip_position()
+	
+	# --- Screen Shake Update ---
+	if _shake_strength > 0:
+		_shake_strength = lerpf(_shake_strength, 0, _shake_decay * _delta)
+		var offset = Vector2(randf_range(-_shake_strength, _shake_strength), randf_range(-_shake_strength, _shake_strength))
+		
+		# 优先震动相机，如果没有相机则震动 Battlefield
+		if _camera:
+			_camera.offset = offset
+		elif has_node("Battlefield"):
+			$Battlefield.position = battlefield_position + offset
+	elif has_node("Battlefield"):
+		# 恢复原始位置
+		if $Battlefield.position != battlefield_position:
+			$Battlefield.position = battlefield_position
+	# ---------------------------
+
 	# 战斗循环：推进战线、检测胜负、让超出战线的单位进入死亡状态。
 	if not is_battle_started:
 		_synergy_update_timer += _delta
@@ -642,6 +762,37 @@ func _count_alive_units(is_friendly: bool) -> int:
 				if unit.get("is_deployed") == true:
 					count += 1
 	return count
+
+# --- Visual Effects Interface ---
+
+func trigger_shake(strength: float = 5.0):
+	_shake_strength = max(_shake_strength, strength)
+
+func spawn_floating_text(pos: Vector2, text: String, color: Color):
+	var label = Label.new()
+	label.text = text
+	label.modulate = color
+	label.z_index = 100 # Ensure on top
+	
+	# Style settings
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	label.add_theme_font_size_override("font_size", 24)
+	
+	# Add to scene
+	if has_node("Battlefield"):
+		$Battlefield.add_child(label)
+	else:
+		add_child(label)
+		
+	label.global_position = pos + Vector2(0, -30) # Start slightly above unit
+	
+	# Animation: Float up and fade out
+	var tw = create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(label, "global_position:y", label.global_position.y - 60, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	tw.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
+	tw.chain().tween_callback(label.queue_free)
 
 # --- 供 Unit 调用的接口 ---
 
@@ -891,21 +1042,61 @@ func modify_enemy_manpower(amount: float):
 func _update_ui():
 	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
 	if enemy_manpower_label: enemy_manpower_label.text = "敌方民力: %.1f" % enemy_current_manpower
-	
+
+func _update_tooltip_position():
 	# 更新 Tooltip 位置
 	if _tooltip_instance and _tooltip_instance.visible:
-		var mouse_pos = get_global_mouse_position()
-		# HUD 是 CanvasLayer 下的，需要 Viewport 坐标
-		var viewport_mouse = get_viewport().get_mouse_position()
+		var target_pos = Vector2.ZERO
 		
-		# 偏移一点，避免遮挡鼠标
-		var target_pos = viewport_mouse + Vector2(15, 15)
+		if is_instance_valid(_tooltip_target):
+			var rect = Rect2()
+			if _tooltip_target is Control:
+				rect = _tooltip_target.get_global_rect()
+			elif _tooltip_target is Node2D:
+				var screen_pos = _tooltip_target.get_global_transform_with_canvas().origin
+				# 估算大小，默认为 GridSize
+				var size = Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE)
+				# 如果是多格单位，尝试读取 data
+				if "data" in _tooltip_target and _tooltip_target.data and _tooltip_target.data.grid_shape:
+					# 简单估算：找出最大 x 和 y
+					var max_x = 0
+					var max_y = 0
+					for p in _tooltip_target.data.grid_shape:
+						if p.x > max_x: max_x = p.x
+						if p.y > max_y: max_y = p.y
+					size = Vector2((max_x + 1) * GameConst.GRID_SIZE, (max_y + 1) * GameConst.GRID_SIZE)
+				
+				rect = Rect2(screen_pos, size)
+			
+			# 默认显示在右侧
+			target_pos = rect.position + Vector2(rect.size.x + 10, 0)
+			
+			# 屏幕边界检查
+			var vp_size = get_viewport().get_visible_rect().size
+			var tooltip_size = _tooltip_instance.size
+			
+			# 1. 右边界检查：如果超出右边，改到左边
+			if target_pos.x + tooltip_size.x > vp_size.x:
+				target_pos.x = rect.position.x - tooltip_size.x - 10
+			
+			# 2. 下边界检查：如果超出下边，向上顶
+			if target_pos.y + tooltip_size.y > vp_size.y:
+				target_pos.y = vp_size.y - tooltip_size.y
+			
+			# 3. 上/左边界硬限制
+			if target_pos.x < 0: target_pos.x = 0
+			if target_pos.y < 0: target_pos.y = 0
+			
+		else:
+			# Fallback: 跟随鼠标
+			var viewport_mouse = get_viewport().get_mouse_position()
+			target_pos = viewport_mouse + Vector2(15, 15)
 		
-		# 简单的边界检查 (假设屏幕足够大，先不做复杂的反转)
 		_tooltip_instance.position = target_pos
 
-func show_tooltip(data: UnitData):
+func show_tooltip(data: UnitData, target: Node = null):
 	if _tooltip_instance:
+		_tooltip_target = target
 		_tooltip_instance.update_info(data)
 		_tooltip_instance.visible = true
 		_tooltip_instance.z_index = 100 # 保证在最上层
@@ -913,6 +1104,7 @@ func show_tooltip(data: UnitData):
 func hide_tooltip():
 	if _tooltip_instance:
 		_tooltip_instance.visible = false
+		_tooltip_target = null
 
 func _end_battle(victory: bool):
 	if battle_ended:
@@ -949,19 +1141,17 @@ func _show_finish_battle_button():
 		btn.name = btn_name
 		btn.text = "完成战斗"
 		
-		# 使用锚点定位到右上角下方
+		# 居中显示
 		btn.layout_mode = 1 # Anchors
-		btn.anchor_left = 1.0
-		btn.anchor_top = 0.0
-		btn.anchor_right = 1.0
-		btn.anchor_bottom = 0.0
+		btn.anchor_left = 0.5
+		btn.anchor_top = 0.5
+		btn.anchor_right = 0.5
+		btn.anchor_bottom = 0.5
 		
-		# 位于 BattleLog 按钮 (70, 30) 下方
-		# BattleLog: top=70, height=30 -> bottom=100
-		btn.offset_left = -120
-		btn.offset_top = 110 
-		btn.offset_right = -20
-		btn.offset_bottom = 140
+		btn.offset_left = -60
+		btn.offset_top = -15 
+		btn.offset_right = 60
+		btn.offset_bottom = 15
 		btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 		
 		if GameState:
@@ -1062,7 +1252,7 @@ func show_victory_dialogue():
 		var current_id = current_level_config.level_id
 		
 		# 特殊处理：汉军线/黄巾线 最后一关结束后，跳转到终章 1_3_1
-		if current_id == "1_1_4" or current_id == "1_2_4":
+		if current_id == "1_1_10" or current_id == "1_2_4":
 			dialogue_path = BattleManager.get_dialogue_path_by_id("1_3_1")
 		else:
 			# 其他关卡：获取下一关的 ID，播放下一关的开场剧情
@@ -1095,6 +1285,54 @@ func _proceed_to_next_level_direct():
 			# 没有下一关，回到主菜单 (Demo 结束)
 			get_tree().paused = false
 			get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
+
+# 供对话调用的接口：直接发放单位
+func grant_unit(unit_identifier: String):
+	print("[BattleManager] Granting unit: ", unit_identifier)
+	var unit_data: UnitData = null
+	
+	# 1. 尝试作为路径加载
+	if unit_identifier.begins_with("res://"):
+		if ResourceLoader.exists(unit_identifier):
+			unit_data = load(unit_identifier)
+	
+	# 2. 尝试从数据库按名称查找
+	if not unit_data and GameState:
+		var db = GameState.get_unit_database()
+		if db:
+			# 这是一个低效查找，但对于少量奖励是可以接受的
+			for u in db.units:
+				if u.name == unit_identifier:
+					unit_data = u
+					break
+	
+	if unit_data:
+		var new_unit = unit_data.duplicate()
+		new_unit.is_injured = false
+		
+		if player_library:
+			player_library.collected_cards.append(new_unit)
+			if GameState:
+				GameState.save_player_library(player_library)
+		
+		# 立即显示在备战区（如果有空位）
+		spawn_unit(new_unit)
+		
+		# 提示
+		var tip_msg = "获得单位：\n%s" % new_unit.name
+		if $CanvasLayer:
+			var label = Label.new()
+			label.text = tip_msg
+			label.position = Vector2(300, 100)
+			label.set("theme_override_colors/font_color", Color.GOLD)
+			label.set("theme_override_font_sizes/font_size", 32)
+			$CanvasLayer.add_child(label)
+			var tween = create_tween()
+			tween.tween_property(label, "position:y", 50.0, 2.0)
+			tween.parallel().tween_property(label, "modulate:a", 0.0, 2.0)
+			tween.tween_callback(label.queue_free)
+	else:
+		push_error("[BattleManager] Could not find unit to grant: " + unit_identifier)
 
 # 供对话调用的接口
 func show_victory_screen():
@@ -1172,7 +1410,7 @@ func _check_and_apply_synergies():
 	var civ_counts = {}
 	var class_counts = {}
 	
-	var civ_unique_types = {} # { "han": { "soldier_name": true, ... } }
+	var civ_unique_types = {} # { "dynasty": { "soldier_name": true, ... } }
 	var class_unique_types = {} # { "infantry": { "soldier_name": true, ... } }
 	
 	var deployed_units = []
@@ -1208,18 +1446,25 @@ func _check_and_apply_synergies():
 	# 2. 定义加成规则 (这里硬编码，也可以配表)
 	
 	# -- 文明羁绊 --
-	# 汉 (Han): 2人 -> +2 ATK; 4人 -> +5 ATK
-	var han_bonus_atk = 0.0
-	if civ_counts.get("han", 0) >= 4: han_bonus_atk = 5.0
-	elif civ_counts.get("han", 0) >= 2: han_bonus_atk = 2.0
+	# 王朝 (Dynasty): 2人 -> +2 ATK; 4人 -> +5 ATK
+	var dynasty_bonus_atk = 0.0
+	if civ_counts.get("dynasty", 0) >= 4: dynasty_bonus_atk = 5.0
+	elif civ_counts.get("dynasty", 0) >= 2: dynasty_bonus_atk = 2.0
 	
-	# 罗马 (Roman): 2人 -> +20 Max HP
-	var roman_bonus_hp = 0.0
-	if civ_counts.get("roman", 0) >= 2: roman_bonus_hp = 20.0
+	# 诸侯 (Warlord): 2人 -> +20 Max HP; 4人 -> +50 Max HP
+	var warlord_bonus_hp = 0.0
+	if civ_counts.get("warlord", 0) >= 4: warlord_bonus_hp = 50.0
+	elif civ_counts.get("warlord", 0) >= 2: warlord_bonus_hp = 20.0
 	
-	# 希腊 (Greek): 2人 -> +10% 冷却缩减 (简单实现为减CD时间)
-	var greek_bonus_cdr = 0.0
-	if civ_counts.get("greek", 0) >= 2: greek_bonus_cdr = 0.2 # 减少0.2秒冷却
+	# 义军 (Rebel): 2人 -> +10% 冷却缩减; 4人 -> +25% 冷却缩减
+	var rebel_bonus_cdr = 0.0
+	if civ_counts.get("rebel", 0) >= 4: rebel_bonus_cdr = 0.5
+	elif civ_counts.get("rebel", 0) >= 2: rebel_bonus_cdr = 0.2
+	
+	# 虎狼 (Predator): 2人 -> +3 ATK; 4人 -> +8 ATK
+	var predator_bonus_atk = 0.0
+	if civ_counts.get("predator", 0) >= 4: predator_bonus_atk = 8.0
+	elif civ_counts.get("predator", 0) >= 2: predator_bonus_atk = 3.0
 
 	# -- 兵种羁绊 --
 	# 步兵 (Infantry): 2人 -> +10 HP; 4人 -> +30 HP
@@ -1254,14 +1499,17 @@ func _check_and_apply_synergies():
 		var cls = unit.data.unit_class
 		
 		# 应用文明加成
-		if civ == "han" and han_bonus_atk > 0:
-			unit.apply_synergy_bonus("attack_damage", han_bonus_atk)
+		if civ == "dynasty" and dynasty_bonus_atk > 0:
+			unit.apply_synergy_bonus("attack_damage", dynasty_bonus_atk)
 			
-		if civ == "roman" and roman_bonus_hp > 0:
-			unit.apply_synergy_bonus("max_hp", roman_bonus_hp)
+		if civ == "warlord" and warlord_bonus_hp > 0:
+			unit.apply_synergy_bonus("max_hp", warlord_bonus_hp)
 			
-		if civ == "greek" and greek_bonus_cdr > 0:
-			unit.apply_synergy_bonus("cooldown_flat", greek_bonus_cdr)
+		if civ == "rebel" and rebel_bonus_cdr > 0:
+			unit.apply_synergy_bonus("cooldown_flat", rebel_bonus_cdr)
+			
+		if civ == "predator" and predator_bonus_atk > 0:
+			unit.apply_synergy_bonus("attack_damage", predator_bonus_atk)
 			
 		# 应用兵种加成
 		if cls == "infantry" and inf_bonus_hp > 0:
@@ -1288,6 +1536,27 @@ func _check_and_apply_synergies():
 
 	# (可选) 在UI上显示触发的羁绊
 	_update_synergy_ui(civ_counts, class_counts)
+
+func find_closest_unit(from_pos: Vector2, target_faction: int, exclude_list: Array = []) -> Node2D:
+	if not units_container: return null
+	var best_unit = null
+	var min_dist_sq = INF
+	
+	for unit in units_container.get_children():
+		if not is_instance_valid(unit): continue
+		if "current_hp" in unit and unit.current_hp <= 0: continue
+		if "faction" in unit and unit.faction != target_faction: continue
+		if unit in exclude_list: continue
+		
+		# Check if unit is actually deployed/active
+		if "is_deployed" in unit and not unit.is_deployed: continue
+		
+		var dist_sq = from_pos.distance_squared_to(unit.global_position)
+		if dist_sq < min_dist_sq:
+			min_dist_sq = dist_sq
+			best_unit = unit
+			
+	return best_unit
 
 func _update_adjacency_visuals(units: Array):
 	if not _adjacency_lines_node: return
@@ -1421,11 +1690,11 @@ func _draw_edge_segment(cell_grid_pos: Vector2i, direction: Vector2i, color: Col
 	_adjacency_lines_node.add_child(line)
 	
 	# 呼吸动画
-	var tw = create_tween().set_loops()
+	var tw = line.create_tween().set_loops()
 	tw.tween_property(line, "width", 2.0, 1.0).from(4.0)
 	tw.tween_property(line, "width", 4.0, 1.0)
 	
-	var tw_alpha = create_tween().set_loops()
+	var tw_alpha = line.create_tween().set_loops()
 	tw_alpha.tween_property(line, "modulate:a", 0.5, 1.5)
 	tw_alpha.tween_property(line, "modulate:a", 1.0, 1.5)
 
@@ -1491,11 +1760,17 @@ func _update_synergy_ui(civ_counts, class_counts):
 	var text = "当前羁绊:\n"
 	
 	# 文明
-	if civ_counts.get("han", 0) >= 4: text += "[汉] 4: 全体+5攻\n"
-	elif civ_counts.get("han", 0) >= 2: text += "[汉] 2: 全体+2攻\n"
+	if civ_counts.get("dynasty", 0) >= 4: text += "[王朝] 4: 全体+5攻\n"
+	elif civ_counts.get("dynasty", 0) >= 2: text += "[王朝] 2: 全体+2攻\n"
 	
-	if civ_counts.get("roman", 0) >= 2: text += "[罗马] 2: 全体+20血\n"
-	if civ_counts.get("greek", 0) >= 2: text += "[希腊] 2: 全体-0.2s CD\n"
+	if civ_counts.get("warlord", 0) >= 4: text += "[诸侯] 4: 全体+50血\n"
+	elif civ_counts.get("warlord", 0) >= 2: text += "[诸侯] 2: 全体+20血\n"
+	
+	if civ_counts.get("rebel", 0) >= 4: text += "[义军] 4: 全体-0.5s CD\n"
+	elif civ_counts.get("rebel", 0) >= 2: text += "[义军] 2: 全体-0.2s CD\n"
+	
+	if civ_counts.get("predator", 0) >= 4: text += "[虎狼] 4: 全体+8攻\n"
+	elif civ_counts.get("predator", 0) >= 2: text += "[虎狼] 2: 全体+3攻\n"
 	
 	# 兵种
 	if class_counts.get("infantry", 0) >= 4: text += "[步兵] 4: 步兵+30血\n"
