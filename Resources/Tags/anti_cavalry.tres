@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "anti_cavalry"
+name = "反骑"
+description = "对骑兵造成额外伤害，或使其失去冲锋能力。"

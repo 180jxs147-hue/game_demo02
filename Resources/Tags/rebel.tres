@@ -6,4 +6,4 @@
 script = ExtResource("1_tag")
 id = "rebel"
 name = "义军"
-description = "拥有义军羁绊。"
+description = "计入【义军】羁绊人数，可从义军羁绊获得增益。"

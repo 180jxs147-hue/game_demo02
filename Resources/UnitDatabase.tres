@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="UnitDatabase" load_steps=31 format=3]
+[gd_resource type="Resource" script_class="UnitDatabase" load_steps=42 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitDatabase.gd" id="1_db"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/Pyrrhus.tres" id="2_pyrrhus"]
@@ -11,7 +11,6 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/soldier.tres" id="9_soldier"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/han_caiguan.tres" id="10_spear"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/xiang_yu.tres" id="11_xiang"]
-[ext_resource type="Resource" path="res://Resources/DataFiles/joan.tres" id="13_joan"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sun_tzu.tres" id="14_sun"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/leonidas.tres" id="15_leo"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/alexander.tres" id="16_alex"]
@@ -40,10 +39,35 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/zhang_fei.tres" id="39_zhangfei"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/zhang_jiao.tres" id="40_zhangjiao"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/zhang_liang.tres" id="41_zhangliang"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/JoanOfArc.tres" id="42_joan"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/BlackPrince.tres" id="43_prince"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/LaHire.tres" id="44_lahire"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/JohnChandos.tres" id="45_chandos"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Routier.tres" id="46_routier"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/EnglishBillman.tres" id="47_billman"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Hobilar.tres" id="48_hobilar"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/DismountedFrenchKnight.tres" id="49_knight"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Ribauldequin.tres" id="50_rib"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/RoyalCulverin.tres" id="51_culverin"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/FrenchHandgonner.tres" id="52_gunner"]
 
 [resource]
 script = ExtResource("1_db")
-units = Array[Resource]([ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), ExtResource("13_joan"), ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), ExtResource("18_camp"), ExtResource("28_drum"), ExtResource("29_cart"), ExtResource("30_tower"), ExtResource("31_bocai"), ExtResource("32_caocao"), ExtResource("33_danyang"), ExtResource("34_guanyu"), ExtResource("35_liubei"), ExtResource("36_mayuanyi"), ExtResource("37_sunjian"), ExtResource("38_zhangbao"), ExtResource("39_zhangfei"), ExtResource("40_zhangjiao"), ExtResource("41_zhangliang")])
+units = Array[Resource]([
+    ExtResource("9_soldier"), ExtResource("23_junguo"), ExtResource("10_spear"), ExtResource("27_yulin"), 
+    ExtResource("3_archer"), ExtResource("26_shesheng"), ExtResource("8_shield"), ExtResource("5_cavalry"), 
+    ExtResource("24_sanhe"), ExtResource("25_changshui"), ExtResource("4_catapult"), ExtResource("6_farmer"), 
+    ExtResource("7_quarter"), ExtResource("19_cangtian"), ExtResource("20_hj_lishi"), ExtResource("21_taiping"), 
+    ExtResource("22_ezei"), ExtResource("2_pyrrhus"), ExtResource("11_xiang"), 
+    ExtResource("14_sun"), ExtResource("15_leo"), ExtResource("16_alex"), ExtResource("17_caesar"), 
+    ExtResource("18_camp"), ExtResource("28_drum"), ExtResource("29_cart"), ExtResource("30_tower"), 
+    ExtResource("31_bocai"), ExtResource("32_caocao"), ExtResource("33_danyang"), ExtResource("34_guanyu"), 
+    ExtResource("35_liubei"), ExtResource("36_mayuanyi"), ExtResource("37_sunjian"), ExtResource("38_zhangbao"), 
+    ExtResource("39_zhangfei"), ExtResource("40_zhangjiao"), ExtResource("41_zhangliang"),
+    ExtResource("42_joan"), ExtResource("43_prince"), ExtResource("44_lahire"), ExtResource("45_chandos"),
+    ExtResource("46_routier"), ExtResource("47_billman"), ExtResource("48_hobilar"), ExtResource("49_knight"),
+    ExtResource("50_rib"), ExtResource("51_culverin"), ExtResource("52_gunner")
+])
 story_by_path = {
 "res://Resources/DataFiles/camp.tres": "军中休憩之所，亦是补给流转的核心。\n源源不断地提供支持，是持久战的关键。",
 "res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",

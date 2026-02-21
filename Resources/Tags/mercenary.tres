@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "mercenary"
+name = "佣兵"
+description = "为报酬而战的士兵。常与掠夺、临时同盟等机制相关。"

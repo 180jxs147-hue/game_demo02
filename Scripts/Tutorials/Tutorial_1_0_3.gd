@@ -26,13 +26,28 @@ func start(bm: BattleManager):
 	
 	get_tree().create_timer(1.0).timeout.connect(_start_sequence)
 
+signal step_finished
+var _wait_index = 0
+func _wait_for_step(duration: float):
+	_wait_index += 1
+	var current_index = _wait_index
+	
+	var t = get_tree().create_timer(duration)
+	t.timeout.connect(func(): 
+		if _wait_index == current_index:
+			step_finished.emit()
+	)
+	
+	await step_finished
+	_wait_index += 1
+
 func _start_sequence():
 	# Step 1: 介绍骑兵
 	phase = Phase.INTRO_CAVALRY
 	var bench = battle_manager.get_node_or_null("CanvasLayer/HUD/BenchPanel")
 	if bench:
 		_show_tip("突骑移动速度极快！\n试着将突骑部署在没有敌人的空行，直接突袭敌方后排。", bench, Vector2(0, -50), 4.0)
-		await get_tree().create_timer(4.5).timeout
+		await _wait_for_step(4.5)
 	
 	# Step 2: 介绍营帐与黄巾力士机制
 	phase = Phase.INTRO_TENT
@@ -41,12 +56,11 @@ func _start_sequence():
 		# 尝试指向敌方某个营帐，如果没有就指向战场
 		var target = enemy_field
 		_show_tip("那个【黄巾力士】非常强大，但攻击需要消耗大量民力。\n优先击杀敌方的【黄巾营帐】，切断民力补给，力士就会无法攻击！", target, Vector2(100, 100), 5.0)
-		await get_tree().create_timer(5.5).timeout
+		await _wait_for_step(5.5)
 
 	_start_phase_wait_start()
 
 func _start_phase_wait_start():
-	phase = Phase.WAIT_START
 	var btn = battle_manager.get_node_or_null("CanvasLayer/HUD/StartButton")
 	if btn:
 		_show_tip("利用兵种克制与断粮战术，\n击溃他们！", btn, Vector2(0, 0))
@@ -73,13 +87,23 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	margin.add_theme_constant_override("margin_bottom", 12)
 	margin.add_theme_constant_override("margin_right", 16)
 	
+	var vbox = VBoxContainer.new()
+	margin.add_child(vbox)
+
 	var label = Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", Color.WHITE)
 	label.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(label)
 	
-	margin.add_child(label)
+	var hint = Label.new()
+	hint.text = "(点击继续)"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	hint.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(hint)
+	
 	panel.add_child(margin)
 	
 	var style = StyleBoxFlat.new()
@@ -89,6 +113,12 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	style.corner_radius_bottom_right = 8
 	style.corner_radius_bottom_left = 8
 	panel.add_theme_stylebox_override("panel", style)
+	
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			step_finished.emit()
+	)
 	
 	battle_manager.get_node("CanvasLayer/HUD").add_child(panel)
 	current_tip = panel

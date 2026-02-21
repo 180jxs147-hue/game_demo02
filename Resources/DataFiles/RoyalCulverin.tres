@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "皇家长管炮"
+icon = null
+rarity = "epic"
+civilization = "dynasty"
+unit_class = "siege"
+color = Color(0.2, 0.2, 0.5, 1)
+tags = Array[String](["artillery", "sniper"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1), Vector2i(0, 2)])
+max_hp = 50.0
+manpower_cost = 6.0
+cooldown = 8.0
+attack_damage = 80.0
+defense = 0.0
+attack_range = 5
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
+story = "皇家长管炮，法兰西王室引以为傲的攻城利器。射程极远，精度极高，专门用于定点清除敌方高价值目标或防御工事。"

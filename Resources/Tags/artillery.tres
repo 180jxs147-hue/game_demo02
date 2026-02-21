@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "artillery"
+name = "火炮"
+description = "攻城器械。攻击速度慢，但射程远或伤害高。"

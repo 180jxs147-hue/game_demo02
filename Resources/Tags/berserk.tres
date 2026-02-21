@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "berserk"
+name = "狂暴"
+description = "怒火中烧：生命值越低，攻击力越高，最多提升 {X}%。"

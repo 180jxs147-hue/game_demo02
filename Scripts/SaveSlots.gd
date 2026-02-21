@@ -140,8 +140,8 @@ func _choose_slot(i: int):
 	# GameState.use_autosave_library = false # Force manual slot mode -> NO, we now load TO autosave.
 	
 	if mode == "load":
-		# Load from Slot i, then initialize Autosave environment
-		GameState.load_from_slot_and_init_autosave(i)
+		# Load from Slot i directly
+		GameState.load_from_slot(i)
 	else: # new
 		GameState.clear_save()
 		# For new game, we also want to be in Autosave mode eventually?
@@ -160,11 +160,11 @@ func _choose_slot(i: int):
 		# Usually this means we overwrite Slot 1.
 		# Let's assume New Game overwrites Slot 1 with initial state.
 		
-		GameState.use_autosave_library = false
+		# GameState.use_autosave_library = false # Deprecated
 		GameState.clear_save() # Writes initial state to Slot i
 		
 		# AFTER overwriting Slot i, we should switch to Autosave mode so further progress doesn't touch it.
-		GameState.load_from_slot_and_init_autosave(i)
+		GameState.load_from_slot(i) # Reload into memory (and reset autosave mode state if any)
 		
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 

@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "plunder"
+name = "掠夺"
+description = "趁火打劫：每次攻击时额外掠夺 {X} 点民力。"

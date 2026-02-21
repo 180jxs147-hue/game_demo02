@@ -34,13 +34,31 @@ func start(bm: BattleManager):
 	# 延迟一点显示，等待 UI 布局完成
 	get_tree().create_timer(1.0).timeout.connect(_start_sequence)
 
+signal step_finished
+
+# Wait for either timer or user click
+var _wait_index = 0
+func _wait_for_step(duration: float):
+	_wait_index += 1
+	var current_index = _wait_index
+	
+	var t = get_tree().create_timer(duration)
+	t.timeout.connect(func(): 
+		if _wait_index == current_index:
+			step_finished.emit()
+	)
+	
+	await step_finished
+	# Invalidate the timer if it hasn't fired yet
+	_wait_index += 1
+
 func _start_sequence():
 	# Step 1: 介绍备战区
 	phase = Phase.INTRO_BENCH
 	var bench = battle_manager.get_node_or_null("CanvasLayer/HUD/BenchPanel")
 	if bench:
 		_show_tip("这是备战区，您的可用单位都在这里。", bench, Vector2(0, -50), 3.0)
-		await get_tree().create_timer(3.5).timeout
+		await _wait_for_step(3.5)
 	
 	# Step 2: 介绍部署区
 	phase = Phase.INTRO_FIELD
@@ -53,7 +71,7 @@ func _start_sequence():
 		# 我们可以用 GridVisualizer 如果它是 Control，但它也是 Node2D
 		# 暂时用 bench 做锚点，向上指
 		_show_tip("请将单位拖拽到战场网格上进行部署。", bench, Vector2(0, -300), 3.0)
-		await get_tree().create_timer(3.5).timeout
+		await _wait_for_step(3.5)
 	
 	# Step 3: 引导拖拽
 	phase = Phase.DRAG_UNIT
@@ -81,13 +99,23 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	margin.add_theme_constant_override("margin_bottom", 12)
 	margin.add_theme_constant_override("margin_right", 16)
 	
+	var vbox = VBoxContainer.new()
+	margin.add_child(vbox)
+
 	var label = Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", Color.WHITE)
 	label.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(label)
 	
-	margin.add_child(label)
+	var hint = Label.new()
+	hint.text = "(点击继续)"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	hint.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(hint)
+	
 	panel.add_child(margin)
 	
 	# 设置文本框样式
@@ -105,7 +133,11 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	panel.add_theme_stylebox_override("panel", style)
 	
 	# 确保不遮挡鼠标交互
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			step_finished.emit()
+	)
 	
 	var hud = battle_manager.get_node("CanvasLayer/HUD")
 	hud.add_child(panel)
@@ -255,7 +287,7 @@ func _start_phase_explain_manpower():
 	if manpower_label:
 		_show_tip("注意左上角的民力值。\n大部分单位攻击时会消耗民力，需要靠营帐等单位回复民力。\n(等待几秒自动继续...)", manpower_label, Vector2(0, 10), 4.0)
 		
-		await get_tree().create_timer(4.5).timeout
+		await _wait_for_step(4.5)
 		_start_phase_wait_start()
 	else:
 		_start_phase_wait_start()

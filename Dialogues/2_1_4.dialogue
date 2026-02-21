@@ -1,0 +1,13 @@
+~ start
+English_Gunner: 尝尝这个！爱德华国王的新玩具！ [#bg:bridge, #pos:right]
+System: 敌方部署了**【雷鸣管】**。这是一种原始的火药武器，主要通过巨响惊吓战马。 [#pos:center]
+French_Knight: 那是什么妖术？！我的马受惊了！该死，这巨响比长弓更可怕！ [#pos:right]
+Joan_of_Arc: 不要怕！那只是虚张声势的噪音！稳住阵脚！ [#pos:right]
+Player: 他们的科技树点歪了。这种老式火器穿透力极差，重步兵可以直接碾过去！ [#pos:left]
+do start_level_id("2_1_4")
+=> END
+
+~ end
+Player: 果然，黑太子的军队停留在1346年。他们不知道80年后，板甲已经能防住这种火药了。 [#pos:left]
+do enter_camp_before_level("2_1_5")
+=> END

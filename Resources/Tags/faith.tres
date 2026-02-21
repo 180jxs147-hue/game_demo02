@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "faith"
+name = "信仰"
+description = "受圣女感召，意志坚定。通常与神启效果联动。"

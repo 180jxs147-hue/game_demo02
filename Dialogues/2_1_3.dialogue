@@ -1,0 +1,14 @@
+~ start
+Joan_of_Arc: 谁在那里？是敌是友？ [#bg:forest_fog, #pos:right]
+Player: 我是来终结这场混乱的旅人。你就是那个“奥尔良少女”？ [#pos:left]
+Joan_of_Arc: 那个声音告诉我你会来。主说，时间破碎了，古老的恶魔复苏了。 [#pos:right]
+Joan_of_Arc: 你看那些士兵，他们手里的武器太古老了，那是爷爷辈才用的东西。 [#pos:right]
+Joan_of_Arc: 但他们的杀意是真实的。主赐予我旗帜，是为了守护这片土地，无论敌人来自过去还是未来！ [#pos:right]
+Player: 你的旗帜能稳定周围的时空……好，我来指挥，你来维持士气！ [#pos:left]
+do start_level_id("2_1_3")
+=> END
+
+~ end
+Joan_of_Arc: 谢谢你。有了你的指挥，我有信心守住奥尔良。虽然……我感觉自己也不属于这里。 [#pos:right]
+do enter_camp_before_level("2_1_4")
+=> END

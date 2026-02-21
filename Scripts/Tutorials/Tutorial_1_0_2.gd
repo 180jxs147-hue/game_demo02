@@ -28,20 +28,37 @@ func start(bm: BattleManager):
 	# 启动教程序列
 	get_tree().create_timer(1.0).timeout.connect(_start_sequence)
 
+signal step_finished
+var _wait_index = 0
+func _wait_for_step(duration: float):
+	_wait_index += 1
+	var current_index = _wait_index
+	
+	var t = get_tree().create_timer(duration)
+	t.timeout.connect(func(): 
+		if _wait_index == current_index:
+			step_finished.emit()
+	)
+	
+	await step_finished
+	_wait_index += 1
+
 func _start_sequence():
 	# Step 1: 介绍弓兵站位
 	phase = Phase.INTRO_STRATEGY
 	var bench = battle_manager.get_node_or_null("CanvasLayer/HUD/BenchPanel")
 	if bench:
 		_show_tip("汉家材官皮糙肉厚，适合抗线。\n请将弓箭手放在材官身后，提供安全的输出环境。", bench, Vector2(0, -50), 4.0)
-		await get_tree().create_timer(4.5).timeout
+		await _wait_for_step(4.5)
 	
 	# Step 2: 介绍射程
 	phase = Phase.EXPLAIN_RANGE
 	var field = battle_manager.get_node_or_null("Battlefield/FriendlyField")
 	if field:
 		_show_tip("每个单位都有攻击距离。\n如果前方有太多友军阻挡，可能会无法攻击到敌人（卡射程）。\n请合理安排站位！", bench, Vector2(0, -300), 4.0)
-		await get_tree().create_timer(4.5).timeout
+		# Add a wait here if needed, or proceed to WAIT_START
+		await _wait_for_step(4.5)
+
 
 	_start_phase_wait_start()
 
@@ -75,13 +92,23 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	margin.add_theme_constant_override("margin_bottom", 12)
 	margin.add_theme_constant_override("margin_right", 16)
 	
+	var vbox = VBoxContainer.new()
+	margin.add_child(vbox)
+
 	var label = Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	label.add_theme_color_override("font_color", Color.WHITE)
 	label.add_theme_font_size_override("font_size", 24)
+	vbox.add_child(label)
 	
-	margin.add_child(label)
+	var hint = Label.new()
+	hint.text = "(点击继续)"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+	hint.add_theme_font_size_override("font_size", 18)
+	vbox.add_child(hint)
+	
 	panel.add_child(margin)
 	
 	# 设置文本框样式
@@ -92,6 +119,12 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	style.corner_radius_bottom_right = 8
 	style.corner_radius_bottom_left = 8
 	panel.add_theme_stylebox_override("panel", style)
+	
+	panel.mouse_filter = Control.MOUSE_FILTER_STOP
+	panel.gui_input.connect(func(event):
+		if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+			step_finished.emit()
+	)
 	
 	battle_manager.get_node("CanvasLayer/HUD").add_child(panel)
 	current_tip = panel

@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "黑太子·爱德华"
+icon = null
+rarity = "legendary"
+civilization = "predator"
+unit_class = "cavalry"
+color = Color(0.2, 0.2, 0.2, 1)
+tags = Array[String](["hero", "plunder", "fear", "elite"])
+grid_shape = Array[Vector2i]([Vector2i(-1, -1), Vector2i(0, -1), Vector2i(1, -1), Vector2i(0, 0), Vector2i(-1, 1), Vector2i(0, 1), Vector2i(1, 1)])
+max_hp = 180.0
+manpower_cost = 6.0
+cooldown = 2.5
+attack_damage = 35.0
+defense = 3.0
+attack_range = 1
+is_injured = false
+charge_count = 3
+fear_count = 8.0
+plunder_count = 0.3
+adjacency_rules = Array[Dictionary]([
+    {
+        "type": "give",
+        "req_type": "tag",
+        "req_value": "plunder",
+        "effect_stat": "attack_damage",
+        "effect_value": 5.0
+    }
+])
+story = "他的盔甲如黑夜般深沉，他的战术如烈火般无情。由于实行焦土政策，他所到之处寸草不生。"

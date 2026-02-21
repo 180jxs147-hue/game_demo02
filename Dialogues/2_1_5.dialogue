@@ -1,0 +1,14 @@
+~ start
+Chandos: 你们以为靠几块铁板就能挡住英格兰的铁骑吗？冲锋！ [#bg:battlefield_day, #pos:right]
+French_Gunner: 圣女大人，我们的火门枪准备好了！虽然装填慢，但这可是为了对付重甲设计的！ [#pos:right]
+Joan_of_Arc: 主啊，指引我们的弹丸。开火！ [#pos:right]
+System: 我方**【火门枪手】**已就位。攻击无视护甲，但攻速极慢。请注意保护。 [#pos:center]
+Player: 这就是时代的代差。用拒马挡住骑兵，让火枪手教他们做人！ [#pos:left]
+do start_level_id("2_1_5")
+=> END
+
+~ end
+Chandos: 这不可能……这是什么武器？连我的板甲都能击穿……这不属于骑士的时代…… [#pos:right]
+BlackPrince: 废物。时代？我就是时代。 [#pos:right]
+do enter_camp_before_level("2_1_6")
+=> END

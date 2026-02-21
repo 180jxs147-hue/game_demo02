@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "英国钩镰民兵"
+icon = null
+rarity = "common"
+civilization = "predator"
+unit_class = "infantry"
+color = Color(0.4, 0.5, 0.2, 1)
+tags = Array[String](["anti_cavalry"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, -1)])
+max_hp = 40.0
+manpower_cost = 2.0
+cooldown = 2.5
+attack_damage = 15.0
+defense = 1.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([
+    {
+        "type": "give",
+        "req_type": "class",
+        "req_value": "cavalry",
+        "effect_stat": "defense",
+        "effect_value": -2.0
+    }
+])
+story = "手持比尔长刀的农兵。这种武器能轻易勾住骑士的铠甲缝隙，将其拉下马背。对骑兵造成 150% 伤害。"

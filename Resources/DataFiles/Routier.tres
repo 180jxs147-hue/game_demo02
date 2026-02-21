@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "自由佣兵"
+icon = null
+rarity = "common"
+civilization = "predator"
+unit_class = "infantry"
+color = Color(0.6, 0.4, 0.2, 1)
+tags = Array[String](["plunder", "mercenary"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 35.0
+manpower_cost = 1.0
+cooldown = 1.5
+attack_damage = 10.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+plunder_count = 0.2
+adjacency_rules = Array[Dictionary]([
+    {
+        "type": "receive",
+        "req_type": "tag",
+        "req_value": "plunder",
+        "effect_stat": "attack_damage",
+        "effect_value": 2.0
+    }
+])
+story = "唯利是图的佣兵团。技能【趁火打劫】：每次攻击时偷取敌方 0.2 民力，并补充给己方。"

@@ -23,6 +23,9 @@ class_name UnitData extends Resource
 @export var attack_range: int = 1 # 射程 (1: 前方无队友; 2: 前方<1队友)
 @export var is_injured: bool = false # 是否受伤
 @export var charge_count: int = 0 # 冲锋次数：前 X 次攻击造成双倍伤害
+@export var fear_count: float = 0.0 # 恐惧强度：降低周围敌军攻击力的数值
+@export var plunder_count: float = 0.0 # 掠夺强度：每次攻击掠夺的民力
+@export var berserk_count: float = 0.0 # 狂暴强度：生命值越低时的最大额外伤害百分比
 
 @export_group("Adjacency Bonuses")
 ## Adjacency Rules:

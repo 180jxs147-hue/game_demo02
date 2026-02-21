@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "约翰·钱多斯"
+icon = null
+rarity = "epic"
+civilization = "predator"
+unit_class = "infantry"
+color = Color(0.3, 0.3, 0.6, 1)
+tags = Array[String](["hero", "tactician"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(0, 1)])
+max_hp = 140.0
+manpower_cost = 4.0
+cooldown = 3.0
+attack_damage = 20.0
+defense = 2.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([
+    {
+        "type": "give",
+        "req_type": "all",
+        "req_value": "all",
+        "effect_stat": "defense",
+        "effect_value": 2.0
+    }
+])
+story = "黑太子的战术导师，百年战争中杰出的指挥官。技能【铁壁阵地】：周围友军防御大幅提升，且对发起冲锋的敌人造成 200% 的反击伤害。"

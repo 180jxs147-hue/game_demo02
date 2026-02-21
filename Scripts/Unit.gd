@@ -352,6 +352,12 @@ func take_damage(amount: float):
 			if def > 0:
 				txt = "-%.0f (%s)" % [final_damage, "抵抗"]
 			battle_manager.spawn_floating_text(global_position, txt, Color(1, 0.2, 0.2)) # 鲜红
+			
+			# Spawn hit particles (using unit's main color or blood color)
+			var particle_color = Color(0.8, 0.1, 0.1) # Blood red
+			if data and data.unit_class == "mechanism":
+				particle_color = Color(0.6, 0.6, 0.6) # Metal sparks
+			battle_manager.spawn_hit_effect(global_position, particle_color)
 
 	if current_hp <= 0:
 		current_hp = 0
@@ -1175,6 +1181,19 @@ func _pop_text(txt, color: Color = Color.WHITE):
 
 	
 #  --- 输入处理 (实现拖拽) ---
+func _set_highlight(active: bool):
+	var color = Color(1.5, 1.5, 1.5) if active else Color.WHITE
+	# 如果是拖拽中，可以更亮一点，或者加边框
+	if active:
+		# 简单实现：变亮
+		modulate = color
+	else:
+		# 恢复
+		if not is_deployed:
+			modulate = Color(0.7, 0.7, 0.7, 1) # 备战区变暗
+		else:
+			modulate = Color.WHITE
+
 func _unhandled_input(event):
 	# 如果战斗已经开始，禁止拖拽
 	if BattleManager.is_battle_started: return
@@ -1196,7 +1215,11 @@ func _unhandled_input(event):
 func _try_start_drag():
 	# 简单的点击检测：鼠标是否在我的“锚点”附近 (粗略检测，实际建议用Area2D)
 	# 这里为了演示简单，假设点击任何属于该单位的格子都算
-	modulate = Color(1.2, 1.2, 1.2, 1)
+	# modulate = Color(1.2, 1.2, 1.2, 1) # 移除旧的高亮
+	
+	# 新的高亮：给所有 block 加 outline shader
+	_set_highlight(true)
+	
 	var mouse_pos = get_global_mouse_position()
 	
 	# 检测是否点击到了本单位的任何一部分
@@ -1224,6 +1247,8 @@ func _end_drag():
 	is_dragging = false
 	z_index = 0
 	in_hand = false
+	
+	_set_highlight(false) # 取消高亮
 	
 	# 清除指示器
 	if drag_preview:

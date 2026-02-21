@@ -43,6 +43,14 @@ var _current_tag: String = ""
 enum UnitTypeFilter { ALL, CONSUME, PRODUCE }
 var _selected_unit: UnitData
 
+var _card_base_width: float = 280.0
+var _card_base_height: float = 400.0
+var _card_min_width: float = 180.0
+var _target_columns: int = 6
+var _current_card_width: float = 280.0
+var _current_card_scale: float = 1.0
+
+
 # Sorting
 var sort_option_collected: OptionButton
 var sort_option_all: OptionButton
@@ -239,10 +247,8 @@ func _refresh_tag_units():
 	_fill_grid(tags_grid, filtered)
 	if _selected_unit and filtered.has(_selected_unit):
 		_show_unit_detail(_selected_unit)
-	elif not filtered.is_empty():
-		_show_unit_detail(filtered[0])
 	else:
-		_show_unit_detail(null)
+		_show_tag_detail(_current_tag)
 
 func _filter_units(units: Array[UnitData], query: String, type_filter_id: int, tag: String) -> Array[UnitData]:
 	var q = query.strip_edges().to_lower()
@@ -266,10 +272,21 @@ func _fill_grid(grid: GridContainer, units: Array[UnitData]):
 	# 这里会先用 UnitDatabase 将 UnitData 解析回“权威实例”，避免导出后字段缺失/资源引用不一致。
 	for child in grid.get_children():
 		child.queue_free()
+	var target_w := _current_card_width
+	var target_h := _card_base_height * _current_card_scale
 	for u in units:
 		u = _resolve_unit_data(u)
+		var wrapper := Control.new()
+		wrapper.custom_minimum_size = Vector2(target_w, target_h)
+		grid.add_child(wrapper)
+		
 		var slot = card_slot_scene.instantiate()
-		grid.add_child(slot)
+		slot.scale = Vector2(_current_card_scale, _current_card_scale)
+		var card_w := _card_base_width * _current_card_scale
+		var card_h := _card_base_height * _current_card_scale
+		slot.position = Vector2((target_w - card_w) * 0.5, (target_h - card_h) * 0.5)
+		wrapper.add_child(slot)
+		
 		slot.setup(u)
 		slot.pressed.connect(_on_card_pressed)
 
@@ -311,11 +328,23 @@ func _fill_grid_stacked(grid: GridContainer, entries: Array[Dictionary]):
 	# 渲染“已收集”页的堆叠卡牌（slot.setup_stacked 会显示 xN）。
 	for child in grid.get_children():
 		child.queue_free()
+	var target_w := _current_card_width
+	var target_h := _card_base_height * _current_card_scale
 	for e in entries:
 		var u: UnitData = _resolve_unit_data(e["data"])
 		var c: int = int(e["count"])
+		
+		var wrapper := Control.new()
+		wrapper.custom_minimum_size = Vector2(target_w, target_h)
+		grid.add_child(wrapper)
+		
 		var slot = card_slot_scene.instantiate()
-		grid.add_child(slot)
+		slot.scale = Vector2(_current_card_scale, _current_card_scale)
+		var card_w := _card_base_width * _current_card_scale
+		var card_h := _card_base_height * _current_card_scale
+		slot.position = Vector2((target_w - card_w) * 0.5, (target_h - card_h) * 0.5)
+		wrapper.add_child(slot)
+		
 		if slot.has_method("setup_stacked"):
 			slot.setup_stacked(u, c)
 		else:
@@ -353,9 +382,24 @@ func _get_all_tags() -> Array[String]:
 
 func _update_columns():
 	var viewport_w: float = get_viewport_rect().size.x
-	var content_w: float = maxf(320.0, viewport_w - 320.0)
-	# 卡牌改为 140宽，加上间距 16 -> 约 156/160
-	var cols: int = clampi(int(content_w / 160.0), 2, 8)
+	var content_w: float = maxf(600.0, viewport_w - 650.0)
+	var gap: float = float(collected_grid.get_theme_constant("h_separation"))
+	if gap <= 0.0:
+		gap = 16.0
+	var cols: int = _target_columns
+	if cols < 1:
+		cols = 1
+	while cols > 1:
+		var total_gap: float = gap * float(cols - 1)
+		var cw: float = floor((content_w - total_gap) / float(cols))
+		if cw >= _card_min_width:
+			_current_card_width = cw
+			_current_card_scale = _current_card_width / _card_base_width
+			break
+		cols -= 1
+	if cols == 1:
+		_current_card_width = minf(_card_base_width, content_w - gap)
+		_current_card_scale = _current_card_width / _card_base_width
 	collected_grid.columns = cols
 	all_grid.columns = cols
 	tags_grid.columns = cols
@@ -392,6 +436,7 @@ func _on_tag_selected(index: int):
 	var t = tag_list.get_item_metadata(index)
 	if t:
 		_current_tag = t
+		_selected_unit = null
 		_refresh_tag_units()
 
 func _on_card_pressed(data: UnitData):
@@ -506,6 +551,9 @@ func _show_unit_detail(data: UnitData):
 	# 2. 标签/技能
 	tag_lines.append("[特性]")
 	for t in data.tags:
+		# 阵营/阵营羁绊标志不在这里重复展开说明
+		if t in ["dynasty", "rebel", "warlord", "predator", "french", "han", "roman", "greek", "huangjin"]:
+			continue
 		var t_name = TagManager.get_tag_name(t)
 		var t_desc = TagManager.get_tag_description(t)
 		
@@ -513,12 +561,27 @@ func _show_unit_detail(data: UnitData):
 		if data.name == "圣女贞德" and t == "medic":
 			t_desc = "不再主动治疗，而是通过光环辅助队友。"
 		
-		# Format description if it has placeholders (like charge)
+		# Format description if it has placeholders (like charge / fear / plunder / berserk)
 		if t == "charge" and "charge_count" in data:
 			if "%d" in t_desc:
 				t_desc = t_desc % data.charge_count
 			elif "{X}" in t_desc:
 				t_desc = t_desc.replace("{X}", str(data.charge_count))
+		elif t == "fear" and "fear_count" in data:
+			if "%d" in t_desc:
+				t_desc = t_desc % int(data.fear_count)
+			elif "{X}" in t_desc:
+				t_desc = t_desc.replace("{X}", str(data.fear_count))
+		elif t == "plunder" and "plunder_count" in data:
+			if "%d" in t_desc:
+				t_desc = t_desc % int(data.plunder_count)
+			elif "{X}" in t_desc:
+				t_desc = t_desc.replace("{X}", str(data.plunder_count))
+		elif t == "berserk" and "berserk_count" in data:
+			if "%d" in t_desc:
+				t_desc = t_desc % int(data.berserk_count)
+			elif "{X}" in t_desc:
+				t_desc = t_desc.replace("{X}", str(data.berserk_count))
 		
 		if t_desc != "":
 			tag_lines.append("• %s：%s" % [t_name, t_desc])
@@ -543,6 +606,53 @@ func _show_unit_detail(data: UnitData):
 	var story_text: String = _get_story_text(data)
 	if story_text.strip_edges().is_empty():
 		story_text = "（暂无简介）"
+	if detail_story is RichTextLabel:
+		detail_story.clear()
+		detail_story.append_text(story_text)
+	else:
+		detail_story.text = story_text
+
+func _show_tag_detail(tag_id: String):
+	# 标签分类页面下，右侧默认展示标签本身的效果说明。
+	var t_name := tag_id
+	var t_desc := ""
+	if TagManager:
+		t_name = TagManager.get_tag_name(tag_id)
+		t_desc = TagManager.get_tag_description(tag_id)
+	if t_desc == "" and GameConst.TAG_DESCRIPTIONS.has(tag_id):
+		t_desc = GameConst.TAG_DESCRIPTIONS[tag_id]
+	# 冲锋标签在标签界面中使用“前N次攻击造成双倍伤害”的描述
+	if tag_id == "charge":
+		t_desc = "前N次攻击造成双倍伤害。"
+	
+	detail_name.text = t_name
+	detail_count.text = "标签效果"
+	if detail_shape and detail_shape.has_method("set_unit_data"):
+		detail_shape.set_unit_data(null)
+	
+	var lines: Array[String] = []
+	lines.append("[标签效果]")
+	if not t_desc.is_empty():
+		lines.append("• %s" % t_desc)
+	else:
+		lines.append("• 暂无描述")
+	
+	var tags_text := "\n".join(lines)
+	if detail_tags is RichTextLabel:
+		detail_tags.clear()
+		detail_tags.append_text(tags_text)
+	else:
+		detail_tags.text = tags_text
+	
+	# 右侧下方区域简单列出若干典型单位名称，帮助玩家理解标签归属
+	var story_text := ""
+	var units := _filter_units(_get_all_units(), "", UnitTypeFilter.ALL, tag_id)
+	if not units.is_empty():
+		var names: Array[String] = []
+		for i in range(min(6, units.size())):
+			names.append(units[i].name)
+		story_text = "典型单位：\n" + ", ".join(names)
+	
 	if detail_story is RichTextLabel:
 		detail_story.clear()
 		detail_story.append_text(story_text)

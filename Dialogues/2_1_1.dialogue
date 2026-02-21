@@ -1,0 +1,15 @@
+~ start
+System: 侦测到强烈的时空波动。当前坐标：法兰西，阿基坦公国。时间轴：数据损毁。 [#bg:burning_village, #pos:center]
+Player: 这里的火焰……不对劲，这种彻底的毁灭是几十年前“骑行劫掠”战术的特征。 [#pos:left]
+French_Peasant: 救命！是黑甲魔鬼！他们从地狱回来了！ [#pos:right]
+Player: 冷静点，现在是哪一年？ [#pos:left]
+French_Peasant: 1429年……不，等等，旗帜上是1356年的纹章……我的头好痛！ [#pos:right, #effect:shake]
+English_Raider: 嘿，这儿有个不知死活的异乡人！太子有令，所过之处，寸草不生！ [#pos:left]
+Player: 无论是什么年代，强盗的逻辑永远没变。准备战斗！ [#pos:left]
+do start_level_id("2_1_1")
+=> END
+
+~ end
+Player: 这些英军……身体像是由灰烬组成的。他们不是活人，是历史的残响。 [#pos:left]
+do enter_camp_before_level("2_1_2")
+=> END

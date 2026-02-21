@@ -1,0 +1,16 @@
+~ start
+BlackPrince: 还没结束……只要我还有一口气，我就能掠夺……把你们的时间……给我…… [#bg:void, #pos:center, #effect:glitch]
+Joan_of_Arc: 他的灵魂已经被贪婪和时空乱流吞噬了。现在的他，只是一个为了杀戮而存在的怪物。 [#pos:right]
+Joan_of_Arc: 异乡人，请指挥最后一次。为了和平，也为了让他解脱。 [#pos:right]
+Player: 尘归尘，土归土。爱德华，回到你的历史书里去吧！ [#pos:left]
+do start_level_id("2_1_8")
+=> END
+
+~ end
+BlackPrince: 原来……我早就死了啊…… (化为黑烟消散) [#pos:center]
+Joan_of_Arc: 裂缝闭合了。那些不属于这个时代的武器也消失了。 [#pos:right]
+Player: 历史修正了。但贞德，你也…… [#pos:left]
+Joan_of_Arc: (身体开始变得透明) 我也不属于这个“战场”。没关系，只要奥尔良得救了，我的使命就完成了。 [#pos:right]
+Joan_of_Arc: 谢谢你，异乡人。愿主保佑你的前路。 [#pos:right]
+do enter_camp_before_level("3_1_1")
+=> END

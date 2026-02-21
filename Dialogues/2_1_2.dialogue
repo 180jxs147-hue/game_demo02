@@ -1,0 +1,15 @@
+~ start
+System: 警告：前方侦测到高密度远程火力。 [#pos:center, #color:red]
+Chandos: 停下。你看上去不像法国佬。但这身盔甲……很有趣。 [#pos:right]
+Player: 你是……钱多斯？你应该在五十年前就死在战场上了。 [#pos:left]
+Chandos: 死？在这里，只要太子殿下的意志还在，我们就永生不死。 [#pos:right]
+BlackPrince: 钱多斯，别废话。让长弓手准备。 [#pos:right]
+BlackPrince: 我不管这是哪一年。只要是法兰西的土地，就必须插上英格兰的旗帜。放箭！ [#pos:right]
+Player: 这种射程……必须利用盾牌兵推进，或者用骑兵侧翼突袭！ [#pos:left]
+do start_level_id("2_1_2")
+=> END
+
+~ end
+BlackPrince: 哼，有趣的战术。撤退，把他们引向奥尔良。那里有更有趣的猎物。 [#pos:right]
+do enter_camp_before_level("2_1_3")
+=> END

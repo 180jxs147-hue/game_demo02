@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "霍比拉游骑"
+icon = null
+rarity = "common"
+civilization = "predator"
+unit_class = "cavalry"
+color = Color(0.5, 0.4, 0.3, 1)
+tags = Array[String](["plunder", "charge"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 45.0
+manpower_cost = 2.5
+cooldown = 1.2
+attack_damage = 12.0
+defense = 0.0
+attack_range = 1
+is_injured = false
+charge_count = 2
+adjacency_rules = Array[Dictionary]([])
+story = "轻装游骑兵。他们骑乘矮马，行动敏捷，擅长追击溃军和骚扰侧翼。攻速极快，适合收割残血敌人。"

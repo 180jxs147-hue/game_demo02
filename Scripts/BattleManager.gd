@@ -325,6 +325,10 @@ func _ready():
 		for card_data in player_library.collected_cards:
 			spawn_unit(card_data)
 	_refresh_bench_ui()
+	
+	# [New Feature] Trigger Autosave at Level Start
+	if GameState and GameState.has_method("trigger_autosave"):
+		GameState.trigger_autosave()
 
 func _unhandled_input(event):
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
@@ -779,20 +783,62 @@ func spawn_floating_text(pos: Vector2, text: String, color: Color):
 	label.add_theme_constant_override("outline_size", 4)
 	label.add_theme_font_size_override("font_size", 24)
 	
+	# Add random offset to prevent perfect overlap
+	var offset = Vector2(randf_range(-16, 16), randf_range(-8, 8))
+	
 	# Add to scene
 	if has_node("Battlefield"):
 		$Battlefield.add_child(label)
 	else:
 		add_child(label)
 		
-	label.global_position = pos + Vector2(0, -30) # Start slightly above unit
+	label.global_position = pos + Vector2(0, -30) + offset
+	label.scale = Vector2(0.5, 0.5) # Start small
 	
 	# Animation: Float up and fade out
 	var tw = create_tween()
 	tw.set_parallel(true)
 	tw.tween_property(label, "global_position:y", label.global_position.y - 60, 0.8).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tw.tween_property(label, "modulate:a", 0.0, 0.8).set_ease(Tween.EASE_IN)
+	
+	# Scale Pop Effect
+	var tw_scale = create_tween()
+	tw_scale.tween_property(label, "scale", Vector2(1.2, 1.2), 0.15).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_scale.tween_property(label, "scale", Vector2(1.0, 1.0), 0.2).set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
+	
 	tw.chain().tween_callback(label.queue_free)
+
+func spawn_hit_effect(pos: Vector2, color: Color = Color.WHITE):
+	var p = CPUParticles2D.new()
+	p.emitting = false
+	p.one_shot = true
+	p.lifetime = 0.4
+	p.explosiveness = 0.9
+	p.amount = 8
+	p.direction = Vector2(0, -1)
+	p.spread = 180
+	p.gravity = Vector2(0, 600)
+	p.initial_velocity_min = 150
+	p.initial_velocity_max = 250
+	p.scale_amount_min = 4.0
+	p.scale_amount_max = 6.0
+	p.color = color
+	p.z_index = 105
+	
+	# Create a simple 2x2 pixel texture
+	var img = Image.create(2, 2, false, Image.FORMAT_RGBA8)
+	img.fill(Color.WHITE)
+	p.texture = ImageTexture.create_from_image(img)
+	
+	if has_node("Battlefield"):
+		$Battlefield.add_child(p)
+	else:
+		add_child(p)
+		
+	p.global_position = pos
+	p.emitting = true
+	
+	get_tree().create_timer(0.6).timeout.connect(p.queue_free)
 
 # --- 供 Unit 调用的接口 ---
 

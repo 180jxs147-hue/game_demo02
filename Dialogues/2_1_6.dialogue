@@ -1,0 +1,13 @@
+~ start
+BlackPrince: 贞德……我听说过你的名字。未来的女巫。 [#bg:siege_sky, #pos:right]
+Joan_of_Arc: 我不是女巫！我是为了法兰西而战的战士！你这个只会屠杀平民的暴君！ [#pos:right]
+BlackPrince: 屠杀？那是效率。只要我攻下这里，把你们的历史抹去，我就能在这个时空复活。 [#pos:right]
+Player: 他想通过吞噬这段历史来固定自己的存在。必须守住城墙！ [#pos:left]
+BlackPrince: 上吧，我的战争机器！摧毁他们的意志，掠夺他们的民力！ [#pos:right]
+do start_level_id("2_1_6")
+=> END
+
+~ end
+Player: 挡住了第一波。但时空裂缝越来越大了，黑太子的力量来源于这些裂缝。 [#pos:left]
+do enter_camp_before_level("2_1_7")
+=> END

@@ -160,8 +160,8 @@ func _try_upgrade(type: String, cost: int):
 			# Let's add 'run_manpower_bonus' to GameState.
 			GameState.add_run_manpower_bonus(10)
 			
-		GameState.save_progress()
-		GameState.trigger_autosave()
+		# GameState.save_progress() # Deprecated: RAM only now
+		# GameState.trigger_autosave() # Deprecated: Only Autosave at Level Start, not shop purchase
 		_refresh_ui()
 
 func _refresh_hospital():
@@ -192,8 +192,8 @@ func _refresh_hospital():
 			btn.pressed.connect(func():
 				if GameState.spend_run_gold(COST_HEAL):
 					unit.is_injured = false
-					GameState.save_player_library(lib)
-					GameState.trigger_autosave()
+					# GameState.save_player_library(lib) # RAM only
+					# GameState.trigger_autosave() # Removed: Autosave only at level start
 					_refresh_ui()
 					_refresh_hospital()
 			)
@@ -345,7 +345,7 @@ func _on_next_level_pressed():
 			var idx = level_db.get_index_by_id(target_level_id)
 			if idx != -1:
 				GameState.selected_level_index = idx
-				GameState.save_progress()
+				# GameState.save_progress() # Deprecated: RAM only
 				print("CampShop: Saved progress. Selected Index: ", idx)
 		
 		# 如果是从剧情跳转过来的（例如 1-0-2 -> Camp -> 1-0-2），
@@ -372,7 +372,7 @@ func start_level_id(id: String):
 		GameState.selected_level_index = idx
 		# 标记跳过 BattleManager 内部的开场剧情检查，因为我们已经在 CampShop 处理过了（或者本身就没有）
 		GameState.skip_intro = true
-		GameState.save_progress()
+		# GameState.save_progress() # Deprecated: RAM only
 		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
 	else:
 		push_error("Level ID not found: " + id)

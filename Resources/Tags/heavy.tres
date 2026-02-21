@@ -4,6 +4,6 @@
 
 [resource]
 script = ExtResource("1_tag")
-id = "dynasty"
-name = "王朝"
-description = "计入【王朝】羁绊人数，可从王朝羁绊获得增益。"
+id = "heavy"
+name = "重甲"
+description = "标记为重甲单位，可被部分技能或阵型羁绊额外强化。"

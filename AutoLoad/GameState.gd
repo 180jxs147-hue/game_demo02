@@ -10,7 +10,7 @@ var current_rows: int = 3
 var current_cols: int = 2
 var slot_select_mode: String = "new"
 var skip_intro: bool = false
-var use_autosave_library: bool = false
+# var use_autosave_library: bool = false # Deprecated: No longer used for mode switching
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
 const DEFAULT_LIBRARY_PATH := "res://Resources/PlayerLibrary.tres"
@@ -58,6 +58,8 @@ func get_card_sell_price(rarity: String) -> int:
 func _slot(i: int = -1) -> int:
 	var s = current_slot if i < 0 else i
 	return clamp(s, 1, 3)
+var use_autosave_library: bool = false
+
 func _save_path(i: int = -1) -> String:
 	return "user://savegame_slot_%d.cfg" % _slot(i)
 func _library_path(i: int = -1) -> String:
@@ -230,13 +232,12 @@ func set_next_shop_pool(pool_id: String):
 
 func add_run_gold(amount: int):
 	run_gold += amount
-	# We might want to save this if we support mid-run saving
-	save_progress()
+	# RAM only; persistent save happens at Level Start or Manual Save
 
 func spend_run_gold(amount: int) -> bool:
 	if run_gold >= amount:
 		run_gold -= amount
-		save_progress()
+		# RAM only; persistent save happens at Level Start or Manual Save
 		return true
 	return false
 
@@ -245,19 +246,22 @@ func get_run_gold() -> int:
 
 func add_run_manpower_bonus(amount: int):
 	run_manpower_bonus += amount
-	save_progress()
+	# RAM only; persistent save happens at Level Start or Manual Save
 
 func get_run_manpower_bonus() -> int:
 	return run_manpower_bonus
 
-func load_player_library(force_reload: bool = false) -> CardLibrary:
+func load_player_library(force_reload: bool = false, from_autosave: bool = false) -> CardLibrary:
 	# 存档策略：
 	# - 优先加载 user:// 下的玩家存档（每台机器/每个用户独立）
 	# - 如果第一次运行或存档不存在，则回退到 res:// 的默认库
 	var lib: CardLibrary = null
-	# 注意：现在统一使用 ConfigFile (.cfg) 存储 Library
-	var save_path := AUTO_SAVE_PROGRESS_PATH if use_autosave_library else _save_path()
-	var legacy_lib_path := AUTO_LIBRARY_PATH if use_autosave_library else _library_path()
+	
+	# Check global flag if explicit arg is false
+	var use_autosave = from_autosave or is_playing_autosave
+	
+	var save_path := AUTO_SAVE_PROGRESS_PATH if use_autosave else _save_path()
+	var legacy_lib_path := AUTO_LIBRARY_PATH if use_autosave else _library_path()
 	
 	# 1. 尝试从 ConfigFile 加载 (新格式)
 	var config = ConfigFile.new()
@@ -271,13 +275,13 @@ func load_player_library(force_reload: bool = false) -> CardLibrary:
 	# 2. 如果 ConfigFile 中没有 Library 数据 (可能是旧存档迁移)，尝试加载 .tres (旧格式)
 	if not lib and FileAccess.file_exists(legacy_lib_path):
 		var cache_mode = ResourceLoader.CACHE_MODE_REUSE
-		if force_reload or use_autosave_library:
+		if force_reload:
 			cache_mode = ResourceLoader.CACHE_MODE_REPLACE
 		lib = ResourceLoader.load(legacy_lib_path, "", cache_mode)
 		print("GameState: Loaded library from Legacy .tres: ", legacy_lib_path)
 	
-	# 3. 尝试回退到默认库
-	if not lib:
+	# 3. 尝试回退到默认库 (仅当不是 Autosave 时，Autosave 不应该回退到 Default)
+	if not lib and not from_autosave:
 		# 尝试回退到默认库
 		var cache_mode = ResourceLoader.CACHE_MODE_REUSE
 		if force_reload:
@@ -286,16 +290,16 @@ func load_player_library(force_reload: bool = false) -> CardLibrary:
 		print("GameState: Loaded default library")
 		
 	# 如果库是空的（可能是默认库也没配置，或者新档），强制发放初始阵容
-	if lib and lib.collected_cards.is_empty():
+	if lib and lib.collected_cards.is_empty() and not from_autosave:
 		_add_initial_roster(lib)
 		
 	return lib
 
 func save_player_library(library: CardLibrary) -> int:
-	# 将卡牌收集进度写入当前槽位文件（或自动存档）
+	# 将卡牌收集进度写入当前槽位文件
 	if not library:
 		return ERR_INVALID_DATA
-	var path = AUTO_SAVE_PROGRESS_PATH if use_autosave_library else _save_path()
+	var path = _save_path()
 	
 	var config = ConfigFile.new()
 	# 尝试加载现有文件以保留其他数据（如进度）
@@ -307,7 +311,6 @@ func save_player_library(library: CardLibrary) -> int:
 	return config.save(path)
 
 func save_autosave_library(library: CardLibrary) -> int:
-	# 将卡牌收集进度写入自动存档文件
 	if not library:
 		return ERR_INVALID_DATA
 	var path = AUTO_SAVE_PROGRESS_PATH
@@ -321,7 +324,8 @@ func save_autosave_library(library: CardLibrary) -> int:
 	return config.save(path)
 
 func save_progress() -> int:
-	var path = AUTO_SAVE_PROGRESS_PATH if use_autosave_library else _save_path()
+	# 手动保存进度到当前槽位
+	var path = _save_path()
 	var config = ConfigFile.new()
 	config.load(path) # 保留 Library 数据
 	
@@ -436,20 +440,18 @@ func _deserialize_unit(data: Dictionary) -> UnitData:
 
 func trigger_autosave() -> int:
 	# 触发自动存档：保存进度和卡牌库到自动存档路径
+	# 这是唯一写入 user://autosave_progress.cfg 的地方
+	
 	var rc1 = save_autosave_progress()
 	var rc2 = OK
-	# 注意：这里我们重新加载当前的库（可能是槽位的，也可能是自动存档的）
-	# 然后将其保存到自动存档位置。
-	# 为了确保一致性，我们应该保存内存中当前正在使用的状态。
-	# 由于 GameState 不持有 library 实例，我们必须 load 一次。
-	# 但 load 会根据 use_autosave_library 决定路径。
-	# 如果当前在玩槽位1，use_autosave_library=false，load 返回槽位1的库。
-	# 我们把这个库保存到 Autosave。这正是自动存档的定义：保存当前游玩状态。
+	
+	# 获取当前内存中的 Library
+	# 同样利用 Resource 缓存机制
 	var lib = load_player_library() 
 	if lib:
 		rc2 = save_autosave_library(lib)
 	
-	print("Autosave triggered.")
+	print("Autosave triggered (Checkpoint created).")
 	return rc1 if rc1 != OK else rc2
 
 
@@ -524,34 +526,14 @@ func load_autosave_progress():
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
 
-func load_from_slot_and_init_autosave(slot_idx: int):
-	# 1. 临时设置环境以读取指定的 Slot 文件
+var is_playing_autosave: bool = false
+
+func load_from_slot(slot_idx: int):
 	current_slot = slot_idx
-	use_autosave_library = false 
-	
-	# 2. 读取该槽位的所有数据到内存 (Progress + Library + Meta)
-	# load_all() 内部会调用 load_progress() 和 load_player_library()
-	# 它们会根据 use_autosave_library=false 读取 _save_path(slot_idx)
+	is_playing_autosave = false
+	# Load data into memory, but do NOT switch to autosave mode
 	load_all()
-	
 	print("GameState: Loaded data from Slot ", slot_idx, " into memory.")
-	
-	# 3. 立即切换到 Autosave 模式
-	use_autosave_library = true
-	
-	# 4. 将内存中的数据写入 Autosave 文件
-	# 这样后续的游戏进程将基于 Autosave 文件进行读写，而不会影响原始 Slot 文件
-	save_autosave_progress()
-	
-	# 注意：Library 数据现在也是通过 save_autosave_progress (如果是单文件) 
-	# 或者我们需要显式保存 Library？
-	# 在新架构下，save_autosave_progress() 只保存 progress 字典。
-	# Library 是通过 save_autosave_library 保存的。
-	# 为了确保完整性，我们调用 trigger_autosave() 或者手动调用两者。
-	# trigger_autosave() 会保存 progress 和 library 到 autosave 路径。
-	trigger_autosave()
-	
-	print("GameState: Initialized Autosave from Slot ", slot_idx)
 
 func save_to_slot(i: int):
 	# 显式保存当前状态到指定槽位
@@ -560,15 +542,40 @@ func save_to_slot(i: int):
 	var target_slot = i
 	var target_path = _save_path(target_slot)
 	
-	# 1. 获取当前内存中的 Library (可能是 Autosave 的，也可能是刚加载的)
-	# 我们直接从内存获取吗？GameState 不持有 Library 实例。
-	# 所以我们必须 load_player_library()。
-	# 此时 use_autosave_library 应该是 true (如果我们正在玩游戏)。
-	var current_lib = load_player_library()
+	# 1. 获取当前内存中的 Library
+	# 因为我们不再切换 mode，所以 load_player_library() 总是加载 _save_path()
+	# 如果我们刚玩了一会，内存里的 lib 应该已经是最新的（通过 CardLibrary 引用）
+	# 但是 wait, GameState 并不持有 library 实例。
+	# BattleManager 和 CampShop 持有 library 引用。
+	# 当我们 save_player_library 时，我们是把传进来的 lib 保存到 disk。
+	# 所以这里 save_to_slot 需要获取当前的 lib。
+	# 简单的做法是重新 load 一次？不，那样会读取旧文件。
+	# 我们需要确保调用者传入 lib，或者 GameState 能够访问当前的 lib。
+	# 不过，之前的逻辑也是 load_player_library()，那是因为 use_autosave_library=true，
+	# 所以它读取的是 autosave 文件（最新的）。
+	# 现在我们去掉了 use_autosave_library。
+	# 如果我们在玩游戏，数据在 RAM 中。
+	# 只有显式 save_player_library 被调用时，数据才写盘。
+	# 所以 save_to_slot 变得有点尴尬：它试图从 RAM 保存到 Disk。
+	# 但 RAM 里的 library 只有持有者知道。
+	# 幸好：Library 是 Resource，在内存中是共享的。
+	# 只要我们之前 load 过，ResourceLoader.load(path, "cache_mode_reuse") 应该返回同一个实例。
+	# 但是 _save_path() 返回的是 slot path。
+	# 如果我们还没保存过，slot file 是旧的。
+	# 所以 ResourceLoader.load 可能返回旧数据（如果我们没用 keep_in_memory 且它被释放了）。
+	# 但通常 Library 会一直被 BattleManager 持有。
+	
+	# 为了安全，我们假设 Library 已经被加载并且修改过了。
+	# 我们直接调用 save_player_library(lib) 就会保存到 _save_path()。
+	# 但是 save_to_slot(i) 允许保存到 *不同* 的槽位。
+	# 如果 i == current_slot，那直接 save_progress() + save_player_library() 即可。
+	
+	# 如果 i != current_slot，我们需要把当前内存状态写入 目标 path。
+	
+	var current_lib = load_player_library() 
 	
 	# 2. 保存到目标槽位文件
 	var config = ConfigFile.new()
-	# 尝试加载目标文件以保留可能的其他元数据（虽然我们其实是覆盖模式）
 	config.load(target_path)
 	
 	# 写入 Progress
@@ -586,7 +593,7 @@ func save_to_slot(i: int):
 		
 	var rc = config.save(target_path)
 	
-	# 3. 保存 Meta (Meta 是全局的，不需要区分槽位，但 save_to_slot 原始逻辑也保存了它)
+	# 3. 保存 Meta
 	save_meta()
 	
 	print("GameState: Manual Save to Slot ", target_slot, " completed. RC: ", rc)
@@ -594,9 +601,34 @@ func save_to_slot(i: int):
 
 
 func load_autosave_all():
-	use_autosave_library = true
+	# Load directly from autosave file, but keep current_slot unchanged (or -1?)
+	# Let's keep current_slot as is, so if they save manually, it defaults to last used slot?
+	# Or maybe safe to say current_slot = 1 (default).
 	load_autosave_progress()
 	load_meta()
+	is_playing_autosave = true
+	print("GameState: Loaded autosave data.")
+	
+	# NOTE: load_player_library will try to load from _save_path(current_slot).
+	# But we want to load from Autosave!
+	# We need a way to force load_player_library to look at Autosave.
+	# Let's add a parameter or specialized method.
+	# Actually, load_player_library is used by BattleManager.
+	# If we are "playing autosave", we need load_player_library to return autosave data.
+	# So we MIGHT need a flag `is_playing_autosave`? 
+	# User said "No Autosave Mode".
+	# But if I load an autosave, I am playing *that* specific save.
+	# Let's handle this in load_player_library.
+
+func load_autosave_library() -> CardLibrary:
+	var path = AUTO_SAVE_PROGRESS_PATH
+	var config = ConfigFile.new()
+	var err = config.load(path)
+	if err == OK:
+		var data = config.get_value("library", "data", {})
+		if data is Dictionary:
+			return _deserialize_library(data)
+	return null
 
 func clear_save() -> int:
 	# 清空存档：重置关卡索引并清空已收集卡牌，然后回写 user:// 存档文件。

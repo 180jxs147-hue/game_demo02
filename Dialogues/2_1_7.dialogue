@@ -1,0 +1,14 @@
+~ start
+French_Gunner: 指挥官！比罗兄弟运来了大家伙——皇家长管炮！ [#bg:battlefield_final, #pos:right]
+System: 获得**【皇家长管炮】**支援。可对敌方后排及建筑造成毁灭性打击。 [#pos:center, #color:gold]
+Joan_of_Arc: 让那些侵略者看看，法兰西的怒火！ [#pos:right]
+BlackPrince: 巨大的铁管子？哼，虚张声势。长弓手，射瞎他们的眼睛！ [#pos:right]
+Player: 这一炮，贯穿80年的时光！目标，黑太子本阵！ [#pos:left]
+do start_level_id("2_1_7")
+=> END
+
+~ end
+BlackPrince: (盔甲碎裂) 这种力量……这根本不是战争……这是屠杀…… [#pos:right]
+Player: 讽刺吗？这正是你当年对法兰西做过的事。 [#pos:left]
+do enter_camp_before_level("2_1_8")
+=> END
