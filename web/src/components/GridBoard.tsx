@@ -10,7 +10,8 @@ export default function GridBoard(props: {
   cell: number
   placed: Placed[]
   battle: BattleState | null
-  onBoardPointerUp?: (p: GridPoint) => void
+  boardRef?: (el: HTMLDivElement | null) => void
+  preview?: { unit: UnitData; anchor: GridPoint; ok: boolean } | null
   onPieceClick?: (slotId: string) => void
 }) {
   const w = props.cols * props.cell
@@ -45,15 +46,12 @@ export default function GridBoard(props: {
       <div
         className="relative overflow-hidden rounded-3xl border border-white/10 bg-black/20"
         style={{ width: w, height: h }}
-        onPointerUp={(e) => {
-          if (!props.onBoardPointerUp) return
-          const rect = (e.currentTarget as HTMLDivElement).getBoundingClientRect()
-          const x = Math.floor((e.clientX - rect.left) / props.cell)
-          const y = Math.floor((e.clientY - rect.top) / props.cell)
-          props.onBoardPointerUp({ x, y })
-        }}
+        ref={props.boardRef}
       >
         <GridLines cols={props.cols} rows={props.rows} cell={props.cell} />
+        {props.preview ? (
+          <PreviewPiece unit={props.preview.unit} anchor={props.preview.anchor} cell={props.cell} ok={props.preview.ok} />
+        ) : null}
         <div className="absolute inset-0">
           {pieces.map((p) => (
             <UnitPiece
@@ -96,6 +94,49 @@ function GridLines(props: { cols: number; rows: number; cell: number }) {
           style={{ top: r * props.cell }}
         />
       ))}
+    </div>
+  )
+}
+
+function PreviewPiece(props: { unit: UnitData; anchor: GridPoint; cell: number; ok: boolean }) {
+  const bb = bboxForShape(props.unit.gridShape)
+  const left = props.anchor.x * props.cell
+  const top = props.anchor.y * props.cell
+  const w = bb.w * props.cell
+  const h = bb.h * props.cell
+  const cells = shapeCells(props.anchor, props.unit.gridShape)
+  const outline = props.ok ? "rgba(45,212,191,0.65)" : "rgba(251,113,133,0.65)"
+  const fill = props.ok ? "rgba(45,212,191,0.14)" : "rgba(251,113,133,0.14)"
+
+  return (
+    <div
+      className="absolute rounded-2xl border border-dashed"
+      style={{
+        left,
+        top,
+        width: w,
+        height: h,
+        borderColor: outline,
+        background: "rgba(0,0,0,0.10)",
+      }}
+    >
+      {cells.map((c, i) => (
+        <div
+          key={`${c.x},${c.y},${i}`}
+          className="absolute rounded-xl"
+          style={{
+            left: (c.x - props.anchor.x) * props.cell + 4,
+            top: (c.y - props.anchor.y) * props.cell + 4,
+            width: props.cell - 8,
+            height: props.cell - 8,
+            background: fill,
+            border: `1px solid ${outline}`,
+          }}
+        />
+      ))}
+      <div className="absolute -top-8 left-0 rounded-xl border border-white/10 bg-black/55 px-2 py-1 text-[11px] text-zinc-100">
+        {props.unit.name} · {cells.length} 格
+      </div>
     </div>
   )
 }
@@ -169,4 +210,3 @@ function UnitPiece(props: {
     </button>
   )
 }
-

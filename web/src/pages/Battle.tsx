@@ -8,8 +8,10 @@ import { unitById } from "@/data/units"
 import { tagText } from "@/data/tags"
 import { useGameStore, saveAutosaveSnapshot } from "@/store/useGameStore"
 import type { BattleState, GridPoint, Reward } from "@/engine/types"
+import { canPlaceUnit, placeUnit, type Occupancy } from "@/engine/gridSystem"
 
 type DragState = { unitId: string; x: number; y: number } | null
+type DragPreview = { anchor: GridPoint; ok: boolean } | null
 
 export default function Battle() {
   const init = useGameStore((s) => s.initFromAutosave)
@@ -28,7 +30,14 @@ export default function Battle() {
   const setSpeed = useGameStore((s) => s.setSpeed)
   const pickReward = useGameStore((s) => s.pickReward)
 
+  const cell = 56
+  const cols = progress.cols
+  const rows = progress.rows
+
   const [drag, setDrag] = useState<DragState>(null)
+  const [preview, setPreview] = useState<DragPreview>(null)
+  const boardRef = useRef<HTMLDivElement | null>(null)
+  const dragUnitIdRef = useRef<string | null>(null)
   const rafRef = useRef<number | null>(null)
   const lastRef = useRef<number>(0)
 
@@ -56,22 +65,59 @@ export default function Battle() {
     }
   }, [battle?.started, battle?.result, tick])
 
+  const occMemo = useMemo(() => {
+    const occ: Occupancy = new Map()
+    for (const p of placed) {
+      const ud = unitById[p.unitId]
+      if (!ud) continue
+      placeUnit({ unit: ud, anchor: p.anchor, instanceId: p.slotId, occ })
+    }
+    return occ
+  }, [placed])
+
+  const computeAnchor = (clientX: number, clientY: number): GridPoint | null => {
+    const el = boardRef.current
+    if (!el) return null
+    const rect = el.getBoundingClientRect()
+    if (clientX < rect.left || clientX >= rect.right) return null
+    if (clientY < rect.top || clientY >= rect.bottom) return null
+    const x = Math.floor((clientX - rect.left) / cell)
+    const y = Math.floor((clientY - rect.top) / cell)
+    return { x, y }
+  }
+
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
+      if (!dragUnitIdRef.current) return
       setDrag((d) => (d ? { ...d, x: e.clientX, y: e.clientY } : d))
+      const anchor = computeAnchor(e.clientX, e.clientY)
+      const unitId = dragUnitIdRef.current
+      const u = unitId ? unitById[unitId] : undefined
+      if (!anchor || !u) {
+        setPreview(null)
+        return
+      }
+      const ok = canPlaceUnit({ unit: u, anchor, cols, rows, occ: occMemo })
+      setPreview({ anchor, ok })
     }
-    const onUp = () => setDrag(null)
+    const onUp = (e: PointerEvent) => {
+      const unitId = dragUnitIdRef.current
+      if (!unitId) return
+      const anchor = computeAnchor(e.clientX, e.clientY)
+      if (anchor) {
+        placeFromBench(unitId, anchor)
+      }
+      dragUnitIdRef.current = null
+      setPreview(null)
+      setDrag(null)
+    }
     window.addEventListener("pointermove", onMove)
     window.addEventListener("pointerup", onUp)
     return () => {
       window.removeEventListener("pointermove", onMove)
       window.removeEventListener("pointerup", onUp)
     }
-  }, [])
-
-  const cell = 56
-  const cols = progress.cols
-  const rows = progress.rows
+  }, [cols, rows, occMemo, placeFromBench])
 
   const bench = useMemo(() => {
     const counts: Record<string, number> = { ...library.copies }
@@ -89,13 +135,6 @@ export default function Battle() {
     if (battle.result === "victory") return { open: true, title: "胜利", detail: "战线推进成功。选择一项奖励继续推进。" }
     return { open: true, title: "失败", detail: "战线被击穿。你可以调整部署并重试。" }
   }, [battle])
-
-  const onBoardPointerUp = (p: GridPoint) => {
-    if (!drag) return
-    const res = placeFromBench(drag.unitId, p)
-    setDrag(null)
-    return res
-  }
 
   const rewardPick = (r: Reward) => pickReward(r)
   const closeResult = () => {
@@ -138,7 +177,14 @@ export default function Battle() {
                 cell={cell}
                 placed={placed}
                 battle={battle}
-                onBoardPointerUp={onBoardPointerUp}
+                boardRef={(el) => {
+                  boardRef.current = el
+                }}
+                preview={
+                  drag && preview && unitById[drag.unitId]
+                    ? { unit: unitById[drag.unitId], anchor: preview.anchor, ok: preview.ok }
+                    : null
+                }
                 onPieceClick={(slotId) => removePlaced(slotId)}
               />
             </div>
@@ -162,7 +208,7 @@ export default function Battle() {
                     disabled={battle?.started}
                     onPointerDown={(e) => {
                       if (battle?.started) return
-                      ;(e.currentTarget as HTMLButtonElement).setPointerCapture(e.pointerId)
+                      dragUnitIdRef.current = b.unitId
                       setDrag({ unitId: b.unitId, x: e.clientX, y: e.clientY })
                     }}
                   />
