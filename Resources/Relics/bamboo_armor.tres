@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/RelicData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bamboo_armor"
+name = "竹甲"
+description = "轻便而坚韧。我方所有单位防御力 +1。"
+rarity = "common"
+effect_type = "global_defense"
+effect_value = 1.0

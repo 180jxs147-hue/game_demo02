@@ -50,6 +50,10 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/Ribauldequin.tres" id="50_rib"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/RoyalCulverin.tres" id="51_culverin"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/FrenchHandgonner.tres" id="52_gunner"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangfu_song.tres" id="53_huangfu"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/general_banner.tres" id="54_banner"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/repeating_crossbow.tres" id="55_crossbow"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/stone_formation.tres" id="56_stone"]
 
 [resource]
 script = ExtResource("1_db")
@@ -66,10 +70,14 @@ units = Array[Resource]([
     ExtResource("39_zhangfei"), ExtResource("40_zhangjiao"), ExtResource("41_zhangliang"),
     ExtResource("42_joan"), ExtResource("43_prince"), ExtResource("44_lahire"), ExtResource("45_chandos"),
     ExtResource("46_routier"), ExtResource("47_billman"), ExtResource("48_hobilar"), ExtResource("49_knight"),
-    ExtResource("50_rib"), ExtResource("51_culverin"), ExtResource("52_gunner")
+    ExtResource("50_rib"), ExtResource("51_culverin"), ExtResource("52_gunner"), ExtResource("53_huangfu"),
+    ExtResource("54_banner"), ExtResource("55_crossbow"), ExtResource("56_stone")
 ])
 story_by_path = {
 "res://Resources/DataFiles/camp.tres": "军中休憩之所，亦是补给流转的核心。\n源源不断地提供支持，是持久战的关键。",
+"res://Resources/DataFiles/general_banner.tres": "鼓舞士气的军旗。周围友军攻击力大幅提升。",
+"res://Resources/DataFiles/repeating_crossbow.tres": "一弩十矢，俱发。蜀汉丞相孔明改进的连发强弩。",
+"res://Resources/DataFiles/stone_formation.tres": "功盖三分国，名成八阵图。石堆组成的迷魂阵，坚不可摧。",
 "res://Resources/DataFiles/Pyrrhus.tres": "卧薪尝胆，以弱胜强。\n他并非天生强大，而是愿意承受屈辱与牺牲。",
 "res://Resources/DataFiles/archer.tres": "弓弦一响，远处便有人倒下。\n他们不擅长坚守，却擅长把敌人逼进恐惧。",
 "res://Resources/DataFiles/catapult.tres": "巨石飞过，城墙与意志一起碎裂。\n每一次装填，都是把未来投向远方。",
@@ -98,5 +106,6 @@ story_by_path = {
 "res://Resources/DataFiles/ma_yuanyi.tres": "黄巾渠帅，潜伏洛阳，意图里应外合。",
 "res://Resources/DataFiles/bo_cai.tres": "统领颍川黄巾，曾大败朱儁，围皇甫嵩于长社。",
 "res://Resources/DataFiles/danyang_bing.tres": "丹阳山险，民多果劲。天下精兵，出丹阳。",
-"res://Resources/DataFiles/sun_jian.tres": "江东猛虎，古锭刀下无冤魂。他总是冲在最前线，因为他相信只有鲜血才能洗清乱世。"
+"res://Resources/DataFiles/sun_jian.tres": "江东猛虎，古锭刀下无冤魂。他总是冲在最前线，因为他相信只有鲜血才能洗清乱世。",
+"res://Resources/DataFiles/huangfu_song.tres": "以名将之身镇压天下，却也亲眼看见无数城池在自己命令下化为灰烬。"
 }

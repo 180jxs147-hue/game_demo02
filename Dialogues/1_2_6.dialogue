@@ -1,0 +1,9 @@
+~ start
+Narrator: 广宗城外，皇甫嵩的旌旗已经压到天边。 [#bg:battle_bg,#pos:left]
+ZhangBao: 侦骑来报，前锋营正在清洗沿途村庄，凡戴黄巾者一律格杀。 [#pos:right]
+ZhangLiang: 不只是黄巾，连交过粮、说过一句好话的百姓也在名单上。 [#pos:left]
+Player01: 大哥的遗言还在耳边，我们不能让这把刀随意落下。 [#pos:left]
+ZhangBao: 好！先砸碎这道前锋大锁，再和皇甫嵩算总账！ [#pos:right]
+System: 【任务：广宗前线——击溃镇压军前锋，为保民之战开路】 
+do start_level_id("1_2_6")
+=> END

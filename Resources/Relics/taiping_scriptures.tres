@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/RelicData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "taiping_scriptures"
+name = "太平要术"
+description = "苍天已死，黄天当立。我方所有单位最大生命值 +20。"
+rarity = "rare"
+effect_type = "global_max_hp"
+effect_value = 20.0

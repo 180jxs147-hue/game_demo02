@@ -70,6 +70,12 @@ func _load_shop_config():
 	else:
 		current_refresh_cost = COST_REFRESH
 		current_base_card_cost = COST_CARD_BASE
+		
+	# Apply Relic Discount
+	if GameState:
+		var discount = GameState.get_relic_effect_value("shop_discount")
+		current_base_card_cost = max(1, current_base_card_cost - int(discount))
+		# current_refresh_cost = max(1, current_refresh_cost - int(discount * 0.5)) # Optional
 
 func _ready():
 	print("CampShop: _ready called")

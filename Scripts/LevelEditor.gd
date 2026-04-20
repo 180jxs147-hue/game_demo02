@@ -191,6 +191,7 @@ func _draw_grid_cells():
 			cell.border_color = Color(0.5, 0.5, 0.5, 0.3)
 			cell.editor_only = false
 			cell.border_width = 2.0
+			cell.mouse_filter = Control.MOUSE_FILTER_IGNORE
 			grid_root.add_child(cell)
 
 func _create_unit_visual(unit_data: UnitData, grid_pos: Vector2i):
@@ -234,12 +235,9 @@ func _on_grid_clicked(grid_pos: Vector2i, button_index: int):
 	if not _is_valid_grid_pos(grid_pos):
 		return
 		
-	if button_index == MOUSE_BUTTON_LEFT:
-		if selected_unit_path == "":
-			feedback_label.text = "Select a unit first!"
-			return
-		_place_unit(grid_pos)
-	elif button_index == MOUSE_BUTTON_RIGHT:
+	# Only handle Right Click for removal. 
+	# Left Click placement is disabled in favor of Drag & Drop.
+	if button_index == MOUSE_BUTTON_RIGHT:
 		_remove_unit(grid_pos)
 
 func _is_valid_grid_pos(grid_pos: Vector2i) -> bool:

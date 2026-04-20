@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/RelicData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "poison_arrows"
+name = "毒箭"
+description = "见血封喉。我方所有单位攻击力 +2。"
+rarity = "uncommon"
+effect_type = "global_attack"
+effect_value = 2.0

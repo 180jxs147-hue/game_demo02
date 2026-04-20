@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/liangguan.png" id="1_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "皇甫嵩"
+icon = ExtResource("1_icon")
+rarity = "legendary"
+civilization = "dynasty"
+unit_class = "infantry"
+color = Color(1, 0.85, 0.4, 1)
+tags = Array[String](["hero", "dynasty", "leader"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+max_hp = 40.0
+manpower_cost = 4.0
+cooldown = 2.5
+attack_damage = 10.0
+defense = 2.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([{
+"effect_stat": "defense",
+"effect_value": 1.0,
+"req_type": "civ",
+"req_value": "dynasty",
+"type": "give"
+}])
+story = "世称名将，几度挽狂澜于既倒。\n他深知乱世之苦，却终究把“宁错杀”的刀举得太高。"

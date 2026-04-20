@@ -1,0 +1,10 @@
+~ start
+Narrator: 广宗城下，火光照红了夜空，哭喊声此起彼伏。 [#bg:battle_bg,#pos:left]
+ZhangLiang: 看那边的囚车，他们把俘虏和百姓关在一起，准备一并处决。 [#pos:left]
+ZhangBao: 皇甫嵩说要“彻底平乱”，这些人，在他眼里不过是添柴的木头。 [#pos:right]
+Player01: 若任由这场屠杀完成，就算我们赢下战役，也只是多砍了一条血路。 [#pos:left]
+Player01: 记住大哥的话——别让黄巾的刀，比他们的更冷。先救人，再杀敌。 [#pos:left]
+ZhangBao: 好！今日黄巾，为天下无辜而战！ [#pos:right]
+System: 【任务：广宗保民战——解救俘虏与百姓，破坏处决场】 
+do start_level_id("1_2_7")
+=> END

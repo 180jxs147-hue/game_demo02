@@ -1,0 +1,39 @@
+[gd_resource type="Resource" script_class="RewardPoolData" load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://Resources/RewardPoolData.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="2"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="3"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="4"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/danyang_bing.tres" id="5"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="6"]
+
+[resource]
+script = ExtResource("1")
+pool_id = "huangjin_late"
+display_name = "黄巾后期池"
+entries = Array[Dictionary]([{
+"min_level": 1,
+"prob": 25.0,
+"tags": [],
+"unit": ExtResource("2")
+}, {
+"min_level": 1,
+"prob": 25.0,
+"tags": [],
+"unit": ExtResource("3")
+}, {
+"min_level": 1,
+"prob": 20.0,
+"tags": [],
+"unit": ExtResource("4")
+}, {
+"min_level": 1,
+"prob": 15.0,
+"tags": [],
+"unit": ExtResource("5")
+}, {
+"min_level": 1,
+"prob": 15.0,
+"tags": [],
+"unit": ExtResource("6")
+}])

@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="RewardPoolData" load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://Resources/RewardPoolData.gd" id="1"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/general_banner.tres" id="2"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/repeating_crossbow.tres" id="3"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/stone_formation.tres" id="4"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/supply_cart.tres" id="5"]
+
+[resource]
+script = ExtResource("1")
+pool_id = "equipment_pool"
+display_name = "战争器械池"
+entries = Array[Dictionary]([{
+"min_level": 1,
+"prob": 25.0,
+"tags": [],
+"unit": ExtResource("2")
+}, {
+"min_level": 1,
+"prob": 25.0,
+"tags": [],
+"unit": ExtResource("3")
+}, {
+"min_level": 1,
+"prob": 25.0,
+"tags": [],
+"unit": ExtResource("4")
+}, {
+"min_level": 1,
+"prob": 25.0,
+"tags": [],
+"unit": ExtResource("5")
+}])

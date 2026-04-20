@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+
+[resource]
+script = ExtResource("1_data")
+name = "八阵图"
+icon = null
+rarity = "rare"
+civilization = "neutral"
+unit_class = "shield"
+color = Color(0.5, 0.5, 0.5, 1)
+tags = Array[String](["last_stand"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0), Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)])
+max_hp = 500.0
+manpower_cost = 0.0
+cooldown = 10.0
+attack_damage = 0.0
+defense = 5.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([{
+"effect_stat": "defense",
+"effect_value": 2.0,
+"req_value": "all",
+"type": "give"
+}])
+story = "功盖三分国，名成八阵图。石堆组成的迷魂阵，坚不可摧。"

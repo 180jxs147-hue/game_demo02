@@ -212,6 +212,8 @@ var _cached_level_database: LevelDatabase
 const METASHOP_SAVE_PATH := "user://metashop.cfg"
 var meta_currency: int = 0
 var purchased_upgrades: Dictionary = {}
+var owned_relic_ids: Array[String] = []
+var _cached_relic_effects: Dictionary = {}
 
 # --- Run Currency (军资) ---
 # This is valid for the current run only
@@ -335,6 +337,7 @@ func save_progress() -> int:
 	config.set_value("progress", "run_gold", run_gold)
 	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
 	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
+	config.set_value("progress", "owned_relic_ids", owned_relic_ids)
 	
 	return config.save(path)
 
@@ -347,8 +350,8 @@ func save_autosave_progress() -> int:
 	config.set_value("progress", "current_rows", current_rows)
 	config.set_value("progress", "current_cols", current_cols)
 	config.set_value("progress", "run_gold", run_gold)
-	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
 	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
+	config.set_value("progress", "owned_relic_ids", owned_relic_ids)
 	
 	return config.save(path)
 
@@ -500,6 +503,7 @@ func load_progress():
 		run_gold = config.get_value("progress", "run_gold", 0)
 		run_manpower_bonus = config.get_value("progress", "run_manpower_bonus", 0)
 		next_level_id_from_camp = config.get_value("progress", "next_level_id_from_camp", "")
+		owned_relic_ids = config.get_value("progress", "owned_relic_ids", [])
 	else:
 		selected_level_index = 0
 		current_rows = 3
@@ -507,6 +511,9 @@ func load_progress():
 		run_gold = 0
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
+		owned_relic_ids = []
+	
+	_update_relic_cache()
 
 func load_autosave_progress():
 	var config = ConfigFile.new()
@@ -518,6 +525,7 @@ func load_autosave_progress():
 		run_gold = config.get_value("progress", "run_gold", 0)
 		run_manpower_bonus = config.get_value("progress", "run_manpower_bonus", 0)
 		next_level_id_from_camp = config.get_value("progress", "next_level_id_from_camp", "")
+		owned_relic_ids = config.get_value("progress", "owned_relic_ids", [])
 	else:
 		selected_level_index = 0
 		current_rows = 3
@@ -525,6 +533,9 @@ func load_autosave_progress():
 		run_gold = 0
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
+		owned_relic_ids = []
+	
+	_update_relic_cache()
 
 var is_playing_autosave: bool = false
 
@@ -732,6 +743,29 @@ func get_level_database() -> LevelDatabase:
 	if db is LevelDatabase:
 		_cached_level_database = db
 	return _cached_level_database
+
+func add_relic(relic_id: String):
+	if not owned_relic_ids.has(relic_id):
+		owned_relic_ids.append(relic_id)
+		_update_relic_cache()
+
+func has_relic(relic_id: String) -> bool:
+	return owned_relic_ids.has(relic_id)
+
+func _update_relic_cache():
+	_cached_relic_effects.clear()
+	for rid in owned_relic_ids:
+		var path = "res://Resources/Relics/" + rid + ".tres"
+		if ResourceLoader.exists(path):
+			var r = load(path)
+			if r:
+				var type = r.effect_type
+				if not _cached_relic_effects.has(type):
+					_cached_relic_effects[type] = 0.0
+				_cached_relic_effects[type] += r.effect_value
+
+func get_relic_effect_value(type: String) -> float:
+	return _cached_relic_effects.get(type, 0.0)
 
 func unlock_all_cards():
 	var db = get_unit_database()

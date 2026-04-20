@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/camp.png" id="1_icon"]
+
+[resource]
+script = ExtResource("1_data")
+name = "囚车"
+icon = ExtResource("1_icon")
+rarity = "common"
+civilization = "neutral"
+unit_class = "building"
+color = Color(0.7, 0.7, 0.7, 1)
+tags = Array[String](["objective"])
+grid_shape = Array[Vector2i]([Vector2i(0, 0)])
+max_hp = 20.0
+manpower_cost = -1.0
+cooldown = 1.0
+attack_damage = 0.0
+defense = 1.0
+attack_range = 1
+is_injured = false
+charge_count = 0
+adjacency_rules = Array[Dictionary]([])
+story = "押送俘虏与无辜之人的车。\n在广宗一带，它象征着将落未落的屠刀。"

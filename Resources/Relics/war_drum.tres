@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/RelicData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "war_drum"
+name = "战鼓"
+description = "一鼓作气。我方所有单位攻击力 +5。"
+rarity = "common"
+effect_type = "global_attack"
+effect_value = 5.0

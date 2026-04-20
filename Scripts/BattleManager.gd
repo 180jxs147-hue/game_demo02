@@ -141,6 +141,37 @@ func _ready():
 					battle_log_ui_instance.toggle()
 			)
 			hud_node.add_child(open_log_btn)
+			
+			# --- [New Feature] 战斗倍速按钮 ---
+			var speed_btn = Button.new()
+			speed_btn.text = "1x"
+			speed_btn.layout_mode = 1
+			speed_btn.anchor_left = 1.0
+			speed_btn.anchor_top = 0.0
+			speed_btn.anchor_right = 1.0
+			speed_btn.anchor_bottom = 0.0
+			
+			speed_btn.offset_left = -120
+			speed_btn.offset_top = 110
+			speed_btn.offset_right = -20
+			speed_btn.offset_bottom = 140
+			speed_btn.grow_horizontal = Control.GROW_DIRECTION_BEGIN
+			
+			if GameState:
+				GameState.apply_button_style(speed_btn)
+				
+			speed_btn.pressed.connect(func():
+				var current = Engine.time_scale
+				var next = 1.0
+				if is_equal_approx(current, 1.0): next = 2.0
+				elif is_equal_approx(current, 2.0): next = 3.0
+				else: next = 1.0
+				
+				Engine.time_scale = next
+				speed_btn.text = "%.0fx" % next
+			)
+			hud_node.add_child(speed_btn)
+
 	
 	_apply_theme()
 	_setup_bench_ui()
@@ -291,6 +322,21 @@ func _ready():
 			for spawn in level.enemy_units:
 				_spawn_enemy(spawn, current_enemy_cols, current_enemy_rows)
 			_has_level_enemies = level.enemy_units.size() > 0
+
+	# --- Apply Relic & Progression Bonuses to Manpower ---
+	if GameState:
+		var bonus_max = 0.0
+		var start_mp = GameState.get_relic_effect_value("start_manpower")
+		var relic_max_mp = GameState.get_relic_effect_value("global_max_manpower")
+		
+		if "run_manpower_bonus" in GameState:
+			bonus_max += GameState.run_manpower_bonus
+			
+		max_manpower = 50.0 + bonus_max + relic_max_mp
+		# Apply start_manpower as an increase to initial current_manpower
+		# Assuming current_manpower starts at 10.0
+		current_manpower = 10.0 + start_mp + bonus_max
+		current_manpower = min(current_manpower, max_manpower)
 
 	_update_ui()
 
@@ -456,6 +502,8 @@ func start_level(index: int):
 	if GameState:
 		max_manpower += GameState.get_max_manpower_bonus()
 		bench_columns += GameState.get_bench_columns_bonus()
+		# 应用宝物加成
+		max_manpower += GameState.get_relic_effect_value("start_manpower")
 	
 	# Ensure Start Button is visible
 	if has_node("CanvasLayer/HUD/StartButton"):
@@ -730,6 +778,12 @@ func _process(_delta):
 			_check_and_apply_synergies()
 		return
 	if battle_ended: return
+	
+	# Apply Manpower Regen Relic
+	if GameState:
+		var regen = GameState.get_relic_effect_value("manpower_regen")
+		if regen > 0:
+			modify_manpower(regen * _delta)
 	
 	# 改为检测双方存活单位数量
 	var friendly_alive = _count_alive_units(true)

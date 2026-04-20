@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="RelicData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://Resources/RelicData.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "feather_fan"
+name = "白羽扇"
+description = "谈笑间樯橹灰飞烟灭。全军技能冷却速度 +10%。"
+rarity = "rare"
+effect_type = "global_cooldown"
+effect_value = 0.1

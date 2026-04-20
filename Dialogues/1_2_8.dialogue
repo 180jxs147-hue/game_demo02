@@ -1,0 +1,11 @@
+~ start
+Narrator: 广宗城前，尸山血海之上，只剩下一面“皇”字大旗在风中猎猎。 [#bg:battle_bg,#pos:left]
+Huangfusong: 黄巾余孽，焚庙毁社，惑乱人心！今日本将斩尽尔等，以血赎国！ [#pos:right]
+ZhangBao: 看他的眼睛……那不是守土之将的眼神，是被杀意烧空的行刑人。 [#pos:left]
+ZhangLiang: 他自称替天行道，可天若真有眼，怎会要这般屠城？ [#pos:left]
+Player01: 妖不在他身后，在他心里。广宗若再让他流一滴无辜之血，这片土地就真成了妖窟。 [#pos:left]
+Player01: 皇甫嵩！今日这一战，不是黄巾对汉军，而是活人对你手里的屠刀！ [#pos:left]
+Huangfusong: 放肆！只要杀光你们，天下自会太平！ [#pos:right]
+System: 【最终决战：魔化皇甫嵩——击败汉军主帅，阻止广宗屠城】 
+do start_level_id("1_2_8")
+=> END

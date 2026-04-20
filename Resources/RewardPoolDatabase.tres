@@ -6,9 +6,14 @@
 [ext_resource type="Resource" path="res://Resources/RewardPools/GenericEarlyPool.tres" id="4"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/GenericEarlyPool01.tres" id="5"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/GenericEarlyPool02.tres" id="6"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/HanMidPool.tres" id="7"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/HanLatePool.tres" id="8"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/HuangjinMidPool.tres" id="9"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/HuangjinLatePool.tres" id="10"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/EquipmentPool.tres" id="11"]
 
 
 [resource]
 script = ExtResource("1")
-pools = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6")]
+pools = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")]
 

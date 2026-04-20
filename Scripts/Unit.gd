@@ -26,6 +26,7 @@ var _buffer_decay_timer: float = 0.0 # 缓冲条停留计时器
 var current_attack_damage: float # 实际攻击力 (含加成)
 var bonus_max_hp: float = 0.0
 var bonus_attack_damage: float = 0.0
+var bonus_defense: float = 0.0
 var bonus_cooldown_speed: float = 0.0
 var bonus_cooldown_flat: float = 0.0
 
@@ -122,14 +123,27 @@ func begin_drag_from_ui():
 	_create_drag_preview()
 
 func get_max_hp() -> float:
-	return data.max_hp + bonus_max_hp
+	var relic_hp = 0.0
+	if faction == Faction.FRIENDLY and GameState:
+		relic_hp = GameState.get_relic_effect_value("global_max_hp")
+	return data.max_hp + bonus_max_hp + relic_hp
 
 func _recalculate_stats():
 	if not data: return
-	current_attack_damage = data.attack_damage + bonus_attack_damage
+	
+	var relic_atk = 0.0
+	if faction == Faction.FRIENDLY and GameState:
+		relic_atk = GameState.get_relic_effect_value("global_attack")
+		
+	current_attack_damage = data.attack_damage + bonus_attack_damage + relic_atk
 	# 冷却计算: (基础 - 固定减免) / (1 + 速度加成)
 	var base_cd = maxf(0.1, data.cooldown - bonus_cooldown_flat)
-	current_cooldown = base_cd / (1.0 + bonus_cooldown_speed)
+	
+	var relic_cdr = 0.0
+	if faction == Faction.FRIENDLY and GameState:
+		relic_cdr = GameState.get_relic_effect_value("global_cooldown")
+		
+	current_cooldown = base_cd / (1.0 + bonus_cooldown_speed + relic_cdr)
 
 func apply_synergy_bonus(type: String, value: float):
 	match type:
@@ -312,16 +326,25 @@ func take_damage_visual():
 
 func take_damage(amount: float):
 	if data and data.unit_class == "equipment": return
-	if not BattleManager.is_battle_started: return # 战斗未开始或已结束，无敌
+	if BattleManager and not BattleManager.is_battle_started: return # 战斗未开始或已结束，无敌
 	if not is_deployed: return # 备战区无敌
 	if current_hp <= 0: return
 	
 	# 应用防御减免
 	var def = 0.0
-	if data:
-		def = data.defense
+	var relic_def = 0.0
 	
+	if data:
+		def = data.defense + bonus_defense
+		
+	if faction == Faction.FRIENDLY and GameState:
+		relic_def = GameState.get_relic_effect_value("global_defense")
+		def += relic_def
+	
+	# 最低伤害为 1.0，防止负伤害加血
 	var final_damage = max(1.0, amount - def)
+	
+	current_hp -= final_damage
 	
 	if BattleManager.instance:
 		var u_name = data.name if data else name
@@ -331,8 +354,7 @@ func take_damage(amount: float):
 		# 我方受伤显示橙色，敌方受伤显示白色
 		var log_color = Color.ORANGE if faction == Faction.FRIENDLY else Color.WHITE
 		BattleManager.instance.log_message(msg, log_color)
-	
-	current_hp -= final_damage
+		
 	_update_health_visuals()
 	
 	# 视觉反馈：Unit 自身震动与闪白
@@ -672,13 +694,18 @@ func _attack():
 	for tag in _cached_tag_defs:
 		if tag.on_attack_start(self, manager):
 			return # 已接管攻击行为
-	
+
 	var dmg = current_attack_damage
 	var target = manager.find_target_for(self)
 	
 	# 2. 伤害修正钩子 (如狙击、冲锋)
 	for tag in _cached_tag_defs:
 		dmg = tag.modify_damage(self, target, dmg)
+
+	# 如果最终伤害 <= 0 (且没有被 tag 接管)，则视为无法攻击/无需攻击
+	# 这适用于 Banner/Stone Formation 等纯被动单位
+	if dmg <= 0:
+		return
 
 	if faction == Faction.FRIENDLY:
 		manager.modify_manpower(-data.manpower_cost)
