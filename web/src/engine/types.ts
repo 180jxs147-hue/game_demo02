@@ -44,7 +44,6 @@ export type LevelConfig = {
   formationCols: number
   formationRows: number
   enemyPower: number
-  enemyBaseHp: number
   enemyUnits: { unitId: string; gridPos: GridPoint }[]
 }
 
@@ -64,9 +63,6 @@ export type BattleState = {
   friendlyMaxManpower: number
   enemyManpower: number
   enemyMaxManpower: number
-  friendlyBaseHp: number
-  enemyBaseHp: number
   units: UnitInstance[]
   logs: { id: string; t: number; text: string; tone: "info" | "good" | "bad" }[]
 }
-

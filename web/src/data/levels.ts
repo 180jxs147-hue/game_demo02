@@ -9,7 +9,6 @@ export const levels: LevelConfig[] = [
     formationCols: 6,
     formationRows: 6,
     enemyPower: 50,
-    enemyBaseHp: 260,
     enemyUnits: [
       { unitId: "huangjin_lishi", gridPos: { x: 4, y: 2 } },
       { unitId: "huangjin_lishi", gridPos: { x: 4, y: 3 } },
@@ -17,4 +16,3 @@ export const levels: LevelConfig[] = [
     ],
   },
 ]
-

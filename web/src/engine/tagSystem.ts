@@ -49,7 +49,7 @@ export const tagHooks: Record<string, TagHooks> = {
     },
   },
   medic: {
-    onAttackStart: ({ unitData, findAllies, heal, log }) => {
+    onAttackStart: ({ battle, unit, unitData, findAllies, heal, log }) => {
       const allies = findAllies().filter((u) => u.alive)
       if (allies.length === 0) return true
       let best = allies[0]
@@ -63,6 +63,9 @@ export const tagHooks: Record<string, TagHooks> = {
       }
       const amount = Math.max(8, Math.round(unitData.attackDamage))
       heal(best, amount)
+      const cost = Math.max(0, unitData.manpowerCost)
+      if (unit.faction === "friendly") battle.friendlyManpower = Math.max(0, battle.friendlyManpower - cost)
+      else battle.enemyManpower = Math.max(0, battle.enemyManpower - cost)
       log(`${unitData.name} 治疗 ${amount}`, "good")
       return true
     },
