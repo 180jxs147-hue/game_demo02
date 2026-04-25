@@ -4,6 +4,7 @@ extends Control
 
 @onready var clear_save_dialog = $ClearSaveDialog
 @onready var info_dialog = $InfoDialog
+@onready var resolution_button = $Sidebar/ResolutionButton
 
 func _ready():
 	_apply_theme()
@@ -31,9 +32,23 @@ func _apply_theme():
 	# 连接编辑器按钮
 	if has_node("Sidebar/EditorButton"):
 		$Sidebar/EditorButton.pressed.connect(_on_editor_button_pressed)
+	if resolution_button:
+		resolution_button.pressed.connect(_on_resolution_button_pressed)
+		_refresh_resolution_button()
 
 func _on_editor_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/LevelEditor.tscn")
+
+func _refresh_resolution_button():
+	if not resolution_button or not GameState:
+		return
+	resolution_button.text = "分辨率: " + GameState.get_display_profile_label()
+
+func _on_resolution_button_pressed():
+	if not GameState:
+		return
+	GameState.toggle_display_profile()
+	_refresh_resolution_button()
 
 func _on_start_button_pressed():
 	if GameState:

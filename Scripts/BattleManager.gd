@@ -521,8 +521,12 @@ func _apply_layout():
 	if not battlefield:
 		return
 	
-	# --- 适配 1080p: 整体缩放 ---
-	battlefield.scale = Vector2(layout_scale, layout_scale)
+	# --- 以 1920x1080 为基准做分辨率缩放 ---
+	# 900p 下如果仍使用固定缩放，敌方军阵右侧会超出可视区域。
+	var viewport_size = get_viewport_rect().size
+	var resolution_scale = min(viewport_size.x / 1920.0, viewport_size.y / 1080.0)
+	var effective_layout_scale = layout_scale * resolution_scale
+	battlefield.scale = Vector2(effective_layout_scale, effective_layout_scale)
 	
 	# 获取当前的实际行数和列数
 	var current_cols = GameConst.MAP_COLUMNS

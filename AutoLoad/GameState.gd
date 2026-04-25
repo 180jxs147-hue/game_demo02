@@ -10,6 +10,10 @@ var current_rows: int = 3
 var current_cols: int = 2
 var slot_select_mode: String = "new"
 var skip_intro: bool = false
+const DISPLAY_SETTINGS_PATH := "user://display_settings.cfg"
+const DISPLAY_PROFILE_900P := "900p"
+const DISPLAY_PROFILE_1080P := "1080p"
+var current_display_profile: String = DISPLAY_PROFILE_900P
 # var use_autosave_library: bool = false # Deprecated: No longer used for mode switching
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
@@ -27,6 +31,7 @@ var _rarity_buy_prices: Dictionary = {}
 var _rarity_sell_prices: Dictionary = {}
 
 func _ready():
+	_load_display_settings()
 	_load_price_config()
 	load_all()
 	# Optional: Apply initial prestige if starting fresh
@@ -34,6 +39,49 @@ func _ready():
 	if config_res and config_res.initial_prestige > 0 and meta_currency == 0:
 		meta_currency = config_res.initial_prestige
 		save_meta()
+
+func _load_display_settings():
+	var config := ConfigFile.new()
+	var err := config.load(DISPLAY_SETTINGS_PATH)
+	var profile := DISPLAY_PROFILE_900P
+	if err == OK:
+		profile = str(config.get_value("display", "profile", DISPLAY_PROFILE_900P))
+	apply_display_profile(profile, false)
+
+func save_display_settings() -> int:
+	var config := ConfigFile.new()
+	config.set_value("display", "profile", current_display_profile)
+	return config.save(DISPLAY_SETTINGS_PATH)
+
+func apply_display_profile(profile: String, save_setting: bool = true):
+	var normalized := profile.to_lower()
+	var window_size := Vector2i(1600, 900)
+	if normalized == DISPLAY_PROFILE_1080P:
+		normalized = DISPLAY_PROFILE_1080P
+		window_size = Vector2i(1920, 1080)
+	else:
+		normalized = DISPLAY_PROFILE_900P
+
+	current_display_profile = normalized
+
+	var window := get_window()
+	if window:
+		window.size = window_size
+
+	if save_setting:
+		save_display_settings()
+
+func toggle_display_profile() -> String:
+	if current_display_profile == DISPLAY_PROFILE_1080P:
+		apply_display_profile(DISPLAY_PROFILE_900P)
+	else:
+		apply_display_profile(DISPLAY_PROFILE_1080P)
+	return current_display_profile
+
+func get_display_profile_label() -> String:
+	if current_display_profile == DISPLAY_PROFILE_1080P:
+		return "1080P"
+	return "900P"
 
 func _load_price_config():
 	var config_res = load(GAME_CONFIG_PATH) as GameConfig

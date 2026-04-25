@@ -3,6 +3,7 @@ class_name Tutorial_1_0_3 extends Node
 var battle_manager: BattleManager
 var current_tip: PanelContainer
 var current_target_node: Node
+var current_tip_offset: Vector2 = Vector2.ZERO
 
 # 阶段枚举
 enum Phase {
@@ -61,9 +62,10 @@ func _start_sequence():
 	_start_phase_wait_start()
 
 func _start_phase_wait_start():
+	phase = Phase.WAIT_START
 	var btn = battle_manager.get_node_or_null("CanvasLayer/HUD/StartButton")
 	if btn:
-		_show_tip("利用兵种克制与断粮战术，\n击溃他们！", btn, Vector2(0, 0))
+		_show_tip("利用兵种克制与断粮战术，\n击溃他们！", btn, Vector2(0, -10))
 
 func _on_start_pressed():
 	if phase == Phase.WAIT_START or phase == Phase.INTRO_CAVALRY or phase == Phase.INTRO_TENT:
@@ -122,8 +124,10 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	
 	battle_manager.get_node("CanvasLayer/HUD").add_child(panel)
 	current_tip = panel
+	current_tip_offset = offset
+	panel.visible = false
 	
-	_update_tip_position(offset)
+	call_deferred("_update_tip_position")
 	
 	if duration > 0:
 		get_tree().create_timer(duration).timeout.connect(func():
@@ -132,17 +136,35 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 				current_tip = null
 		)
 
-func _update_tip_position(offset: Vector2):
+func _update_tip_position():
 	if not current_tip or not is_instance_valid(current_target_node):
 		return
-		
-	var target_pos = Vector2.ZERO
+
+	var target_rect = Rect2()
 	if current_target_node is Control:
-		target_pos = current_target_node.get_global_rect().position
+		target_rect = current_target_node.get_global_rect()
 	elif current_target_node is Node2D:
-		target_pos = current_target_node.get_global_transform_with_canvas().origin
-		
-	current_tip.global_position = target_pos + offset
+		var target_pos = current_target_node.get_global_transform_with_canvas().origin
+		target_rect = Rect2(target_pos, Vector2.ZERO)
+
+	var viewport_size = get_viewport().get_visible_rect().size
+	var tip_size = current_tip.size
+	var tip_pos = target_rect.position + Vector2(
+		target_rect.size.x / 2.0 - tip_size.x / 2.0,
+		-tip_size.y - 20
+	) + current_tip_offset
+
+	if tip_pos.y < 10:
+		tip_pos.y = target_rect.end.y + 20
+	if tip_pos.y + tip_size.y > viewport_size.y - 10:
+		tip_pos.y = max(10.0, viewport_size.y - tip_size.y - 10.0)
+	if tip_pos.x < 10:
+		tip_pos.x = 10
+	if tip_pos.x + tip_size.x > viewport_size.x - 10:
+		tip_pos.x = viewport_size.x - tip_size.x - 10
+
+	current_tip.position = tip_pos
+	current_tip.visible = true
 
 func _exit_tree():
 	if current_tip:
