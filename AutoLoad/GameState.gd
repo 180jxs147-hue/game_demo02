@@ -551,7 +551,7 @@ func load_progress():
 		run_gold = config.get_value("progress", "run_gold", 0)
 		run_manpower_bonus = config.get_value("progress", "run_manpower_bonus", 0)
 		next_level_id_from_camp = config.get_value("progress", "next_level_id_from_camp", "")
-		owned_relic_ids = config.get_value("progress", "owned_relic_ids", [])
+		owned_relic_ids.assign(config.get_value("progress", "owned_relic_ids", []))
 	else:
 		selected_level_index = 0
 		current_rows = 3
@@ -559,8 +559,8 @@ func load_progress():
 		run_gold = 0
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
-		owned_relic_ids = []
-	
+		owned_relic_ids.clear()
+
 	_update_relic_cache()
 
 func load_autosave_progress():
@@ -573,7 +573,7 @@ func load_autosave_progress():
 		run_gold = config.get_value("progress", "run_gold", 0)
 		run_manpower_bonus = config.get_value("progress", "run_manpower_bonus", 0)
 		next_level_id_from_camp = config.get_value("progress", "next_level_id_from_camp", "")
-		owned_relic_ids = config.get_value("progress", "owned_relic_ids", [])
+		owned_relic_ids.assign(config.get_value("progress", "owned_relic_ids", []))
 	else:
 		selected_level_index = 0
 		current_rows = 3
@@ -581,7 +581,7 @@ func load_autosave_progress():
 		run_gold = 0
 		run_manpower_bonus = 0
 		next_level_id_from_camp = ""
-		owned_relic_ids = []
+		owned_relic_ids.clear()
 	
 	_update_relic_cache()
 
