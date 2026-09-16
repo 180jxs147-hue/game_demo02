@@ -31,6 +31,8 @@ var bonus_cooldown_speed: float = 0.0
 var bonus_cooldown_flat: float = 0.0
 
 var visual_blocks: Array[ColorRect] = []
+var token_health: ProgressBar
+var token_backplates: Array[Panel] = []
 var _processed_death_ids: Dictionary = {}
 var _last_stand_triggered: bool = false
 var current_charge_stacks: int = 0 # 剩余冲锋次数
@@ -94,6 +96,8 @@ func _update_tag_defs():
 	# 这需要在 battle_started 时调用 on_battle_start
 
 func set_bench_hidden(hidden: bool):
+	if token_health: token_health.visible = not hidden
+	for plate in token_backplates: plate.visible = not hidden
 	for block in visual_blocks:
 		block.visible = not hidden
 	if name_label:
@@ -222,7 +226,11 @@ func _ready():
 		# 居中显示在包围盒内部上方
 		var center_x = bounds.position.x + bounds.size.x / 2.0
 		# 名字放在顶部内侧 (假设 GridSize 足够大)
-		name_label.position = Vector2(center_x, bounds.position.y + 2)
+		name_label.position = Vector2(bounds.position.x + 2, bounds.position.y + 2)
+		name_label.size = Vector2(bounds.size.x - 4, 18)
+		name_label.add_theme_font_size_override("font_size", 11)
+		name_label.add_theme_color_override("font_outline_color", Color("161510"))
+		name_label.add_theme_constant_override("outline_size", 3)
 		name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		# 确保文字在最上层
 		name_label.z_index = 20 
@@ -234,6 +242,24 @@ func _ready():
 		status_label.z_index = 20
 	
 	_create_cooldown_bar(bounds)
+	if battle_manager:
+		token_health = ProgressBar.new()
+		token_health.show_percentage = false
+		token_health.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		token_health.position = Vector2(bounds.position.x + 5, bounds.end.y - 13)
+		token_health.size = Vector2(bounds.size.x - 10, 5)
+		token_health.z_index = 21
+		var skin = preload("res://Scripts/MenuVisuals.gd")
+		var track = skin.surface(Color("171714"))
+		var fill = skin.surface(Color("8cc597") if faction == Faction.FRIENDLY else Color("d9826d"))
+		for style in [track, fill]:
+			style.content_margin_top = 0
+			style.content_margin_bottom = 0
+			style.content_margin_left = 0
+			style.content_margin_right = 0
+		token_health.add_theme_stylebox_override("background", track)
+		token_health.add_theme_stylebox_override("fill", fill)
+		add_child(token_health)
 	# 初始化血量显示
 	_update_health_visuals()
 	
@@ -292,7 +318,7 @@ func _create_cooldown_bar(bounds: Rect2):
 	cooldown_bar = ColorRect.new()
 	cooldown_bar.size = cd_bg.size
 	cooldown_bar.size.x = 0 # 初始为空
-	cooldown_bar.color = Color(1, 1, 0, 1) # 黄色
+	cooldown_bar.color = Color("c9ac70") # 黄色
 	cd_bg.add_child(cooldown_bar)
 	
 	cooldown_bar.set_meta("max_width", bar_width)
@@ -389,6 +415,7 @@ func _update_health_visuals():
 	if not data: return
 	var bounds = _calculate_visual_bounds()
 	var hp_percent = current_hp / get_max_hp()
+	if token_health: token_health.value = hp_percent * 100.0
 	var buffer_percent = buffer_hp / get_max_hp()
 	
 	# 计算全局截断点 (相对于 Unit 节点)
@@ -1152,6 +1179,16 @@ func _build_visuals():
 		else:
 			mat.set_shader_parameter("use_icon", false)
 		
+		if battle_manager:
+			var plate := Panel.new()
+			plate.position = block.position
+			plate.size = block.size
+			plate.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			var border := Color("739a7b") if faction == Faction.FRIENDLY else Color("a76b58")
+			plate.add_theme_stylebox_override("panel", preload("res://Scripts/MenuVisuals.gd").surface(Color("22231d"), border))
+			add_child(plate)
+			token_backplates.append(plate)
+		block.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 		add_child(block)
 		visual_blocks.append(block)
 

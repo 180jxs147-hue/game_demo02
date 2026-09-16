@@ -79,6 +79,8 @@ var _enemy_occupied: Dictionary = {}
 var _adjacency_lines_node: Node2D # 用于绘制连线
 
 var _card_slot_scene = preload("res://Scenes/CardSlot.tscn")
+var _battle_presentation: Node
+const _BENCH_CARD_SIZE := Vector2(140, 200) ## 备战区卡牌的显示尺寸（CardSlot 原始 280x400 等比缩小）
 
 # 存储当前的敌人网格尺寸，供 _apply_layout 使用
 var current_enemy_cols: int = GameConst.MAP_COLUMNS
@@ -119,6 +121,7 @@ func _ready():
 			# 创建打开日志的按钮
 			var open_log_btn = Button.new()
 			open_log_btn.text = "战斗日志"
+			open_log_btn.name = "BattleLogButton"
 			
 			# 使用锚点定位到右上角
 			open_log_btn.layout_mode = 1 # Anchors
@@ -145,6 +148,7 @@ func _ready():
 			# --- [New Feature] 战斗倍速按钮 ---
 			var speed_btn = Button.new()
 			speed_btn.text = "1x"
+			speed_btn.name = "BattleSpeedButton"
 			speed_btn.layout_mode = 1
 			speed_btn.anchor_left = 1.0
 			speed_btn.anchor_top = 0.0
@@ -517,95 +521,13 @@ func start_level(index: int):
 	call_deferred("_check_tutorial")
 
 func _apply_layout():
-	# 根据屏幕宽度摆放战场
-	# 修改：不再动态居中，而是使用固定基准点
-	if not battlefield:
-		return
-	
-	# --- 以 1920x1080 为基准做分辨率缩放 ---
-	# 900p 下如果仍使用固定缩放，敌方军阵右侧会超出可视区域。
-	var viewport_size = get_viewport_rect().size
-	var resolution_scale = min(viewport_size.x / 1920.0, viewport_size.y / 1080.0)
-	var effective_layout_scale = layout_scale * resolution_scale
-	battlefield.scale = Vector2(effective_layout_scale, effective_layout_scale)
-	
-	# 获取当前的实际行数和列数
-	var current_cols = GameConst.MAP_COLUMNS
-	var current_rows = GameConst.MAP_ROWS
-	
-	if GridManager:
-		if GridManager.playable_columns > 0:
-			current_cols = GridManager.playable_columns
-		if GridManager.playable_rows > 0:
-			current_rows = GridManager.playable_rows
-	
-	var battle_field_width_actual = current_cols * GameConst.GRID_SIZE
-	
-	# --- 1. 设置 Battlefield 容器位置 (绝对位置) ---
-	# 直接使用 battlefield_position，不再根据内容宽度自动居中
-	# 这样当网格扩大时，基准点不会移动
-	battlefield.position = battlefield_position
-	
-	# --- 2. 设置 我方战场 (左上角基准) ---
-	if friendly_field:
-		# 锚点：Top-Left (Base Point)
-		# 随着网格扩充，向右下延伸，左上角不动
-		friendly_field.position = friendly_field_base
+	if not _battle_presentation:
+		_battle_presentation = preload("res://Scripts/BattlePresentation.gd").new()
+		_battle_presentation.name = "BattlePresentation"
+		add_child(_battle_presentation)
+	else:
+		_battle_presentation.layout()
 
-	# --- 3. 设置 敌方战场 (右上角基准) ---
-	if enemy_field:
-		# 锚点：Top-Right (Base Point)
-		# 随着网格扩充，向左下延伸，右上角不动
-		# Position (Top-Left) = Base (Top-Right) - Width
-		
-		# 使用敌人自己的列数计算宽度
-		var enemy_width_actual = current_enemy_cols * GameConst.GRID_SIZE
-		
-		# 修正：用户反馈第三四关敌方阵线到了屏幕右侧（超出画面）。
-		# 原因是之前的逻辑 pos_x = enemy_field_base.x - enemy_width_actual 是正确的“定右算左”逻辑，
-		# 但是 enemy_field_base.x 的值（比如 1000）是相对于 Battlefield 容器的。
-		# Battlefield 容器本身在屏幕上有偏移（battlefield_position = 280）且有缩放（1.35）。
-		# 屏幕 X = 280 + (BaseX - Width) * 1.35
-		# 右边界屏幕 X = 280 + BaseX * 1.35
-		
-		# 如果 BaseX = 1000，Scale = 1.35 -> 右边界 = 280 + 1350 = 1630 (在 1920 屏幕内)
-		# 如果 BaseX = 800，Scale = 1.35 -> 右边界 = 280 + 1080 = 1360 (在 1920 屏幕内)
-		
-		# 那为什么用户说“第三四关会到屏幕右侧”？
-		# 第三四关通常 enemy_width_actual 很大（比如 9列 = 990）。
-		# 如果 BaseX = 1000，Width = 990 -> PosX = 10.
-		# 左边界屏幕 X = 280 + 10 * 1.35 = 293.5
-		# 右边界屏幕 X = 1630.
-		# 这看起来完全正常。
-		
-		# 但是！如果用户之前的体验是 BaseX 比较小（比如为了让小地图居中），
-		# 此时突然变大，他可能会觉得“偏右了”。
-		# 或者，用户所谓的“屏幕右侧”是指**超出了**屏幕右侧？
-		# 用户原话：“为什么第三四关会到屏幕右侧。”
-		# 结合之前的“右侧已经超出画面”，可能是指虽然理论计算在内，但视觉上太靠右了，或者甚至出去了。
-		
-		# 让我们回退到用户认可的逻辑：
-		# “敌方阵线是以右上角为基准点，基准点位置固定，不与任何其他要素相关”
-		# 这意味着 BaseX 必须是一个常数，不能变。
-		# 我们现在的代码 BaseX 就是常数 (enemy_field_base)。
-		
-		# 唯一的变量是 current_enemy_cols。
-		# 如果 cols 变大，width 变大，pos_x 变小（向左延伸）。
-		# 右边界始终是 BaseX。
-		
-		var base_pos = enemy_field_base
-		
-		# 如果有关卡特定的偏移配置，应用它
-		if current_level_config and "position_offset" in current_level_config:
-			base_pos += current_level_config.position_offset
-		
-		var pos_x = base_pos.x - enemy_width_actual
-		var pos_y = base_pos.y
-		
-		enemy_field.position = Vector2(pos_x, pos_y)
-
-	# --- 调试：按 F2 测试对话 ---
-	print("按 F2 测试对话功能")
 
 func _input(event):
 	if event is InputEventKey and event.pressed and not event.echo:
@@ -711,8 +633,8 @@ func _update_background():
 		texture = current_level_config.background_texture
 	
 	# 如果没有配置背景，强制使用默认背景
-	if not texture:
-		texture = load("res://Resources/ImageFiles/Backgrounds/battleground.png")
+	if not texture or texture.resource_path == "res://Resources/ImageFiles/Backgrounds/battleground.png":
+		texture = load("res://Assets/UI/Battle/dusk.png")
 	
 	if texture:
 		print("[BattleManager] Loading background: ", texture.resource_path)
@@ -729,7 +651,7 @@ func _update_background():
 		bg_rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		
 		# 调暗背景，提高特效和网格的对比度
-		bg_rect.modulate = Color(0.6, 0.6, 0.6, 1.0)
+		bg_rect.modulate = Color(0.86, 0.86, 0.86, 1.0)
 		
 		# 确保不遮挡
 		bg_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1200,6 +1122,9 @@ func _update_tooltip_position():
 		_tooltip_instance.position = target_pos
 
 func show_tooltip(data: UnitData, target: Node = null):
+	if _battle_presentation:
+		_battle_presentation.inspect(data)
+		return
 	if _tooltip_instance:
 		_tooltip_target = target
 		_tooltip_instance.update_info(data)
@@ -1231,7 +1156,7 @@ func _end_battle(victory: bool):
 
 func _show_finish_battle_button():
 	# 弹出飘字提示
-	log_message("战斗胜利！请点击右上角按钮进行结算。", Color("gold"))
+	log_message("战斗胜利！请点击完成战斗进行结算。", Color("gold"))
 	
 	# 创建或显示“结算”按钮
 	# 复用 HUD，类似于 battle_log_ui_instance
@@ -1271,6 +1196,8 @@ func _show_finish_battle_button():
 		hud.add_child(btn)
 	
 	btn.visible = true
+	$CanvasLayer/HUD/StartButton.hide()
+	_apply_layout()
 
 static func get_dialogue_path_by_id(id: String) -> String:
 	var dialogue_path = ""
@@ -2489,10 +2416,14 @@ func _refresh_bench_ui():
 		var data = entry["data"] as UnitData
 		var units = entry["units"]
 		var slot = _card_slot_scene.instantiate()
-		slot.custom_minimum_size = Vector2(280, 400)
-		slot.set("use_card_base", false)
 		slot.set("drag_on_press", true)
-		bench_grid.add_child(slot)
+		# CardSlot 原始尺寸 280x400，用等比缩放的包装 Control 适配备战区格子
+		var wrapper := Control.new()
+		wrapper.custom_minimum_size = _BENCH_CARD_SIZE
+		wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wrapper.add_child(slot)
+		slot.scale = _BENCH_CARD_SIZE / Vector2(280, 400)
+		bench_grid.add_child(wrapper)
 		if slot.has_method("setup_stacked"):
 			slot.setup_stacked(data, units.size())
 		else:

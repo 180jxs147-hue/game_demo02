@@ -5,7 +5,8 @@ var override_rows: int = -1
 
 func _draw():
 	# 改为深色半透明线，增加宽度，以便在黄色/亮色背景上更清晰
-	var color = Color(0.1, 0.1, 0.1, 0.35) 
+	var enemy := get_parent().name == "EnemyField"
+	var color := Color(0.80, 0.39, 0.31, 0.48) if enemy else Color(0.49, 0.72, 0.56, 0.48) 
 	var line_width = 2.0
 	
 	# 确定绘制范围
@@ -23,6 +24,9 @@ func _draw():
 	elif GridManager and GridManager.playable_rows > 0:
 		rows = GridManager.playable_rows
 	
+	var area := Rect2(0, 0, cols * GameConst.GRID_SIZE, rows * GameConst.GRID_SIZE)
+	draw_rect(area, Color(0.10, 0.075, 0.065, 0.64))
+	draw_rect(area, color.lightened(0.2), false, 2.0)
 	# 画竖线
 	for x in range(cols + 1):
 		var start = Vector2(x * GameConst.GRID_SIZE, 0)
