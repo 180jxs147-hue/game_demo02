@@ -9,6 +9,7 @@ extends Control
 @onready var u3_buy = $VBox/Upgrades/U3/U3Buy
 
 func _ready():
+	preload("res://Scripts/WarMenuSkin.gd").apply.call_deferred(self)
 	_refresh()
 	if save_btn:
 		save_btn.pressed.connect(func():

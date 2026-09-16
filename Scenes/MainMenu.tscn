@@ -1,6 +1,46 @@
-[gd_scene load_steps=2 format=3 uid="uid://d3yq8x2l5q2j"]
+[gd_scene load_steps=11 format=3 uid="uid://d3yq8x2l5q2j"]
 
 [ext_resource type="Script" uid="uid://bvlbecukcwxa8" path="res://Scripts/MainMenu.gd" id="1_menu"]
+[ext_resource type="Texture2D" path="res://Assets/Backgrounds/main_menu_han_war_v3.png" id="2_background"]
+[ext_resource type="PackedScene" path="res://Scenes/SettingsOptions.tscn" id="3_settings"]
+
+[sub_resource type="Gradient" id="Gradient_left"]
+offsets = PackedFloat32Array(0, 0.55, 1)
+colors = PackedColorArray(0.055, 0.037, 0.025, 0.8, 0.055, 0.037, 0.025, 0.42, 0.055, 0.037, 0.025, 0)
+
+[sub_resource type="GradientTexture2D" id="Texture_left"]
+gradient = SubResource("Gradient_left")
+width = 1100
+height = 2
+fill_to = Vector2(1, 0)
+
+[sub_resource type="Gradient" id="Gradient_bottom"]
+colors = PackedColorArray(0.055, 0.037, 0.025, 0, 0.055, 0.037, 0.025, 0.8)
+
+[sub_resource type="GradientTexture2D" id="Texture_bottom"]
+gradient = SubResource("Gradient_bottom")
+width = 2
+height = 200
+fill_to = Vector2(0, 1)
+
+[sub_resource type="SystemFont" id="Font_title"]
+font_names = PackedStringArray("KaiTi", "STKaiti", "Noto Serif CJK SC", "serif")
+
+[sub_resource type="StyleBoxFlat" id="Style_seal"]
+content_margin_left = 10.0
+content_margin_top = 4.0
+content_margin_right = 10.0
+content_margin_bottom = 4.0
+bg_color = Color(0.6, 0.247, 0.235, 1)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.76, 0.44, 0.36, 1)
+
+[sub_resource type="StyleBoxLine" id="Style_divider"]
+color = Color(0.65, 0.51, 0.32, 0.4)
+thickness = 2
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -18,104 +58,228 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_background")
 expand_mode = 1
 stretch_mode = 6
 
-[node name="ColorRect" type="ColorRect" parent="."]
+[node name="LeftShade" type="TextureRect" parent="."]
+layout_mode = 1
+anchor_right = 0.6875
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = SubResource("Texture_left")
+expand_mode = 1
+
+[node name="BottomShade" type="TextureRect" parent="."]
+layout_mode = 1
+anchor_top = 0.777778
+anchor_right = 1.0
+anchor_bottom = 1.0
+mouse_filter = 2
+texture = SubResource("Texture_bottom")
+expand_mode = 1
+
+[node name="MenuColumn" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchor_left = 0.06625
+anchor_top = 0.137778
+anchor_right = 0.06625
+anchor_bottom = 0.137778
+offset_right = 460.0
+theme_override_constants/separation = 0
+
+[node name="Header" type="VBoxContainer" parent="MenuColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="Chapter" type="Label" parent="MenuColumn/Header"]
+custom_minimum_size = Vector2(0, 26)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.73, 0.78, 0.7, 1)
+theme_override_font_sizes/font_size = 18
+text = "第一卷  /  苍天将变"
+
+[node name="TitleRow" type="HBoxContainer" parent="MenuColumn/Header"]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+theme_override_constants/separation = 44
+
+[node name="Title" type="Label" parent="MenuColumn/Header/TitleRow"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("Font_title")
+theme_override_font_sizes/font_size = 88
+text = "时空阵线"
+
+[node name="Seal" type="PanelContainer" parent="MenuColumn/Header/TitleRow"]
+custom_minimum_size = Vector2(42, 54)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/panel = SubResource("Style_seal")
+
+[node name="Text" type="Label" parent="MenuColumn/Header/TitleRow/Seal"]
+layout_mode = 2
+theme_override_fonts/font = SubResource("Font_title")
+theme_override_font_sizes/font_size = 18
+text = "汉\n末"
+horizontal_alignment = 1
+
+[node name="Divider" type="HSeparator" parent="MenuColumn/Header"]
+custom_minimum_size = Vector2(314, 1)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/separator = SubResource("Style_divider")
+
+[node name="HeaderSpace" type="Control" parent="MenuColumn"]
+custom_minimum_size = Vector2(0, 96)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Actions" type="VBoxContainer" parent="MenuColumn"]
+custom_minimum_size = Vector2(314, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 2
+
+[node name="StartButton" type="Button" parent="MenuColumn/Actions"]
+custom_minimum_size = Vector2(314, 60)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 24
+text = "开始新游戏"
+alignment = 0
+
+[node name="LoadButton" type="Button" parent="MenuColumn/Actions"]
+custom_minimum_size = Vector2(314, 60)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "载入游戏"
+alignment = 0
+
+[node name="LevelSelectButton" type="Button" parent="MenuColumn/Actions"]
+custom_minimum_size = Vector2(314, 60)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "战役"
+alignment = 0
+
+[node name="BarracksButton" type="Button" parent="MenuColumn/Actions"]
+custom_minimum_size = Vector2(314, 60)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "兵营图鉴"
+alignment = 0
+
+[node name="MetaShopButton" type="Button" parent="MenuColumn/Actions"]
+custom_minimum_size = Vector2(314, 60)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+text = "局外商店"
+alignment = 0
+
+[node name="FooterSpace" type="Control" parent="MenuColumn"]
+custom_minimum_size = Vector2(0, 52)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="FooterDivider" type="HSeparator" parent="MenuColumn"]
+custom_minimum_size = Vector2(314, 1)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_styles/separator = SubResource("Style_divider")
+
+[node name="FooterGap" type="Control" parent="MenuColumn"]
+custom_minimum_size = Vector2(0, 16)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="Footer" type="HBoxContainer" parent="MenuColumn"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="SettingsButton" type="Button" parent="MenuColumn/Footer"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+text = "设置"
+
+[node name="QuitButton" type="Button" parent="MenuColumn/Footer"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 18
+text = "退出"
+
+[node name="Utilities" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -412.0
+offset_top = -94.0
+offset_right = -76.0
+offset_bottom = -46.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="EditorButton" type="Button" parent="Utilities"]
+custom_minimum_size = Vector2(150, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+text = "关卡编辑器"
+
+[node name="DevButton" type="Button" parent="Utilities"]
+custom_minimum_size = Vector2(140, 48)
+layout_mode = 2
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+text = "开发工具"
+
+[node name="ModalShade" type="ColorRect" parent="."]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.156863, 0.156863, 0.156863, 0.8)
+mouse_filter = 0
+color = Color(0.025, 0.018, 0.012, 0.7)
 
-[node name="VBoxContainer" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 8
-anchor_left = 0.5
-anchor_top = 0.5
-anchor_right = 0.5
-anchor_bottom = 0.5
-offset_left = -100.0
-offset_top = -80.0
-offset_right = 100.0
-offset_bottom = 80.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/separation = 20
+[node name="SettingsDialog" type="AcceptDialog" parent="."]
+title = "设置"
+size = Vector2i(720, 520)
+exclusive = true
 
-[node name="Label" type="Label" parent="VBoxContainer"]
+[node name="Content" parent="SettingsDialog" instance=ExtResource("3_settings")]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 676.0
+offset_bottom = 490.0
+theme_override_constants/separation = 16
+
+[node name="DeveloperDialog" type="AcceptDialog" parent="."]
+title = "开发工具"
+size = Vector2i(420, 190)
+exclusive = true
+
+[node name="Content" type="VBoxContainer" parent="DeveloperDialog"]
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 396.0
+offset_bottom = 120.0
+theme_override_constants/separation = 16
+
+[node name="UnlockAllButton" type="Button" parent="DeveloperDialog/Content"]
+custom_minimum_size = Vector2(320, 56)
 layout_mode = 2
-theme_override_font_sizes/font_size = 48
-text = "时空阵线"
-horizontal_alignment = 1
-
-[node name="StartButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "开始新游戏"
-
-[node name="LoadButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "载入游戏"
-
-[node name="MetaShopButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "局外商店"
-
-[node name="Sidebar" type="VBoxContainer" parent="."]
-layout_mode = 1
-anchors_preset = 1
-anchor_left = 1.0
-anchor_right = 1.0
-offset_left = -220.0
-offset_top = 60.0
-offset_right = -20.0
-offset_bottom = 420.0
-grow_horizontal = 0
-theme_override_constants/separation = 12
-
-[node name="LevelSelectButton" type="Button" parent="Sidebar"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "选关"
-
-[node name="UnlockAllButton" type="Button" parent="Sidebar"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
 text = "一键解锁 (测试)"
-
-[node name="EditorButton" type="Button" parent="Sidebar"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "关卡编辑器"
-
-[node name="ResolutionButton" type="Button" parent="Sidebar"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "分辨率: 900P"
-
-[node name="BarracksButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "军营 (图鉴)"
-
-[node name="QuitButton" type="Button" parent="VBoxContainer"]
-custom_minimum_size = Vector2(0, 50)
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "退出"
 
 [node name="ClearSaveDialog" type="ConfirmationDialog" parent="."]
 title = "清除存档"
@@ -124,11 +288,14 @@ dialog_text = "将清空已收集卡牌等进度，是否继续？"
 [node name="InfoDialog" type="AcceptDialog" parent="."]
 title = "提示"
 
-[connection signal="pressed" from="VBoxContainer/StartButton" to="." method="_on_start_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/LoadButton" to="." method="_on_load_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/MetaShopButton" to="." method="_on_metashop_button_pressed"]
-[connection signal="pressed" from="Sidebar/LevelSelectButton" to="." method="_on_level_select_button_pressed"]
-[connection signal="pressed" from="Sidebar/UnlockAllButton" to="." method="_on_unlock_all_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/BarracksButton" to="." method="_on_barracks_button_pressed"]
-[connection signal="pressed" from="VBoxContainer/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Actions/StartButton" to="." method="_on_start_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Actions/LoadButton" to="." method="_on_load_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Actions/LevelSelectButton" to="." method="_on_level_select_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Actions/BarracksButton" to="." method="_on_barracks_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Actions/MetaShopButton" to="." method="_on_metashop_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Footer/SettingsButton" to="." method="_on_settings_button_pressed"]
+[connection signal="pressed" from="MenuColumn/Footer/QuitButton" to="." method="_on_quit_button_pressed"]
+[connection signal="pressed" from="Utilities/EditorButton" to="." method="_on_editor_button_pressed"]
+[connection signal="pressed" from="Utilities/DevButton" to="." method="_on_developer_button_pressed"]
+[connection signal="pressed" from="DeveloperDialog/Content/UnlockAllButton" to="." method="_on_unlock_all_button_pressed"]
 [connection signal="confirmed" from="ClearSaveDialog" to="." method="_on_clear_save_dialog_confirmed"]

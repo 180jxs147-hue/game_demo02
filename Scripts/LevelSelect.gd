@@ -8,6 +8,7 @@ extends Control
 @onready var list_container = $ScrollContainer/VBoxContainer
 
 func _ready():
+	preload("res://Scripts/WarMenuSkin.gd").apply.call_deferred(self)
 	_apply_theme()
 	_build_list()
 

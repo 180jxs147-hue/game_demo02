@@ -252,6 +252,7 @@ func _ready():
 		var loaded = GameState.load_player_library()
 		if loaded:
 			player_library = loaded
+			GameState.set_current_library(loaded)
 
 	# --- 1. 动态调整战场格子数量 ---
 	# 逻辑：取玩家解锁的尺寸与关卡要求尺寸的较大值

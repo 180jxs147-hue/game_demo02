@@ -1,0 +1,11 @@
+# Main Menu War Background V3
+
+Generated with the built-in image_gen editing tool on 2026-09-14.
+Asset: main_menu_han_war_v3.png.
+Reference/edit target: main_menu_han_v2.png (retained).
+User correction: a ruined, war-torn village rather than a peaceful pastoral scene.
+Live title, menu and shading remain separate Godot controls.
+
+## Prompt
+
+Use case: precise-object-edit / historical-scene. Edit this existing game background into the devastated aftermath of WAR in late Eastern Han China. Preserve the wide 16:9 composition, the road and village concentrated on the RIGHT, distant mountain valley, and LEFT 36 percent low-contrast dark foreground reserved for live menu text. Dramatically change the narrative: this village has been sacked and abandoned. Right foreground houses have large COLLAPSED roof sections with broken exposed charred rafters, shattered rammed-earth walls and empty dark doorways. Rubble and broken roof tiles spill into a rutted cracked dirt road. A broken wooden ox cart and overturned cracked pottery lie on the road edge, torn faded crimson military banner on a snapped pole. The left tree is scorched and mostly leafless with bare crooked branches; dead grass and ash instead of lush vegetation. Valley fields are drought-stricken and abandoned; several distant village buildings burn with restrained small ember-orange flames, thick dark smoke columns blowing sideways and merging into a heavy smoke-gray overcast sky. Remove the beautiful golden sunset, visible sun disk, lush greenery, prosperous intact houses and all peaceful pastoral warmth. Palette: ash gray, soot charcoal, desaturated ink green, dirty pale earth, tiny rust-red banner and ember-orange accents. Mood: desolate, oppressive, a land ravaged by war, distinctly readable destruction rather than just a color filter. Premium hand-painted historical strategy game key art, expressive brush texture, sharp material details in the RIGHT architecture, atmospheric distant mountains, enough cold diffuse daylight to inspect all the ruins. Keep readable midtones; do not blacken the whole painting. No corpses, no gore, no foreground people, no modern objects, no fantasy buildings, no magical particles. Absolutely no text, logo, watermark, UI or border. Full bleed background plate, landscape 16:9.

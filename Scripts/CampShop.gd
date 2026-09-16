@@ -78,6 +78,7 @@ func _load_shop_config():
 		# current_refresh_cost = max(1, current_refresh_cost - int(discount * 0.5)) # Optional
 
 func _ready():
+	preload("res://Scripts/WarMenuSkin.gd").apply.call_deferred(self)
 	print("CampShop: _ready called")
 	get_tree().paused = false # Ensure game is not paused from previous state (e.g. Dialogue)
 	_load_shop_config()
@@ -178,6 +179,7 @@ func _refresh_hospital():
 	if not GameState: return
 	var lib = GameState.load_player_library()
 	if not lib: return
+	GameState.set_current_library(lib)
 	
 	var injured_found = false
 	for unit in lib.collected_cards:
@@ -255,6 +257,8 @@ func _refresh_shop(free: bool = false):
 		shop_cards.append(card)
 		
 		var vbox = VBoxContainer.new()
+		vbox.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		vbox.add_theme_constant_override("separation", 16)
 		
 		# Slot display
 		var slot = shop_card_scene.instantiate()
@@ -266,6 +270,8 @@ func _refresh_shop(free: bool = false):
 		var btn = Button.new()
 		# var cost = COST_CARD_BASE # Removed local var
 		btn.text = "购买 (%d)" % cost
+		btn.custom_minimum_size.y = 48
+		preload("res://Scripts/MenuVisuals.gd").primary(btn)
 		if GameState.get_run_gold() < cost:
 			btn.disabled = true
 			
@@ -275,6 +281,7 @@ func _refresh_shop(free: bool = false):
 				var lib = GameState.load_player_library()
 				if lib:
 					lib.collected_cards.append(card.duplicate())
+					GameState.set_current_library(lib)
 					GameState.save_player_library(lib)
 					GameState.trigger_autosave()
 				

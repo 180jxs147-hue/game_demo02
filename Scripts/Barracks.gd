@@ -45,8 +45,8 @@ var _selected_unit: UnitData
 
 var _card_base_width: float = 280.0
 var _card_base_height: float = 400.0
-var _card_min_width: float = 180.0
-var _target_columns: int = 6
+var _card_min_width: float = 220.0
+var _target_columns: int = 4
 var _current_card_width: float = 280.0
 var _current_card_scale: float = 1.0
 
@@ -56,6 +56,7 @@ var sort_option_collected: OptionButton
 var sort_option_all: OptionButton
 
 func _ready():
+	preload("res://Scripts/WarMenuSkin.gd").apply.call_deferred(self)
 	# 图鉴数据有两部分来源：
 	# 1) 玩家存档库：决定“已收集”页显示哪些卡、各卡数量（user://PlayerLibrary.tres）
 	# 2) 单位数据库：决定“全部兵种/标签页”有哪些卡，以及用于补全导出时可能丢失的字段（例如简介）
@@ -152,6 +153,9 @@ func _setup_type_option(option: OptionButton):
 
 func _connect_signals():
 	resized.connect(_update_columns)
+	for grid in [collected_grid, all_grid, tags_grid]:
+		grid.get_parent().horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+		grid.get_parent().resized.connect(_update_columns)
 	collected_search.text_changed.connect(func(_t): _refresh_collected())
 	all_search.text_changed.connect(func(_t): _refresh_all_units())
 	collected_type.item_selected.connect(func(_i): _refresh_collected())
@@ -289,6 +293,7 @@ func _fill_grid(grid: GridContainer, units: Array[UnitData]):
 		
 		slot.setup(u)
 		slot.pressed.connect(_on_card_pressed)
+	_update_columns.call_deferred()
 
 func _get_stacked_collected() -> Array[Dictionary]:
 	# “已收集”页需要把同名/同资源的卡牌堆叠显示（xN），所以先按 key 聚合计数。
@@ -350,6 +355,7 @@ func _fill_grid_stacked(grid: GridContainer, entries: Array[Dictionary]):
 		else:
 			slot.setup(u)
 		slot.pressed.connect(_on_card_pressed)
+	_update_columns.call_deferred()
 
 func _get_all_units() -> Array[UnitData]:
 	# “全部兵种/标签”页的候选单位列表。
@@ -381,30 +387,31 @@ func _get_all_tags() -> Array[String]:
 	return _tags_cache
 
 func _update_columns():
-	var viewport_w: float = get_viewport_rect().size.x
-	var content_w: float = maxf(600.0, viewport_w - 650.0)
-	var gap: float = float(collected_grid.get_theme_constant("h_separation"))
-	if gap <= 0.0:
-		gap = 16.0
-	var cols: int = _target_columns
-	if cols < 1:
-		cols = 1
-	while cols > 1:
-		var total_gap: float = gap * float(cols - 1)
-		var cw: float = floor((content_w - total_gap) / float(cols))
-		if cw >= _card_min_width:
-			_current_card_width = cw
-			_current_card_scale = _current_card_width / _card_base_width
-			break
-		cols -= 1
-	if cols == 1:
-		_current_card_width = minf(_card_base_width, content_w - gap)
-		_current_card_scale = _current_card_width / _card_base_width
-	collected_grid.columns = cols
-	all_grid.columns = cols
-	tags_grid.columns = cols
+	# Measure the scroll area rather than subtracting guessed sidebar widths.
+	for grid in [collected_grid, all_grid, tags_grid]:
+		var available: float = maxf(220.0, grid.get_parent().size.x - 12.0)
+		var gap: float = float(grid.get_theme_constant("h_separation"))
+		var cols := clampi(int((available + gap) / (_card_min_width + gap)), 1, _target_columns)
+		var width := minf(_card_base_width, floorf((available - gap * (cols - 1)) / cols))
+		var card_scale := width / _card_base_width
+		grid.columns = cols
+		if grid == collected_grid:
+			_current_card_width = width
+			_current_card_scale = card_scale
+		for wrapper in grid.get_children():
+			if wrapper.is_queued_for_deletion(): continue
+			wrapper.custom_minimum_size = Vector2(width, _card_base_height * card_scale)
+			if wrapper.get_child_count() > 0:
+				var slot: Control = wrapper.get_child(0)
+				slot.scale = Vector2(card_scale, card_scale)
+				slot.position = Vector2.ZERO
 
 func _switch_page(page: String):
+	var nav := {"CollectedButton": "collected", "AllUnitsButton": "all", "TagsButton": "tags", "SynergyButton": "synergy"}
+	for button_name in nav:
+		var button: Button = $RootLayout/Sidebar/SidebarVBox.get_node(button_name)
+		button.theme_type_variation = "CommandButton" if page == nav[button_name] else ""
+	_update_columns.call_deferred()
 	collected_page.visible = page == "collected"
 	all_page.visible = page == "all"
 	tags_page.visible = page == "tags"

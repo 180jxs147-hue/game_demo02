@@ -13,7 +13,9 @@ var skip_intro: bool = false
 const DISPLAY_SETTINGS_PATH := "user://display_settings.cfg"
 const DISPLAY_PROFILE_900P := "900p"
 const DISPLAY_PROFILE_1080P := "1080p"
-var current_display_profile: String = DISPLAY_PROFILE_900P
+var current_display_profile: String = DISPLAY_PROFILE_1080P
+const AUDIO_SETTINGS_PATH := "user://audio_settings.cfg"
+var master_volume_percent: float = 100.0
 # var use_autosave_library: bool = false # Deprecated: No longer used for mode switching
 
 const USER_LIBRARY_PATH := "user://PlayerLibrary.tres"
@@ -25,6 +27,7 @@ const SAVE_GAME_PATH := "user://savegame.cfg"
 const AUTO_SAVE_PROGRESS_PATH := "user://autosave_progress.cfg"
 const AUTO_LIBRARY_PATH := "user://Autosave_PlayerLibrary.tres"
 var current_slot: int = 1
+var _current_library: CardLibrary = null
 
 # Caches for price configuration
 var _rarity_buy_prices: Dictionary = {}
@@ -32,6 +35,9 @@ var _rarity_sell_prices: Dictionary = {}
 
 func _ready():
 	_load_display_settings()
+	var audio_config := ConfigFile.new()
+	if audio_config.load(AUDIO_SETTINGS_PATH) == OK:
+		apply_master_volume(float(audio_config.get_value("audio", "master_volume", 100.0)), false)
 	_load_price_config()
 	load_all()
 	# Optional: Apply initial prestige if starting fresh
@@ -43,15 +49,28 @@ func _ready():
 func _load_display_settings():
 	var config := ConfigFile.new()
 	var err := config.load(DISPLAY_SETTINGS_PATH)
-	var profile := DISPLAY_PROFILE_900P
+	var profile := DISPLAY_PROFILE_1080P
 	if err == OK:
-		profile = str(config.get_value("display", "profile", DISPLAY_PROFILE_900P))
+		profile = str(config.get_value("display", "profile", DISPLAY_PROFILE_1080P))
 	apply_display_profile(profile, false)
 
 func save_display_settings() -> int:
 	var config := ConfigFile.new()
 	config.set_value("display", "profile", current_display_profile)
 	return config.save(DISPLAY_SETTINGS_PATH)
+
+func apply_master_volume(value: float, persist: bool = true):
+	master_volume_percent = clampf(value, 0.0, 100.0)
+	var bus := AudioServer.get_bus_index("Master")
+	if bus >= 0:
+		AudioServer.set_bus_volume_db(bus, linear_to_db(maxf(master_volume_percent / 100.0, 0.0001)))
+		AudioServer.set_bus_mute(bus, is_zero_approx(master_volume_percent))
+	if persist:
+		var config := ConfigFile.new()
+		config.set_value("audio", "master_volume", master_volume_percent)
+		var err := config.save(AUDIO_SETTINGS_PATH)
+		if err != OK:
+			push_warning("Audio settings could not be saved: %s" % err)
 
 func apply_display_profile(profile: String, save_setting: bool = true):
 	var normalized := profile.to_lower()
@@ -112,6 +131,12 @@ func _save_path(i: int = -1) -> String:
 	return "user://savegame_slot_%d.cfg" % _slot(i)
 func _library_path(i: int = -1) -> String:
 	return "user://PlayerLibrary_slot_%d.tres" % _slot(i)
+
+func set_current_library(lib: CardLibrary):
+	_current_library = lib
+
+func get_current_library() -> CardLibrary:
+	return _current_library
 
 # --- 恢复逻辑 ---
 func recover_all_injured_units():
@@ -398,6 +423,7 @@ func save_autosave_progress() -> int:
 	config.set_value("progress", "current_rows", current_rows)
 	config.set_value("progress", "current_cols", current_cols)
 	config.set_value("progress", "run_gold", run_gold)
+	config.set_value("progress", "run_manpower_bonus", run_manpower_bonus)
 	config.set_value("progress", "next_level_id_from_camp", next_level_id_from_camp)
 	config.set_value("progress", "owned_relic_ids", owned_relic_ids)
 	
@@ -631,7 +657,7 @@ func save_to_slot(i: int):
 	
 	# 如果 i != current_slot，我们需要把当前内存状态写入 目标 path。
 	
-	var current_lib = load_player_library() 
+	var current_lib = get_current_library() if get_current_library() else load_player_library() 
 	
 	# 2. 保存到目标槽位文件
 	var config = ConfigFile.new()

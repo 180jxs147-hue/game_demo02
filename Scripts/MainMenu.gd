@@ -4,51 +4,52 @@ extends Control
 
 @onready var clear_save_dialog = $ClearSaveDialog
 @onready var info_dialog = $InfoDialog
-@onready var resolution_button = $Sidebar/ResolutionButton
 
 func _ready():
 	_apply_theme()
 
 func _apply_theme():
-	if not GameState: return
-	
-	# 尝试加载背景图
-	if has_node("Background"):
-		var bg_node = $Background
-		var bg_path = "res://Assets/Backgrounds/main_menu_bg.png"
-		if ResourceLoader.exists(bg_path):
-			var tex = load(bg_path)
-			if tex:
-				bg_node.texture = tex
-				# 如果有背景图，半透明遮罩可以淡一点
-				if has_node("ColorRect"):
-					$ColorRect.color = Color(0, 0, 0, 0.3)
-	
-	# 应用样式到所有按钮
-	for node in find_children("", "Button", true, false):
-		if node is Button:
-			GameState.apply_button_style(node)
-			
-	# 连接编辑器按钮
-	if has_node("Sidebar/EditorButton"):
-		$Sidebar/EditorButton.pressed.connect(_on_editor_button_pressed)
-	if resolution_button:
-		resolution_button.pressed.connect(_on_resolution_button_pressed)
-		_refresh_resolution_button()
+	var visuals = preload("res://Scripts/MenuVisuals.gd")
+	theme = visuals.create_theme()
+	for button in $MenuColumn/Actions.get_children():
+		button.add_theme_font_size_override("font_size", 23)
+		button.add_theme_stylebox_override("normal", _button_style(Color.TRANSPARENT))
+		button.add_theme_stylebox_override("hover", visuals.inset(Color(1.5, 1.3, 1.05)))
+		button.add_theme_stylebox_override("pressed", visuals.inset(Color("a68c6c")))
+	for dialog in [$SettingsDialog, $DeveloperDialog, $ClearSaveDialog, $InfoDialog]:
+		preload("res://Scripts/MenuVisuals.gd").style_dialog(dialog, dialog == $ClearSaveDialog)
+		dialog.get_ok_button().text = "关闭" if dialog != $ClearSaveDialog else "确认"
+		dialog.get_ok_button().custom_minimum_size = Vector2(120, 44)
+		dialog.visibility_changed.connect(_refresh_modal_shade)
+	$ClearSaveDialog.get_cancel_button().text = "取消"
+	var start: Button = $MenuColumn/Actions/StartButton
+	start.alignment = HORIZONTAL_ALIGNMENT_CENTER
+	for state in ["normal", "hover", "pressed"]:
+		start.remove_theme_stylebox_override(state)
+	visuals.primary(start)
+	$ClearSaveDialog.get_ok_button().text = "确认清除"
+
+func _refresh_modal_shade():
+	$ModalShade.visible = $SettingsDialog.visible or $DeveloperDialog.visible or $ClearSaveDialog.visible or $InfoDialog.visible
+
+func _button_style(color: Color) -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = color
+	style.content_margin_left = 30.0
+	style.content_margin_right = 24.0
+	style.content_margin_top = 8.0
+	style.content_margin_bottom = 8.0
+	return style
+
+func _on_settings_button_pressed():
+	$SettingsDialog/DialogBody/Content.refresh()
+	$SettingsDialog.popup_centered()
+
+func _on_developer_button_pressed():
+	$DeveloperDialog.popup_centered()
 
 func _on_editor_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/LevelEditor.tscn")
-
-func _refresh_resolution_button():
-	if not resolution_button or not GameState:
-		return
-	resolution_button.text = "分辨率: " + GameState.get_display_profile_label()
-
-func _on_resolution_button_pressed():
-	if not GameState:
-		return
-	GameState.toggle_display_profile()
-	_refresh_resolution_button()
 
 func _on_start_button_pressed():
 	if GameState:
@@ -73,6 +74,7 @@ func _on_barracks_button_pressed():
 	get_tree().change_scene_to_file("res://Scenes/Barracks.tscn")
 
 func _on_unlock_all_button_pressed():
+	$DeveloperDialog.hide()
 	if GameState and GameState.has_method("unlock_all_cards"):
 		GameState.unlock_all_cards()
 	if info_dialog:

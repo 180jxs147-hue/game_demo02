@@ -139,7 +139,9 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 			step_finished.emit()
 	)
 	
-	var hud = battle_manager.get_node("CanvasLayer/HUD")
+	var hud = battle_manager.get_node_or_null("CanvasLayer/HUD")
+	if not hud:
+		return
 	hud.add_child(panel)
 	current_tip = panel
 	panel.visible = false # 先隐藏，等定位好再显示
@@ -234,7 +236,7 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 			if is_instance_valid(panel) and current_tip == panel:
 				panel.queue_free()
 				current_tip = null
-			if is_instance_valid(current_indicator) and current_indicator == current_indicator:
+			if is_instance_valid(current_indicator):
 				current_indicator.queue_free()
 				current_indicator = null
 		)

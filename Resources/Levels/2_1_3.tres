@@ -1,0 +1,48 @@
+[gd_resource type="Resource" script_class="LevelConfig" format=3]
+
+[ext_resource type="Script" path="res://Resources/LevelConfig.gd" id="1_level"]
+[ext_resource type="Script" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/JohnChandos.tres" id="3_chandos"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/EnglishBillman.tres" id="4_billman"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/Hobilar.tres" id="5_hobilar"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/archer.tres" id="6_archer"]
+
+[sub_resource type="Resource" id="UnitSpawn_Commander"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("3_chandos")
+grid_pos = Vector2i(4, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_Billman1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_billman")
+grid_pos = Vector2i(3, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_Billman2"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("4_billman")
+grid_pos = Vector2i(5, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_Hobilar1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("5_hobilar")
+grid_pos = Vector2i(2, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_Hobilar2"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("5_hobilar")
+grid_pos = Vector2i(6, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_Archer1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("6_archer")
+grid_pos = Vector2i(4, 0)
+
+[resource]
+script = ExtResource("1_level")
+level_id = "2_1_3"
+level_name = "百年战争线 第 3 关 - 奥尔良前哨"
+grid_width = 9
+grid_height = 6
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Commander"), SubResource("UnitSpawn_Billman1"), SubResource("UnitSpawn_Billman2"), SubResource("UnitSpawn_Hobilar1"), SubResource("UnitSpawn_Hobilar2"), SubResource("UnitSpawn_Archer1")])
+reward_pool_id = "generic_early"
+shop_pool_id = "generic_shop"

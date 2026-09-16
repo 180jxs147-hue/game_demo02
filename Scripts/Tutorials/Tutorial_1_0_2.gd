@@ -119,6 +119,11 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_right = 8
 	style.corner_radius_bottom_left = 8
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.1, 0.2, 0.8)
 	panel.add_theme_stylebox_override("panel", style)
 	
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -127,7 +132,10 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 			step_finished.emit()
 	)
 	
-	battle_manager.get_node("CanvasLayer/HUD").add_child(panel)
+	var hud = battle_manager.get_node_or_null("CanvasLayer/HUD")
+	if not hud:
+		return
+	hud.add_child(panel)
 	current_tip = panel
 	current_tip_offset = offset
 	panel.visible = false
@@ -142,13 +150,6 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 				panel.queue_free()
 				current_tip = null
 		)
-
-func _process(_delta):
-	if current_tip and is_instance_valid(current_target_node):
-		# 如果需要跟随移动，可以在这里更新位置
-		# 目前只在创建时定位一次，如果需要实时跟随，取消下面注释并传入 offset
-		# _update_tip_position(Vector2.ZERO) 
-		pass
 
 func _update_tip_position():
 	if not current_tip or not is_instance_valid(current_target_node):

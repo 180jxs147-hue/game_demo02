@@ -39,12 +39,12 @@ grow_vertical = 2
 theme_override_constants/separation = 18
 
 [node name="Sidebar" type="PanelContainer" parent="RootLayout"]
-custom_minimum_size = Vector2(220, 0)
+custom_minimum_size = Vector2(188, 0)
 layout_mode = 2
 
 [node name="SidebarVBox" type="VBoxContainer" parent="RootLayout/Sidebar"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="TitleLabel" type="Label" parent="RootLayout/Sidebar/SidebarVBox"]
 layout_mode = 2
@@ -83,17 +83,17 @@ size_flags_horizontal = 3
 
 [node name="ContentVBox" type="VBoxContainer" parent="RootLayout/Content"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="PageHeader" type="Label" parent="RootLayout/Content/ContentVBox"]
 layout_mode = 2
-theme_override_font_sizes/font_size = 28
+theme_override_font_sizes/font_size = 32
 text = "已收集"
 
 [node name="MainArea" type="HBoxContainer" parent="RootLayout/Content/ContentVBox"]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="Pages" type="Control" parent="RootLayout/Content/ContentVBox/MainArea"]
 layout_mode = 2
@@ -107,15 +107,16 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="Toolbar" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="SearchLineEdit" type="LineEdit" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage/Toolbar"]
 layout_mode = 2
 size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 48)
 placeholder_text = "搜索名称"
 
 [node name="TypeOptionButton" type="OptionButton" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage/Toolbar"]
@@ -127,8 +128,8 @@ size_flags_vertical = 3
 
 [node name="GridContainer" type="GridContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/CollectedPage/ScrollContainer"]
 layout_mode = 2
-theme_override_constants/h_separation = 16
-theme_override_constants/v_separation = 16
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 24
 columns = 4
 
 [node name="AllPage" type="VBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
@@ -139,15 +140,16 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="Toolbar" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="SearchLineEdit" type="LineEdit" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage/Toolbar"]
 layout_mode = 2
 size_flags_horizontal = 3
+custom_minimum_size = Vector2(120, 48)
 placeholder_text = "搜索名称"
 
 [node name="TypeOptionButton" type="OptionButton" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage/Toolbar"]
@@ -159,8 +161,8 @@ size_flags_vertical = 3
 
 [node name="GridContainer" type="GridContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/AllPage/ScrollContainer"]
 layout_mode = 2
-theme_override_constants/h_separation = 16
-theme_override_constants/v_separation = 16
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 24
 columns = 4
 
 [node name="TagsPage" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
@@ -171,7 +173,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="TagList" type="ItemList" parent="RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage"]
 custom_minimum_size = Vector2(220, 0)
@@ -187,8 +189,8 @@ size_flags_vertical = 3
 
 [node name="GridContainer" type="GridContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages/TagsPage/CardList/ScrollContainer"]
 layout_mode = 2
-theme_override_constants/h_separation = 16
-theme_override_constants/v_separation = 16
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 24
 columns = 4
 
 [node name="SynergyPage" type="HBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Pages"]
@@ -199,7 +201,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 18
 
 [node name="SynergyList" type="ItemList" parent="RootLayout/Content/ContentVBox/MainArea/Pages/SynergyPage"]
 custom_minimum_size = Vector2(220, 0)
@@ -214,12 +216,12 @@ text = "选择一个羁绊查看详情"
 autowrap_mode = 2
 
 [node name="Detail" type="PanelContainer" parent="RootLayout/Content/ContentVBox/MainArea"]
-custom_minimum_size = Vector2(340, 0)
+custom_minimum_size = Vector2(300, 0)
 layout_mode = 2
 
 [node name="DetailVBox" type="VBoxContainer" parent="RootLayout/Content/ContentVBox/MainArea/Detail"]
 layout_mode = 2
-theme_override_constants/separation = 10
+theme_override_constants/separation = 16
 
 [node name="NameLabel" type="Label" parent="RootLayout/Content/ContentVBox/MainArea/Detail/DetailVBox"]
 layout_mode = 2

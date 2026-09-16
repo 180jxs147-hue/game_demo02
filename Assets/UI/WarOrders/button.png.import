@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6qe27sk5qmjk"
-path="res://.godot/imported/ee6153927628603c4e85e12eb343e377.jpg-40c32196129fbfb6a107ef0e9acddfd3.ctex"
+uid="uid://dpyvnx1bkrnbp"
+path="res://.godot/imported/button.png-96ccba8c5a750e145d0a8b7d7e2cd756.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Resources/ImageFiles/ee6153927628603c4e85e12eb343e377.jpg"
-dest_files=["res://.godot/imported/ee6153927628603c4e85e12eb343e377.jpg-40c32196129fbfb6a107ef0e9acddfd3.ctex"]
+source_file="res://Assets/UI/WarOrders/button.png"
+dest_files=["res://.godot/imported/button.png-96ccba8c5a750e145d0a8b7d7e2cd756.ctex"]
 
 [params]
 

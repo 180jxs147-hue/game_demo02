@@ -37,13 +37,13 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -260.0
-offset_top = -220.0
-offset_right = 260.0
-offset_bottom = 220.0
+offset_left = -680.0
+offset_top = -345.0
+offset_right = 300.0
+offset_bottom = 345.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 20
+theme_override_constants/separation = 24
 
 [node name="Header" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
@@ -51,8 +51,8 @@ theme_override_constants/separation = 10
 
 [node name="Title" type="Label" parent="VBox/Header"]
 layout_mode = 2
-text = "选择存档槽位"
-theme_override_font_sizes/font_size = 36
+text = "战役档案"
+theme_override_font_sizes/font_size = 48
 
 [node name="ModeLabel" type="Label" parent="VBox/Header"]
 layout_mode = 2
@@ -152,7 +152,7 @@ theme_override_font_sizes/font_size = 24
 [node name="Bottom" type="HBoxContainer" parent="VBox"]
 layout_mode = 2
 theme_override_constants/separation = 12
-alignment = 1
+alignment = 0
 
 [node name="BackButton" type="Button" parent="VBox/Bottom"]
 custom_minimum_size = Vector2(0, 50)

@@ -114,6 +114,11 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	style.corner_radius_top_right = 8
 	style.corner_radius_bottom_right = 8
 	style.corner_radius_bottom_left = 8
+	style.border_width_left = 2
+	style.border_width_top = 2
+	style.border_width_right = 2
+	style.border_width_bottom = 2
+	style.border_color = Color(0.1, 0.2, 0.8)
 	panel.add_theme_stylebox_override("panel", style)
 	
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -122,7 +127,10 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 			step_finished.emit()
 	)
 	
-	battle_manager.get_node("CanvasLayer/HUD").add_child(panel)
+	var hud = battle_manager.get_node_or_null("CanvasLayer/HUD")
+	if not hud:
+		return
+	hud.add_child(panel)
 	current_tip = panel
 	current_tip_offset = offset
 	panel.visible = false
