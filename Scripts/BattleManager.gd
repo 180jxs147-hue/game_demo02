@@ -80,7 +80,7 @@ var _adjacency_lines_node: Node2D # 用于绘制连线
 
 var _card_slot_scene = preload("res://Scenes/CardSlot.tscn")
 var _battle_presentation: Node
-const _BENCH_CARD_SIZE := Vector2(140, 200) ## 备战区卡牌的显示尺寸（CardSlot 原始 280x400 等比缩小）
+const _BENCH_CARD_SIZE := Vector2(126, 180) ## 备战区卡牌的显示尺寸（CardSlot 原始 280x400 等比缩小，适配底栏高度）
 
 # 存储当前的敌人网格尺寸，供 _apply_layout 使用
 var current_enemy_cols: int = GameConst.MAP_COLUMNS
@@ -2420,8 +2420,9 @@ func _refresh_bench_ui():
 		# CardSlot 原始尺寸 280x400，用等比缩放的包装 Control 适配备战区格子
 		var wrapper := Control.new()
 		wrapper.custom_minimum_size = _BENCH_CARD_SIZE
-		wrapper.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		wrapper.mouse_filter = Control.MOUSE_FILTER_STOP
 		wrapper.add_child(slot)
+		slot.position = Vector2.ZERO
 		slot.scale = _BENCH_CARD_SIZE / Vector2(280, 400)
 		bench_grid.add_child(wrapper)
 		if slot.has_method("setup_stacked"):
@@ -2437,6 +2438,26 @@ func _refresh_bench_ui():
 					u.begin_drag_from_ui()
 				_refresh_bench_ui()
 			)
+	# 补齐空槽位，让备战区呈现完整卡位（对齐图二示意）
+	for i in range(maxi(0, bench_columns - groups.size())):
+		var slot_panel := Panel.new()
+		slot_panel.custom_minimum_size = _BENCH_CARD_SIZE
+		slot_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color(0, 0, 0, 0.28)
+		sb.border_color = Color(Color("c5a369").r, Color("c5a369").g, Color("c5a369").b, 0.35)
+		sb.set_border_width_all(1)
+		slot_panel.add_theme_stylebox_override("panel", sb)
+		var plus := Label.new()
+		plus.text = "+"
+		plus.add_theme_font_size_override("font_size", 28)
+		plus.add_theme_color_override("font_color", Color(1, 1, 1, 0.18))
+		plus.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		plus.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		plus.set_anchors_preset(Control.PRESET_FULL_RECT)
+		plus.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		slot_panel.add_child(plus)
+		bench_grid.add_child(slot_panel)
 
 func _apply_theme():
 	if not GameState: return

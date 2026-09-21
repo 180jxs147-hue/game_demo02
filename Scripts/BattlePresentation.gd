@@ -21,7 +21,8 @@ func _ready():
 		var panel := Panel.new()
 		panel.name = "Battle" + key
 		panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		panel.add_theme_stylebox_override("panel", Visuals.surface(Color(0.075, 0.073, 0.066, 0.96), Visuals.GOLD))
+		# 面板边框保持克制，文字和内容优先；装饰只作为细金线和暗色底。
+		panel.add_theme_stylebox_override("panel", battle_panel())
 		hud.add_child(panel)
 		hud.move_child(panel, 0)
 		panels[key] = panel
@@ -66,6 +67,34 @@ func label(value: String, font_size: int, color: Color) -> Label:
 	hud.add_child(node)
 	return node
 
+func ornate_panel() -> StyleBoxTexture:
+	var style := StyleBoxTexture.new()
+	style.texture = load("res://Assets/UI/Battle/ornate_panel.png")
+	style.texture_margin_left = 92
+	style.texture_margin_top = 92
+	style.texture_margin_right = 92
+	style.texture_margin_bottom = 92
+	style.expand_margin_left = 2
+	style.expand_margin_top = 2
+	style.expand_margin_right = 2
+	style.expand_margin_bottom = 2
+	style.modulate_color = Color(1.0, 0.96, 0.86, 0.96)
+	return style
+
+func battle_panel() -> StyleBoxFlat:
+	var style := StyleBoxFlat.new()
+	style.bg_color = Color(0.035, 0.028, 0.022, 0.84)
+	style.border_color = Color(0.67, 0.52, 0.31, 0.82)
+	style.set_border_width_all(1)
+	style.shadow_color = Color(0, 0, 0, 0.38)
+	style.shadow_size = 8
+	style.shadow_offset = Vector2(0, 3)
+	style.content_margin_left = 16
+	style.content_margin_right = 16
+	style.content_margin_top = 12
+	style.content_margin_bottom = 12
+	return style
+
 func style_button(button: Button, primary: bool = false):
 	for state in ["normal", "hover", "pressed", "disabled", "focus"]:
 		button.remove_theme_stylebox_override(state)
@@ -83,11 +112,11 @@ func layout():
 	var size := get_viewport().get_visible_rect().size
 	var w := size.x
 	var h := size.y
-	var dock_y := h - 216.0
+	var dock_y := h - 240.0
 	place(panels.Top, Rect2(0, 0, w, 86))
 	place(panels.Synergy, Rect2(14, 116, 210, dock_y - 128))
-	place(panels.Dock, Rect2(0, dock_y, w, 216))
-	place(panels.Details, Rect2(w * 0.39, dock_y + 14, w * 0.36, 188))
+	place(panels.Dock, Rect2(0, dock_y, w, 240))
+	place(panels.Details, Rect2(w * 0.39, dock_y + 14, w * 0.36, 212))
 	place(captions.Title, Rect2(24, 17, 245, 48))
 	place(captions.Synergy, Rect2(32, 132, 170, 36))
 	place(battle.synergy_label, Rect2(32, 190, 172, maxf(100, dock_y - 240)))
@@ -99,19 +128,19 @@ func layout():
 	place(subtitle, Rect2(w * 0.41, 54, w * 0.22, 24))
 	place(hud.get_node("BattleLogButton"), Rect2(w - 228, 23, 132, 40))
 	place(hud.get_node("BattleSpeedButton"), Rect2(w - 84, 23, 66, 40))
-	place(battle.bench_panel, Rect2(24, dock_y + 12, w * 0.37 - 24, 192))
+	place(battle.bench_panel, Rect2(24, dock_y + 12, w * 0.37 - 24, 216))
 	place(captions.Hint, Rect2(132, dock_y + 16, 300, 24))
-	place(portrait, Rect2(w * 0.39 + 14, dock_y + 26, 118, 155))
-	place(detail, Rect2(w * 0.39 + 148, dock_y + 24, w * 0.36 - 158, 163))
-	place(footprint, Rect2(w * 0.75 - 84, dock_y + 128, 70, 60))
-	var action := Rect2(w * 0.77, dock_y + 38, w * 0.21, 68)
+	place(portrait, Rect2(w * 0.39 + 14, dock_y + 30, 118, 155))
+	place(detail, Rect2(w * 0.39 + 148, dock_y + 28, w * 0.36 - 158, 180))
+	place(footprint, Rect2(w * 0.75 - 84, dock_y + 144, 70, 60))
+	var action := Rect2(w * 0.77, dock_y + 44, w * 0.21, 68)
 	place(hud.get_node("StartButton"), action)
 	style_button(hud.get_node("StartButton"), true)
 	if hud.has_node("FinishBattleButton"):
 		place(hud.get_node("FinishBattleButton"), action)
 		style_button(hud.get_node("FinishBattleButton"), true)
-	place(hud.get_node("SaveButton"), Rect2(w * 0.77, dock_y + 131, w * 0.10, 47))
-	place(hud.get_node("TopMenuButton"), Rect2(w * 0.88, dock_y + 131, w * 0.10, 47))
+	place(hud.get_node("SaveButton"), Rect2(w * 0.77, dock_y + 143, w * 0.10, 47))
+	place(hud.get_node("TopMenuButton"), Rect2(w * 0.88, dock_y + 143, w * 0.10, 47))
 	# Scale the combined board once. Unequal armies NEVER scale independently.
 	var cols: int = GridManager.playable_columns
 	var rows: int = GridManager.playable_rows
@@ -148,7 +177,7 @@ func _process(_delta: float):
 func inspect(data: UnitData):
 	selected = data
 	portrait.texture = data.icon
-	detail.text = "%s\n\n生命  %g       防御  %g\n攻击  %g       射程  %g\n冷却  %.1fs    民力  %g" % [data.name, data.max_hp, data.defense, data.attack_damage, data.attack_range, data.cooldown, data.manpower_cost]
+	detail.text = "%s\n\n生命  %.1f       防御  %.1f\n攻击  %.1f       射程  %.1f\n冷却  %.1fs    民力  %.1f" % [data.name, data.max_hp, data.defense, data.attack_damage, data.attack_range, data.cooldown, data.manpower_cost]
 	footprint.queue_redraw()
 
 func _draw_footprint():
