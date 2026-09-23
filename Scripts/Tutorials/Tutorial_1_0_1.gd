@@ -64,13 +64,8 @@ func _start_sequence():
 	phase = Phase.INTRO_FIELD
 	var field = battle_manager.get_node_or_null("Battlefield/FriendlyField")
 	if field:
-		# 临时把提示框放在战场中央大概位置
-		# 由于 FriendlyField 很大，我们尝试找个中心点提示
-		var center_offset = Vector2(200, 150) 
-		# 这里没有很好的 Control 节点做锚点，FriendlyField 是 Node2D
-		# 我们可以用 GridVisualizer 如果它是 Control，但它也是 Node2D
-		# 暂时用 bench 做锚点，向上指
-		_show_tip("请将单位拖拽到战场网格上进行部署。", bench, Vector2(0, -300), 3.0)
+		var grid = battle_manager.get_node_or_null("Battlefield/FriendlyField/GridVisualizer")
+		_show_tip("请将单位拖拽到战场网格上进行部署。", grid, Vector2(0, -18), 3.0)
 		await _wait_for_step(3.5)
 	
 	# Step 3: 引导拖拽
@@ -105,15 +100,17 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	var label = Label.new()
 	label.text = text
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	label.custom_minimum_size = Vector2(380, 0)
 	label.add_theme_color_override("font_color", Color.WHITE)
-	label.add_theme_font_size_override("font_size", 24)
+	label.add_theme_font_size_override("font_size", 20)
 	vbox.add_child(label)
 	
 	var hint = Label.new()
 	hint.text = "(点击继续)"
 	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
-	hint.add_theme_font_size_override("font_size", 18)
+	hint.add_theme_font_size_override("font_size", 15)
 	vbox.add_child(hint)
 	
 	panel.add_child(margin)
@@ -129,7 +126,10 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 	style.border_width_top = 2
 	style.border_width_right = 2
 	style.border_width_bottom = 2
-	style.border_color = Color(0.1, 0.2, 0.8) # Deep Blue
+	style.border_color = Color(0.77, 0.62, 0.32, 0.95)
+	style.shadow_color = Color(0, 0, 0, 0.55)
+	style.shadow_size = 10
+	style.shadow_offset = Vector2(0, 4)
 	panel.add_theme_stylebox_override("panel", style)
 	
 	# 确保不遮挡鼠标交互
@@ -153,11 +153,11 @@ func _show_tip(text: String, target_node: Node, offset: Vector2 = Vector2.ZERO, 
 		indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var ind_style = StyleBoxFlat.new()
 		ind_style.bg_color = Color(0, 0, 0, 0) # 透明背景
-		ind_style.border_width_left = 4
-		ind_style.border_width_top = 4
-		ind_style.border_width_right = 4
-		ind_style.border_width_bottom = 4
-		ind_style.border_color = Color(0.1, 0.2, 0.8, 0.8) # Deep Blue Transparent
+		ind_style.border_width_left = 2
+		ind_style.border_width_top = 2
+		ind_style.border_width_right = 2
+		ind_style.border_width_bottom = 2
+		ind_style.border_color = Color(0.77, 0.62, 0.32, 0.78)
 		ind_style.set_corner_radius_all(4)
 		indicator.add_theme_stylebox_override("panel", ind_style)
 		
@@ -251,6 +251,11 @@ func _get_screen_rect(node: Node) -> Rect2:
 		
 		# 估算大小 (尝试获取 Sprite 子节点，或者用默认值)
 		var size = Vector2(100, 100) # 默认 100x100
+		if node.name == "GridVisualizer":
+			var cols := int(node.get("override_cols")) if node.get("override_cols") else int(GridManager.playable_columns)
+			var rows := int(node.get("override_rows")) if node.get("override_rows") else int(GridManager.playable_rows)
+			var grid_scale: float = float(node.global_scale.x)
+			return Rect2(screen_pos, Vector2(cols, rows) * GameConst.GRID_SIZE * grid_scale)
 		var sprite = _find_visual_node(node)
 		if sprite:
 			if sprite is Sprite2D:

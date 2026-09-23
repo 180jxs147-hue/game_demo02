@@ -91,8 +91,17 @@ func _run():
 	battle._refresh_bench_ui()
 	battle.show_tooltip(load("res://Resources/DataFiles/junguo_bing.tres"))
 	await capture("deployment")
-	var card = battle.bench_grid.get_child(battle.bench_grid.get_child_count() - 1)
-	card.drag_requested.emit(card.data)
+	# The reserve grid is padded with empty Panel slots. The last child is
+	# therefore not guaranteed to be a card; locate the wrapped CardSlot that
+	# actually owns the drag signal and data property.
+	var card: Node = null
+	for candidate in battle.bench_grid.find_children("*", "Panel", true, false):
+		if candidate.has_signal("drag_requested") and candidate.get("_unit_data") is UnitData:
+			card = candidate
+			break
+	check(card != null, "Reserve card exists in padded grid")
+	if card:
+		card.drag_requested.emit(card.get("_unit_data"))
 	await settle()
 	var in_hand := false
 	for unit in battle.units_container.get_children():
