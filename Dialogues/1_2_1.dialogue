@@ -7,3 +7,4 @@ Player01: 我明白了。若有一日黄巾也只会滥杀，我会第一个举�
 ZhangJue: 好。去吧，先挡住这第一阵风。让他们知道，黄巾不是只会抢粮的贼。 [#pos:right]
 System: 【任务：黄巾营初试——击退追击而来的汉军】 
 do enter_camp_before_level("1_2_1")
+=> END

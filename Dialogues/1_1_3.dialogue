@@ -9,5 +9,5 @@ System: 【任务：坚守长社，等待火攻时机】
 - 立即支援长社 (主线)
 	do enter_camp_before_level("1_1_3")
 - 救援被围困的孙坚 (支线 - 获得孙坚)
-	do start_level_id("1_1_3_side")
+	do play_level_intro("1_1_3_side")
 => END

@@ -42,6 +42,7 @@ var active_status_effects: Dictionary = {} # type -> {duration, value, tick_time
 var is_dragging: bool = false
 var drag_offset: Vector2 = Vector2.ZERO
 var drag_preview: Node2D = null # 拖拽时的指示器
+var _drag_origin_parent: Node2D = null
 
 # 引用新的 Label 节点
 @onready var status_label = $StatusLabel # 记得在场景里改名
@@ -125,6 +126,23 @@ func begin_drag_from_ui():
 	is_dragging = true
 	z_index = 100
 	_create_drag_preview()
+	_raise_for_drag()
+
+func _raise_for_drag() -> void:
+	if not battle_manager:
+		return
+	var layer := battle_manager.get_node_or_null("DragLayer") as CanvasLayer
+	var origin := get_parent() as Node2D
+	if not layer or not origin:
+		return
+	_drag_origin_parent = origin
+	_reparent_preserving_screen(layer)
+	drag_offset = get_global_mouse_position() - global_position
+
+func _reparent_preserving_screen(new_parent: Node) -> void:
+	var screen_transform := get_global_transform_with_canvas()
+	reparent(new_parent, true)
+	global_transform = get_canvas_transform().affine_inverse() * screen_transform
 
 func get_max_hp() -> float:
 	var relic_hp = 0.0
@@ -1302,6 +1320,7 @@ func _try_start_drag():
 		
 		# 创建拖拽指示器
 		_create_drag_preview()
+		_raise_for_drag()
 		
 		# 拖起时，如果在格子里，要清除占用
 		if is_deployed:
@@ -1309,6 +1328,9 @@ func _try_start_drag():
 
 func _end_drag():
 	is_dragging = false
+	if is_instance_valid(_drag_origin_parent):
+		_reparent_preserving_screen(_drag_origin_parent)
+	_drag_origin_parent = null
 	z_index = 0
 	in_hand = false
 	
@@ -1423,8 +1445,11 @@ func _update_drag_preview():
 	
 	# 1. 计算目标格子 (逻辑与 _end_drag 保持一致)
 	var center_offset = Vector2(GameConst.GRID_SIZE, GameConst.GRID_SIZE) / 2.0
-	var mouse_world_pos = global_position + center_offset
-	var local_pos = get_parent().to_local(mouse_world_pos)
+	var grid_parent := _drag_origin_parent if is_instance_valid(_drag_origin_parent) else get_parent() as Node2D
+	if not grid_parent:
+		return
+	var center_screen_pos: Vector2 = get_global_transform_with_canvas() * center_offset
+	var local_pos: Vector2 = grid_parent.get_global_transform_with_canvas().affine_inverse() * center_screen_pos
 	var target_grid_pos = GridManager.world_to_grid(local_pos)
 	
 	# 2. 移动指示器到吸附位置

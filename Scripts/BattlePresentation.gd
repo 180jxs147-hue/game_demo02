@@ -8,6 +8,7 @@ var phase: Label
 var detail_root: VBoxContainer
 var detail_name: Label
 var detail_stats: GridContainer
+var detail_traits: RichTextLabel
 var card_preview: Control
 var plaque: TextureRect
 var panels: Dictionary = {}
@@ -77,7 +78,7 @@ func _ready():
 	detail_root = VBoxContainer.new()
 	detail_root.name = "UnitDetailContent"
 	detail_root.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	detail_root.add_theme_constant_override("separation", 5)
+	detail_root.add_theme_constant_override("separation", 3)
 	detail_name = Label.new()
 	detail_name.add_theme_font_size_override("font_size", 22)
 	detail_name.add_theme_color_override("font_color", Visuals.GOLD)
@@ -89,11 +90,25 @@ func _ready():
 	separator.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	detail_root.add_child(separator)
 	detail_stats = GridContainer.new()
-	detail_stats.columns = 2
-	detail_stats.add_theme_constant_override("h_separation", 18)
-	detail_stats.add_theme_constant_override("v_separation", 8)
+	detail_stats.columns = 4
+	detail_stats.add_theme_constant_override("h_separation", 12)
+	detail_stats.add_theme_constant_override("v_separation", 2)
 	detail_stats.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	detail_root.add_child(detail_stats)
+	var trait_heading := Label.new()
+	trait_heading.text = "特性"
+	trait_heading.add_theme_font_size_override("font_size", 15)
+	trait_heading.add_theme_color_override("font_color", Visuals.GOLD)
+	trait_heading.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	detail_root.add_child(trait_heading)
+	detail_traits = RichTextLabel.new()
+	detail_traits.name = "UnitTraits"
+	detail_traits.custom_minimum_size.y = 44
+	detail_traits.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	detail_traits.scroll_active = true
+	detail_traits.add_theme_font_size_override("normal_font_size", 14)
+	detail_traits.add_theme_color_override("default_color", Visuals.PAPER)
+	detail_root.add_child(detail_traits)
 	hud.add_child(detail_root)
 	card_preview = load("res://Scenes/CardSlot.tscn").instantiate()
 	card_preview.name = "UnitDetailCardPreview"
@@ -284,9 +299,9 @@ func layout():
 		bench_title.add_theme_font_size_override("font_size", 16)
 		bench_title.add_theme_color_override("font_color", Visuals.PAPER)
 	place(captions.Hint, Rect2(164, dock_y + 20, 420, 24))
-	card_preview.position = Vector2(w * 0.39 + 11, dock_y + 12)
+	card_preview.position = Vector2(w * 0.39 + 11, dock_y + 26)
 	card_preview.scale = Vector2.ONE * 0.47
-	place(detail_root, Rect2(w * 0.39 + 154, dock_y + 34, w * 0.36 - 168, 160))
+	place(detail_root, Rect2(w * 0.39 + 154, dock_y + 34, w * 0.36 - 168, 182))
 	var action := Rect2(w - 360, dock_y + 26, 336, 58)
 	place(hud.get_node("StartButton"), action)
 	style_action_button(hud.get_node("StartButton"), true)
@@ -340,9 +355,6 @@ func inspect(data: UnitData):
 		["冷却", "%.1fs" % data.cooldown], ["民力", "%.1f" % data.manpower_cost]
 	]
 	for entry in stats:
-		var row := HBoxContainer.new()
-		row.add_theme_constant_override("separation", 6)
-		row.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var key := Label.new()
 		key.text = entry[0]
 		key.custom_minimum_size.x = 42
@@ -351,11 +363,30 @@ func inspect(data: UnitData):
 		key.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var value := Label.new()
 		value.text = entry[1]
+		value.custom_minimum_size.x = 72
 		value.add_theme_font_size_override("font_size", 17)
 		value.add_theme_color_override("font_color", Visuals.PAPER)
-		value.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		value.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		value.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		row.add_child(key)
-		row.add_child(value)
-		detail_stats.add_child(row)
+		detail_stats.add_child(key)
+		detail_stats.add_child(value)
+	var trait_lines: Array[String] = []
+	for tag_id in data.tags:
+		var tag_name: String = TagManager.get_tag_name(tag_id)
+		var description: String = TagManager.get_tag_description(tag_id)
+		if description.is_empty():
+			description = GameConst.TAG_DESCRIPTIONS.get(tag_id, "")
+		if tag_id == "medic":
+			description = "不进行攻击，治疗受伤最重的友军（基础治疗量 %.1f）。" % data.attack_damage
+			if data.name == "圣女贞德":
+				description = "正常攻击，并通过光环辅助队友。"
+		elif tag_id == "charge":
+			description = description.replace("%d", str(data.charge_count)).replace("{X}", str(data.charge_count))
+		elif tag_id == "fear":
+			description = description.replace("{X}", str(data.fear_count))
+		elif tag_id == "plunder":
+			description = description.replace("{X}", str(data.plunder_count))
+		elif tag_id == "berserk":
+			description = description.replace("{X}", str(data.berserk_count))
+		trait_lines.append("• %s：%s" % [tag_name, description] if not description.is_empty() else "• %s" % tag_name)
+	detail_traits.text = "\n".join(trait_lines) if not trait_lines.is_empty() else "暂无特性"

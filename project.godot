@@ -26,6 +26,7 @@ DialogueManager="*res://addons/dialogue_manager/dialogue_manager.gd"
 GridManager="*res://Scripts/GridManager.gd"
 GameState="*res://AutoLoad/GameState.gd"
 TagManager="*res://AutoLoad/TagManager.gd"
+MCPRuntimeServer="*res://addons/godot_mcp_toolkit/runtime/mcp_runtime_server.gd"
 
 [display]
 
@@ -37,7 +38,7 @@ window/stretch/mode="canvas_items"
 
 [editor_plugins]
 
-enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_state_charts/plugin.cfg")
+enabled=PackedStringArray("res://addons/dialogue_manager/plugin.cfg", "res://addons/godot_state_charts/plugin.cfg", "res://addons/godot_mcp_toolkit/plugin.cfg")
 
 [internationalization]
 

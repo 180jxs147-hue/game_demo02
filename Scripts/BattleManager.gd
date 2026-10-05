@@ -58,12 +58,17 @@ var _shake_decay: float = 10.0
 
 @onready var result_overlay = $CanvasLayer/ResultOverlay
 @onready var result_title_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/TitleLabel
+@onready var result_progress_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/ProgressLabel
 @onready var result_detail_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/DetailLabel
+@onready var reward_hint_label = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/RewardHint
 @onready var next_level_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/NextLevelButton
 @onready var retry_button = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/RetryButton
 
 var _tooltip_instance: Control
 var _tooltip_target: Node = null
+var _camp_intro_pending: bool = false
+var _intro_dialogue_started: bool = false
+var _active_tutorial: Node
 
 @onready var reward_container = $CanvasLayer/ResultOverlay/Panel/VBoxContainer/RewardContainer
 
@@ -81,6 +86,10 @@ var _adjacency_lines_node: Node2D # 用于绘制连线
 var _card_slot_scene = preload("res://Scenes/CardSlot.tscn")
 var _battle_presentation: Node
 const _BENCH_CARD_SIZE := Vector2(126, 180) ## 备战区卡牌的显示尺寸（CardSlot 原始 280x400 等比缩小，适配底栏高度）
+var _reward_primary_button_texture: Texture2D = preload("res://Assets/UI/Battle/reward_button_primary_v2.png")
+var _reward_secondary_button_texture: Texture2D = preload("res://Assets/UI/Battle/reward_button_secondary_v2.png")
+var _reward_resolved: bool = false
+var _reward_action_buttons: Array = []
 
 # 存储当前的敌人网格尺寸，供 _apply_layout 使用
 var current_enemy_cols: int = GameConst.MAP_COLUMNS
@@ -178,6 +187,9 @@ func _ready():
 
 	
 	_apply_theme()
+	if get_viewport() and not get_viewport().size_changed.is_connected(_fit_result_overlay):
+		get_viewport().size_changed.connect(_fit_result_overlay)
+	call_deferred("_fit_result_overlay")
 	_setup_bench_ui()
 	
 	# --- 强制修复交互遮挡 ---
@@ -226,9 +238,21 @@ func _ready():
 		
 	if not level_database and GameState and GameState.has_method("get_level_database"):
 		level_database = GameState.get_level_database()
-	if level_database:
-		level = level_database.get_level(level_index)
-		current_level_config = level
+	if not level_database or level_database.levels.is_empty():
+		push_error("[BattleManager] Level database is missing or empty.")
+		return
+	if level_index < 0 or level_index >= level_database.levels.size():
+		var fallback_index := level_database.get_index_by_id("1_0_1")
+		if fallback_index < 0: fallback_index = 0
+		push_warning("[BattleManager] Saved level index %d is invalid; using database fallback %d." % [level_index, fallback_index])
+		level_index = fallback_index
+		if GameState: GameState.selected_level_index = level_index
+	level = level_database.get_level(level_index)
+	current_level_config = level
+	if not current_level_config:
+		push_error("[BattleManager] No level config at index %d." % level_index)
+		return
+	print("[BattleManager] Loading selected campaign level %s (index %d): %s" % [level.level_id, level_index, level.level_name])
 	
 	# --- 设置背景图片 ---
 	_update_background()
@@ -274,6 +298,7 @@ func _ready():
 		GameState.next_level_id_from_camp = ""
 		# 如果需要跳过（例如上一段剧情已经作为该关的引子），则不再播放
 		if not GameState.skip_intro:
+			_camp_intro_pending = true
 			print("[BattleManager] Auto-playing intro for level: ", id)
 			# 延迟一帧调用以确保 _ready 完成
 			get_tree().create_timer(0.1).timeout.connect(func():
@@ -283,19 +308,9 @@ func _ready():
 			print("BattleManager: skip_intro is true. Skipping intro for: ", id)
 			GameState.skip_intro = false
 	else:
-		print("BattleManager: No next_level_id_from_camp found or it is empty.")
-		# --- Fallback for testing: Auto-start Level 1_0_1 ---
-		print("[BattleManager] Debug: Auto-starting level 1_0_1 for testing/fallback.")
-		
-		# 确保 level_database 存在
-		if not level_database:
-			level_database = load("res://Resources/EnemyLevels.tres")
-			
-		if level_database:
-			# 使用 call_deferred 确保 _ready 完全结束后再开始关卡
-			call_deferred("start_level_id", "1_0_1")
-		else:
-			push_error("[BattleManager] Critical: LevelDatabase not found and cannot be loaded.")
+		# The selected level was already initialized from GameState above.
+		# Never replace it with the tutorial opening level on normal loads.
+		print("[BattleManager] No pending camp level; keeping selected level %s." % level.level_id)
 
 	if GameState:
 		final_cols = GameState.current_cols
@@ -359,7 +374,7 @@ func _ready():
 	# 确保 _arrange_bench 在节点就绪后安全调用
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
-	call_deferred("start_intro_dialogue")
+	call_deferred("_start_intro_or_tutorial")
 	
 	print("[BattleManager] _ready completed successfully")
 
@@ -404,6 +419,7 @@ func start_level(index: int):
 		level = level_database.get_level(level_index)
 	
 	current_level_config = level
+	_camp_intro_pending = false
 	_update_background()
 	
 	if not level:
@@ -519,6 +535,8 @@ func start_level(index: int):
 	call_deferred("_arrange_bench")
 	call_deferred("_apply_layout")
 	call_deferred("_check_tutorial")
+	if GameState:
+		GameState.trigger_autosave()
 
 func _apply_layout():
 	if not _battle_presentation:
@@ -535,19 +553,38 @@ func _input(event):
 			start_intro_dialogue()
 
 func start_intro_dialogue():
+	if _intro_dialogue_started:
+		return true
 	# 只有在第一关（index 0）时才播放开场剧情
 	if level_index != 0:
-		return
+		return false
 
 	# 使用 1_0_1.dialogue 而不是 level1.dialogue，以便统一管理
 	var dialogue_path = BattleManager.get_dialogue_path_by_id("1_0_1")
 	var resource = load(dialogue_path)
 	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
 	if resource and balloon_scene:
+		_intro_dialogue_started = true
 		# 传入 [self] 以便在对话中调用 start_level
 		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
+		return true
 	else:
 		push_error("Dialogue resource or Balloon scene not found!")
+		return false
+
+func _start_intro_or_tutorial():
+	# LevelSelect may already have played this level's dialogue before entering
+	# Battle. Consume that handoff and start its tutorial once, without replaying
+	# the dialogue over the tutorial callouts.
+	if _camp_intro_pending:
+		return
+	if GameState and GameState.skip_intro:
+		GameState.skip_intro = false
+		_check_tutorial()
+		return
+	if level_index == 0 and start_intro_dialogue():
+		return
+	_check_tutorial()
 
 func _debug_add_random_unit() -> UnitData:
 	var random_datas = [
@@ -608,6 +645,10 @@ func _debug_add_card_to_library():
 func _check_tutorial():
 	if not current_level_config:
 		return
+	if is_instance_valid(_active_tutorial) and _active_tutorial.is_queued_for_deletion():
+		_active_tutorial = null
+	if is_instance_valid(_active_tutorial):
+		return
 		
 	var level_id = current_level_config.level_id
 	var tutorial_script_path = "res://Scripts/Tutorials/Tutorial_%s.gd" % level_id
@@ -616,7 +657,13 @@ func _check_tutorial():
 		var tutorial_script = load(tutorial_script_path)
 		if tutorial_script:
 			var tutorial = tutorial_script.new()
+			tutorial.name = "ActiveLevelTutorial"
+			_active_tutorial = tutorial
 			add_child(tutorial)
+			tutorial.tree_exited.connect(func():
+				if _active_tutorial == tutorial:
+					_active_tutorial = null
+			)
 			if tutorial.has_method("start"):
 				tutorial.start(self)
 
@@ -1143,9 +1190,6 @@ func _end_battle(victory: bool):
 	is_battle_started = false
 	
 	if victory:
-		# 胜利：保存进度
-		_save_library()
-		
 		# 不直接显示结算界面，而是显示“完成战斗”按钮
 		# show_victory_screen()
 		_show_finish_battle_button()
@@ -1200,32 +1244,16 @@ func _show_finish_battle_button():
 	_apply_layout()
 
 static func get_dialogue_path_by_id(id: String) -> String:
-	var dialogue_path = ""
-	# 线性前置
-	if id == "1_0_1": dialogue_path = "res://Dialogues/1_0_1.dialogue"
-	elif id == "1_0_2": dialogue_path = "res://Dialogues/1_0_2.dialogue"
-	elif id == "1_0_3": dialogue_path = "res://Dialogues/1_0_3.dialogue"
-	elif id == "1_0_4": dialogue_path = "res://Dialogues/1_0_4.dialogue"
-	
-	# 汉军线
-	elif id == "1_1_1": dialogue_path = "res://Dialogues/1_1_1.dialogue"
-	elif id == "1_1_2": dialogue_path = "res://Dialogues/1_1_2.dialogue"
-	elif id == "1_1_3": dialogue_path = "res://Dialogues/1_1_3.dialogue"
-	elif id == "1_1_4": dialogue_path = "res://Dialogues/1_1_4.dialogue"
-	
-	# 黄巾线
-	elif id == "1_2_1": dialogue_path = "res://Dialogues/1_2_1.dialogue"
-	elif id == "1_2_2": dialogue_path = "res://Dialogues/1_2_2.dialogue"
-	elif id == "1_2_3": dialogue_path = "res://Dialogues/1_2_3.dialogue"
-	elif id == "1_2_4": dialogue_path = "res://Dialogues/1_2_4.dialogue"
-	
-	# 终章
-	elif id == "1_3_1": dialogue_path = "res://Dialogues/1_3_1.dialogue"
-	
-	return dialogue_path
+	var dialogue_id := "1_1_3_side_start" if id == "1_1_3_side" else id
+	var dialogue_path := "res://Dialogues/%s.dialogue" % dialogue_id
+	return dialogue_path if ResourceLoader.exists(dialogue_path) else ""
 
 func get_next_level_id() -> String:
 	if level_database and current_level_config:
+		if current_level_config.level_id == "1_1_10" or current_level_config.level_id == "1_2_8":
+			return "1_3_1"
+		if current_level_config.level_id == "1_3_1" or current_level_config.level_id == "1_1_3_side":
+			return ""
 		var current_idx = level_database.get_index_by_id(current_level_config.level_id)
 		if current_idx != -1 and current_idx + 1 < level_database.levels.size():
 			return level_database.levels[current_idx + 1].level_id
@@ -1239,17 +1267,6 @@ func start_level_id(id: String):
 			start_level(idx)
 		else:
 			push_error("Level ID not found: " + id)
-
-func _save_library():
-	if not player_library: return
-	var save_path = player_library.resource_path
-	if save_path.is_empty() or save_path.begins_with("res://"):
-		# 优先使用 GameState 的存档路径管理
-		if GameState:
-			save_path = GameState._library_path()
-		else:
-			save_path = "user://PlayerLibrary.tres"
-	ResourceSaver.save(player_library, save_path)
 
 # 供对话调用的接口：播放指定关卡的开场剧情，如果没有则直接开始战斗
 func play_level_intro(id: String):
@@ -1283,8 +1300,10 @@ func show_victory_dialogue():
 	if current_level_config:
 		var current_id = current_level_config.level_id
 		
-		# 特殊处理：汉军线/黄巾线 最后一关结束后，跳转到终章 1_3_1
-		if current_id == "1_1_10" or current_id == "1_2_4":
+		if current_id == "1_1_3_side":
+			dialogue_path = "res://Dialogues/1_1_3_side_victory.dialogue"
+		# 汉军线、黄巾线最后一关结束后进入终章。
+		elif current_id == "1_1_10" or current_id == "1_2_8":
 			dialogue_path = BattleManager.get_dialogue_path_by_id("1_3_1")
 		else:
 			# 其他关卡：获取下一关的 ID，播放下一关的开场剧情
@@ -1345,7 +1364,8 @@ func grant_unit(unit_identifier: String):
 		if player_library:
 			player_library.collected_cards.append(new_unit)
 			if GameState:
-				GameState.save_player_library(player_library)
+				GameState.set_current_library(player_library)
+				GameState.trigger_autosave()
 		
 		# 立即显示在备战区（如果有空位）
 		spawn_unit(new_unit)
@@ -1369,11 +1389,19 @@ func grant_unit(unit_identifier: String):
 # 供对话调用的接口
 func show_victory_screen():
 	print("DEBUG: show_victory_screen called")
+	if result_overlay and result_overlay.visible and result_title_label and result_title_label.text.begins_with("战斗胜利"):
+		return
+	_reward_resolved = false
+	_reward_action_buttons.clear()
 	get_tree().paused = true
 	if result_overlay:
 		result_overlay.visible = true
+		result_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	if result_title_label:
-		result_title_label.text = "胜利"
+		result_title_label.text = "战斗胜利"
+	if reward_hint_label:
+		reward_hint_label.visible = true
+		reward_hint_label.text = "选择一项战利品，或将其折现为军资"
 	
 	# 胜利逻辑
 	var reward_text = ""
@@ -1402,9 +1430,9 @@ func show_victory_screen():
 		if not level_database: print("DEBUG: level_database is null")
 		if not current_level_config: print("DEBUG: current_level_config is null")
 		
-	if current_idx != -1 and level_database and current_idx + 1 < level_database.levels.size():
+	if get_next_level_id() != "" or (current_level_config and current_level_config.level_id == "1_1_3_side"):
 		has_next = true
-		print("DEBUG: has_next=true. Next index=", current_idx + 1)
+		print("DEBUG: has_next=true. Next level=", get_next_level_id())
 	else:
 		print("DEBUG: has_next=false. levels.size=", level_database.levels.size() if level_database else "null")
 		reward_text += "\n\n恭喜通关！(Demo结束)"
@@ -1417,16 +1445,20 @@ func show_victory_screen():
 	if result_detail_label:
 		var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f%s" % [_count_alive_units(true), _count_alive_units(false), current_manpower, reward_text]
 		result_detail_label.text = detail
+	_update_result_progress()
 
 func _show_defeat_screen():
 	# 确保胜利窗口不会同时出现
-	if result_title_label and result_title_label.text == "胜利" and result_overlay.visible:
+	if result_title_label and result_title_label.text.begins_with("战斗胜利") and result_overlay.visible:
 		return
 		
 	if result_overlay:
 		result_overlay.visible = true
+		result_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	if result_title_label:
 		result_title_label.text = "失败"
+	if reward_hint_label:
+		reward_hint_label.visible = false
 		
 	if next_level_button: next_level_button.visible = false
 	if retry_button: retry_button.visible = true
@@ -1434,6 +1466,7 @@ func _show_defeat_screen():
 	if result_detail_label:
 		var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f" % [_count_alive_units(true), _count_alive_units(false), current_manpower]
 		result_detail_label.text = detail
+	_update_result_progress()
 
 # --- 羁绊系统 ---
 func _check_and_apply_synergies():
@@ -1830,6 +1863,9 @@ func _on_start_button_pressed():
 	get_tree().call_group("units", "start_battle")
 
 func _on_next_level_button_pressed():
+	if current_level_config and current_level_config.level_id == "1_1_3_side":
+		show_victory_dialogue()
+		return
 	var next_id = get_next_level_id()
 	if next_id != "":
 		play_level_intro(next_id)
@@ -1837,9 +1873,11 @@ func _on_next_level_button_pressed():
 		_proceed_to_next_level_direct()
 
 func _on_retry_button_pressed():
-	# 重试时强制重载存档，丢弃当前战斗中的更改（如受伤）
+	# 重试时恢复本关开始时的自动检查点，保留此前关卡获得的卡牌。
 	if GameState:
-		GameState.load_player_library(true)
+		var checkpoint = GameState.load_player_library(true, true)
+		if checkpoint:
+			GameState.set_current_library(checkpoint)
 		
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://Scenes/Battle.tscn")
@@ -1864,6 +1902,8 @@ func _show_rewards():
 	if not reward_container: return
 	
 	print("DEBUG: _show_rewards called")
+	_reward_resolved = false
+	_reward_action_buttons.clear()
 	
 	# 清空旧的
 	for child in reward_container.get_children():
@@ -1970,194 +2010,165 @@ func _show_rewards():
 
 func _create_reward_card_ui(item: Dictionary):
 	var type = item.get("type", "unit")
-	
-	# --- 如果是兵种卡牌，使用标准的 CardSlot 样式 ---
+	# 每张奖励卡都使用统一的宽度和暗金样式，保证三选一能完整落在面板内。
+	const CARD_WIDTH := 220.0
+	const CARD_HEIGHT := 292.0
+	var wrapper := VBoxContainer.new()
+	wrapper.custom_minimum_size = Vector2(CARD_WIDTH, 370)
+	wrapper.add_theme_constant_override("separation", 8)
+	wrapper.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+
 	if type == "unit":
-		var data = item["data"] as UnitData
-		if _card_slot_scene:
-			var vbox = VBoxContainer.new()
-			vbox.add_theme_constant_override("separation", 12)
-			
-			var slot = _card_slot_scene.instantiate()
-			# CardSlot 默认尺寸 280x400，在奖励界面可能有点大，但为了保持一致，我们暂不缩放
-			# 或者如果需要缩放，可以用 Control 包裹并设置 scale
-			if slot.has_method("setup"):
-				slot.setup(data)
-			
-			# 禁用 CardSlot 内部的点击逻辑，改用外部按钮，或者复用内部点击
-			# 这里为了明确交互，我们在下方加一个“选择”按钮，同时让卡牌点击也触发选择
-			if slot.has_signal("pressed"):
-				slot.pressed.connect(func(_d): _on_reward_selected(item))
-			
-			vbox.add_child(slot)
-			
-			var btn = Button.new()
-			btn.text = "选择"
-			btn.custom_minimum_size = Vector2(0, 48)
-			if GameState:
-				GameState.apply_button_style(btn)
-			btn.pressed.connect(func(): _on_reward_selected(item))
-			vbox.add_child(btn)
-			
-			# Add "Sell" button
-			var btn_sell = Button.new()
-			var sell_price = 1
-			if GameState and data:
-				sell_price = GameState.get_card_sell_price(data.rarity)
-			btn_sell.text = "折现 (+%d 军资)" % sell_price
-			
-			btn_sell.custom_minimum_size = Vector2(0, 36)
-			if GameState:
-				GameState.apply_button_style(btn_sell)
-				# Make it look different, maybe distinct color
-				btn_sell.modulate = Color(1.0, 0.8, 0.4)
-				
-			btn_sell.pressed.connect(func(): _on_reward_sold(item))
-			vbox.add_child(btn_sell)
-			
-			reward_container.add_child(vbox)
+		var data := item.get("data") as UnitData
+		if not data or not _card_slot_scene:
 			return
 
-	# --- 其他类型（如战线扩充） ---
-	elif type == "upgrade_row" or type == "upgrade_col":
-		# 使用简单的白底黑字样式，不使用 CardSlot
-		var card = PanelContainer.new()
-		# 设置尺寸与 CardSlot 一致，保持排版整齐，或者稍小一点
-		card.custom_minimum_size = Vector2(280, 400)
-		
-		# 设置白底背景
-		var bg_style = StyleBoxFlat.new()
-		bg_style.bg_color = Color.WHITE
-		bg_style.border_width_left = 2
-		bg_style.border_width_top = 2
-		bg_style.border_width_right = 2
-		bg_style.border_width_bottom = 2
-		bg_style.border_color = Color.BLACK
-		bg_style.corner_radius_top_left = 8
-		bg_style.corner_radius_top_right = 8
-		bg_style.corner_radius_bottom_left = 8
-		bg_style.corner_radius_bottom_right = 8
-		card.add_theme_stylebox_override("panel", bg_style)
-		
-		var vbox = VBoxContainer.new()
-		vbox.add_theme_constant_override("separation", 20)
-		# 增加内边距
-		var margin_container = MarginContainer.new()
-		margin_container.add_theme_constant_override("margin_left", 20)
-		margin_container.add_theme_constant_override("margin_right", 20)
-		margin_container.add_theme_constant_override("margin_top", 40)
-		margin_container.add_theme_constant_override("margin_bottom", 40)
-		margin_container.add_child(vbox)
-		card.add_child(margin_container)
-		
-		var title_text = ""
-		var desc_text = ""
-		
-		if type == "upgrade_row":
-			title_text = "战线扩充 (行)"
-			desc_text = "战场容量 +1 行\n(横向扩展)"
-		elif type == "upgrade_col":
-			title_text = "战线扩充 (列)"
-			desc_text = "战场容量 +1 列\n(纵向扩展)"
-			
-		# 标题
-		var lbl_title = Label.new()
-		lbl_title.text = title_text
-		lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl_title.add_theme_color_override("font_color", Color.BLACK)
-		lbl_title.add_theme_font_size_override("font_size", 28)
-		lbl_title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		vbox.add_child(lbl_title)
-		
-		# 分隔线
-		var sep = HSeparator.new()
-		sep.modulate = Color.BLACK 
-		vbox.add_child(sep)
-		
-		# 描述
-		var lbl_desc = Label.new()
-		lbl_desc.text = desc_text
-		lbl_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		lbl_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		lbl_desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-		lbl_desc.add_theme_color_override("font_color", Color(0.2, 0.2, 0.2)) # 深灰色
-		lbl_desc.add_theme_font_size_override("font_size", 20)
-		vbox.add_child(lbl_desc)
-		
-		# 为了整体布局，我们需要将 Card 和 Button 放在一个垂直容器中
-		var wrapper_vbox = VBoxContainer.new()
-		wrapper_vbox.add_theme_constant_override("separation", 12)
-		wrapper_vbox.add_child(card)
-		
-		var btn = Button.new()
-		btn.text = "选择"
-		btn.custom_minimum_size = Vector2(0, 48)
+		var slot_host := Control.new()
+		slot_host.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT)
+		slot_host.pivot_offset = Vector2(CARD_WIDTH * 0.5, CARD_HEIGHT * 0.5)
+		slot_host.mouse_filter = Control.MOUSE_FILTER_PASS
+		slot_host.mouse_entered.connect(func(): _set_reward_hover(slot_host, true))
+		slot_host.mouse_exited.connect(func(): _set_reward_hover(slot_host, false))
+		var slot = _card_slot_scene.instantiate()
+		if slot.has_method("setup"):
+			slot.setup(data)
+		# CardSlot 原始尺寸 280x400，缩放后约 202x288，居中放入统一卡框。
+		slot.scale = Vector2(0.72, 0.72)
+		slot.position = Vector2(9, 0)
+		if slot.has_signal("pressed"):
+			slot.pressed.connect(func(_d): _on_reward_selected(item))
+		slot_host.add_child(slot)
+		wrapper.add_child(slot_host)
+
+		var take_button := Button.new()
+		take_button.text = "领取"
+		take_button.custom_minimum_size = Vector2(0, 40)
 		if GameState:
-			GameState.apply_button_style(btn)
-		btn.pressed.connect(func(): _on_reward_selected(item))
-		wrapper_vbox.add_child(btn)
-		
-		reward_container.add_child(wrapper_vbox)
+			GameState.apply_button_style(take_button)
+		_apply_reward_button_art(take_button, _reward_primary_button_texture)
+		take_button.pressed.connect(func(): _on_reward_selected(item))
+		_reward_action_buttons.append(take_button)
+		wrapper.add_child(take_button)
+
+		var sell_price := 1
+		if GameState:
+			sell_price = GameState.get_card_sell_price(data.rarity)
+		var sell_button := Button.new()
+		sell_button.text = "折现  +%d 军资" % sell_price
+		sell_button.custom_minimum_size = Vector2(0, 34)
+		if GameState:
+			GameState.apply_button_style(sell_button)
+			sell_button.modulate = Color(1.0, 0.84, 0.5)
+		_apply_reward_button_art(sell_button, _reward_secondary_button_texture, Color(0.92, 0.84, 0.66, 1))
+		sell_button.pressed.connect(func(): _on_reward_sold(item))
+		_reward_action_buttons.append(sell_button)
+		wrapper.add_child(sell_button)
+		reward_container.add_child(wrapper)
 		return
 
-	# --- 如果都不是，保持原有样式（如果有） ---
-	# 创建卡片容器
-	var card = PanelContainer.new()
-	card.custom_minimum_size = Vector2(140, 200)
-	if GameState:
-		card.add_theme_stylebox_override("panel", GameState.get_ui_style("reward_card_bg"))
-	
-	var vbox = VBoxContainer.new()
-	vbox.add_theme_constant_override("separation", 8)
-	card.add_child(vbox)
-	
-	# 内容解析
-	var title_text = ""
-	var desc_text = ""
-	var color = Color.WHITE
-	
-	if type == "upgrade_row":
-		title_text = "战线扩充"
-		desc_text = "战场容量 +1 行\n(横向)"
-		color = GameState.UI_COLOR_ACCENT_GOLD
-		
-	elif type == "upgrade_col":
-		title_text = "战线扩充"
-		desc_text = "战场容量 +1 列\n(纵向)"
-		color = GameState.UI_COLOR_ACCENT_GOLD
-	
-	# 标题
-	var lbl_title = Label.new()
-	lbl_title.text = title_text
-	lbl_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_title.add_theme_color_override("font_color", color)
-	lbl_title.add_theme_font_size_override("font_size", 18)
-	vbox.add_child(lbl_title)
-	
-	# 分隔线
-	var sep = HSeparator.new()
-	vbox.add_child(sep)
-	
-	# 描述
-	var lbl_desc = Label.new()
-	lbl_desc.text = desc_text
-	lbl_desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	lbl_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl_desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	lbl_desc.add_theme_color_override("font_color", Color(0.8, 0.8, 0.8))
-	vbox.add_child(lbl_desc)
-	
-	# 选择按钮
-	var btn = Button.new()
-	btn.text = "选择"
-	if GameState:
-		GameState.apply_button_style(btn)
-	btn.pressed.connect(func(): _on_reward_selected(item))
-	vbox.add_child(btn)
-	
-	reward_container.add_child(card)
+	if type == "upgrade_row" or type == "upgrade_col":
+		var card := PanelContainer.new()
+		card.custom_minimum_size = Vector2(CARD_WIDTH, CARD_HEIGHT)
+		card.pivot_offset = Vector2(CARD_WIDTH * 0.5, CARD_HEIGHT * 0.5)
+		card.mouse_entered.connect(func(): _set_reward_hover(card, true))
+		card.mouse_exited.connect(func(): _set_reward_hover(card, false))
+		var card_style := StyleBoxFlat.new()
+		card_style.bg_color = Color(0.075, 0.055, 0.04, 0.96)
+		card_style.border_width_left = 2
+		card_style.border_width_top = 2
+		card_style.border_width_right = 2
+		card_style.border_width_bottom = 2
+		card_style.border_color = Color(0.68, 0.48, 0.22, 0.95)
+		card_style.set_corner_radius_all(10)
+		card_style.shadow_color = Color(0, 0, 0, 0.4)
+		card_style.shadow_size = 8
+		card.add_theme_stylebox_override("panel", card_style)
+
+		var inner := VBoxContainer.new()
+		inner.add_theme_constant_override("separation", 10)
+		var margin := MarginContainer.new()
+		margin.add_theme_constant_override("margin_left", 18)
+		margin.add_theme_constant_override("margin_right", 18)
+		margin.add_theme_constant_override("margin_top", 18)
+		margin.add_theme_constant_override("margin_bottom", 18)
+		margin.add_child(inner)
+		card.add_child(margin)
+
+		var emblem := Label.new()
+		emblem.text = "＋"
+		emblem.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		emblem.add_theme_color_override("font_color", Color(0.95, 0.72, 0.3, 1))
+		emblem.add_theme_font_size_override("font_size", 54)
+		inner.add_child(emblem)
+
+		var title := Label.new()
+		title.text = "扩充前线（行）" if type == "upgrade_row" else "扩充前线（列）"
+		title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		title.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		title.add_theme_color_override("font_color", Color(0.95, 0.8, 0.52, 1))
+		title.add_theme_font_size_override("font_size", 22)
+		inner.add_child(title)
+
+		var desc := Label.new()
+		desc.text = "战场容量 +1 行\n前后排空间增加" if type == "upgrade_row" else "战场容量 +1 列\n可部署更多单位"
+		desc.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		desc.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		desc.size_flags_vertical = Control.SIZE_EXPAND_FILL
+		desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		desc.add_theme_color_override("font_color", Color(0.82, 0.77, 0.67, 1))
+		desc.add_theme_font_size_override("font_size", 16)
+		inner.add_child(desc)
+		wrapper.add_child(card)
+
+		var take_button := Button.new()
+		take_button.text = "领取扩充"
+		take_button.custom_minimum_size = Vector2(0, 40)
+		if GameState:
+			GameState.apply_button_style(take_button)
+		_apply_reward_button_art(take_button, _reward_primary_button_texture)
+		take_button.pressed.connect(func(): _on_reward_selected(item))
+		_reward_action_buttons.append(take_button)
+		wrapper.add_child(take_button)
+		reward_container.add_child(wrapper)
+
+func _set_reward_hover(control: Control, hovered: bool):
+	if not control or _reward_resolved:
+		return
+	control.scale = Vector2(1.04, 1.04) if hovered else Vector2.ONE
+	control.modulate = Color(1.08, 1.03, 0.92, 1) if hovered else Color.WHITE
+
+func _apply_reward_button_art(button: Button, texture: Texture2D, tint: Color = Color.WHITE):
+	if not button or not texture:
+		return
+	var old_art := button.get_node_or_null("RewardButtonArt")
+	if old_art:
+		old_art.queue_free()
+
+	# 让生成的按钮图负责边框与底纹，Button 只负责文字和输入状态。
+	var clear_style := StyleBoxFlat.new()
+	clear_style.bg_color = Color(0, 0, 0, 0)
+	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
+		button.add_theme_stylebox_override(state, clear_style)
+	button.add_theme_color_override("font_color", Color(0.98, 0.88, 0.66, 1))
+	button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82, 1))
+	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.82, 0.42, 1))
+
+	var art := TextureRect.new()
+	art.name = "RewardButtonArt"
+	art.set_anchors_preset(Control.PRESET_FULL_RECT)
+	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	art.texture = texture
+	art.expand_mode = 1
+	art.stretch_mode = 6
+	art.modulate = tint
+	art.z_index = -1
+	button.add_child(art)
 
 func _on_reward_sold(item: Dictionary):
+	if _reward_resolved:
+		return
+	_reward_resolved = true
+	_disable_reward_actions()
 	# 折现逻辑
 	var reward_name = "军资"
 	var sell_value = 1
@@ -2181,6 +2192,8 @@ func _on_reward_sold(item: Dictionary):
 	# 更新文本提示
 	if result_detail_label:
 		result_detail_label.text += "\n\n已选择: %s" % reward_name
+	if reward_hint_label:
+		reward_hint_label.text = "战利品已入库，整备后继续远征"
 		
 	# 无论是否有下一关，都先进入营地
 	# 如果是最后一关，可能也允许进营地看看？或者直接结束？
@@ -2190,6 +2203,10 @@ func _on_reward_sold(item: Dictionary):
 	_show_camp_button()
 
 func _on_reward_selected(item: Dictionary):
+	if _reward_resolved:
+		return
+	_reward_resolved = true
+	_disable_reward_actions()
 	var type = item.get("type", "unit")
 	var reward_name = ""
 	
@@ -2204,7 +2221,7 @@ func _on_reward_selected(item: Dictionary):
 		if player_library:
 			player_library.collected_cards.append(new_data)
 			if GameState:
-				GameState.save_player_library(player_library)
+				GameState.set_current_library(player_library)
 		# 立即添加到备战区显示
 		spawn_unit(new_data)
 				
@@ -2212,13 +2229,11 @@ func _on_reward_selected(item: Dictionary):
 		reward_name = "战线扩充(行)"
 		if GameState:
 			GameState.current_rows = min(GameState.current_rows + 1, GameConst.MAP_ROWS)
-			GameState.save_progress()
 			
 	elif type == "upgrade_col":
 		reward_name = "战线扩充(列)"
 		if GameState:
 			GameState.current_cols = min(GameState.current_cols + 1, GameConst.MAP_COLUMNS)
-			GameState.save_progress()
 
 	if GameState:
 		GameState.trigger_autosave()
@@ -2229,8 +2244,15 @@ func _on_reward_selected(item: Dictionary):
 	# 更新文本提示
 	if result_detail_label:
 		result_detail_label.text += "\n\n已选择: %s" % reward_name
+	if reward_hint_label:
+		reward_hint_label.text = "战利品已入库，整备后继续远征"
 		
 	_show_camp_button()
+
+func _disable_reward_actions():
+	for button in _reward_action_buttons:
+		if is_instance_valid(button):
+			button.disabled = true
 
 func _show_camp_button():
 	# 检查是否还有下一关，决定是去营地还是直接结束
@@ -2239,7 +2261,7 @@ func _show_camp_button():
 	if level_database and current_level_config:
 		current_idx = level_database.get_index_by_id(current_level_config.level_id)
 		
-	if current_idx != -1 and level_database and current_idx + 1 < level_database.levels.size():
+	if get_next_level_id() != "" or (current_level_config and current_level_config.level_id == "1_1_3_side"):
 		has_next = true
 	
 	if next_level_button:
@@ -2249,8 +2271,8 @@ func _show_camp_button():
 			for c in conns:
 				next_level_button.pressed.disconnect(c.callable)
 			
-			# 统一只显示“下一关”，取消自动进营地的逻辑
-			next_level_button.text = "下一关"
+			# 奖励确认后再进入下一关，避免玩家误以为奖励尚未结算。
+			next_level_button.text = "前往下一关"
 			next_level_button.pressed.connect(_on_next_level_button_pressed)
 				
 			next_level_button.visible = true
@@ -2459,6 +2481,33 @@ func _refresh_bench_ui():
 		slot_panel.add_child(plus)
 		bench_grid.add_child(slot_panel)
 
+func _update_result_progress():
+	if not result_progress_label:
+		return
+	if level_database and current_level_config:
+		var idx := level_database.get_index_by_id(current_level_config.level_id)
+		if idx >= 0:
+			result_progress_label.text = "战役进度  ·  第 %d / %d 关" % [idx + 1, level_database.levels.size()]
+			return
+	result_progress_label.text = "战役进度"
+
+func _fit_result_overlay():
+	if not result_overlay:
+		return
+	var panel = result_overlay.get_node_or_null("Panel")
+	if not panel:
+		return
+	var viewport_size := get_viewport_rect().size
+	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
+		return
+	# 保留奖励卡的横向空间，同时给低分辨率留下安全边距。
+	var panel_width := clampf(viewport_size.x - 48.0, 760.0, 1120.0)
+	var panel_height := clampf(viewport_size.y - 48.0, 620.0, 700.0)
+	panel.offset_left = -panel_width * 0.5
+	panel.offset_right = panel_width * 0.5
+	panel.offset_top = -panel_height * 0.5
+	panel.offset_bottom = panel_height * 0.5
+
 func _apply_theme():
 	if not GameState: return
 	
@@ -2466,13 +2515,30 @@ func _apply_theme():
 	for node in find_children("", "Button", true, false):
 		if node is Button:
 			GameState.apply_button_style(node)
+	_apply_reward_button_art(next_level_button, _reward_primary_button_texture)
+	_apply_reward_button_art(retry_button, _reward_secondary_button_texture)
+	_apply_reward_button_art($CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/MenuButton, _reward_secondary_button_texture)
 	
 	# 胜利/失败面板背景
 	if result_overlay:
 		var panel = result_overlay.get_node_or_null("Panel")
 		if panel and panel is Panel:
-			# 使用半透明黑底
-			var style = StyleBoxFlat.new()
-			style.bg_color = Color(0, 0, 0, 0.85)
-			style.set_corner_radius_all(12)
+			var style := StyleBoxFlat.new()
+			style.bg_color = Color(0.055, 0.038, 0.026, 0.97)
+			style.border_width_left = 2
+			style.border_width_top = 2
+			style.border_width_right = 2
+			style.border_width_bottom = 2
+			style.border_color = Color(0.68, 0.48, 0.22, 0.96)
+			style.set_corner_radius_all(14)
+			style.shadow_color = Color(0, 0, 0, 0.6)
+			style.shadow_size = 18
 			panel.add_theme_stylebox_override("panel", style)
+			panel.mouse_filter = Control.MOUSE_FILTER_STOP
+
+		var title = result_title_label
+		if title:
+			title.add_theme_color_override("font_color", Color(0.96, 0.78, 0.42, 1))
+		var detail = result_detail_label
+		if detail:
+			detail.add_theme_color_override("font_color", Color(0.86, 0.82, 0.73, 1))

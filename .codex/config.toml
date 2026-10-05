@@ -1,0 +1,9 @@
+[mcp_servers."godot-mcp-toolkit"]
+command = "cmd"
+args = ["/c", "npx", "-y", "@npgamedev/godot-mcp-server"]
+cwd = "E:/testgame/HistoryMixer_testdemo"
+startup_timeout_sec = 30
+
+[mcp_servers."godot-mcp-toolkit".env]
+GODOT_MCP_CONFIG_VERSION = "1"
+GODOT_MCP_PROJECT_PATH = "E:/testgame/HistoryMixer_testdemo"

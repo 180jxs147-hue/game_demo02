@@ -282,7 +282,6 @@ func _refresh_shop(free: bool = false):
 				if lib:
 					lib.collected_cards.append(card.duplicate())
 					GameState.set_current_library(lib)
-					GameState.save_player_library(lib)
 					GameState.trigger_autosave()
 				
 				# Disable button
