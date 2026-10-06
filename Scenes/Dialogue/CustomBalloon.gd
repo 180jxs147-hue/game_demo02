@@ -42,6 +42,8 @@ var dialogue_line: DialogueLine:
 			apply_dialogue_line()
 		else:
 			# The dialogue has finished so close the balloon
+			if not Engine.is_editor_hint() and is_inside_tree():
+				get_tree().paused = false
 			if owner == null:
 				queue_free()
 			else:
@@ -140,6 +142,11 @@ func _load_texture_any(path: String) -> Texture2D:
 			return tex
 	return null
 
+
+func _exit_tree() -> void:
+	var scene_tree := get_tree()
+	if not Engine.is_editor_hint() and scene_tree:
+		scene_tree.paused = false
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS

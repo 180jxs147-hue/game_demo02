@@ -98,13 +98,30 @@ func _ready():
 		btn_refresh.pressed.connect(_on_refresh_shop_pressed)
 		
 	if btn_expand_rows:
-		btn_expand_rows.pressed.connect(func(): _try_upgrade("rows", COST_EXPAND_ROWS))
+		btn_expand_rows.pressed.connect(func(): _try_upgrade("rows", get_expand_cost_rows()))
 	if btn_expand_cols:
-		btn_expand_cols.pressed.connect(func(): _try_upgrade("cols", COST_EXPAND_COLS))
+		btn_expand_cols.pressed.connect(func(): _try_upgrade("cols", get_expand_cost_cols()))
 	if btn_max_manpower:
 		btn_max_manpower.pressed.connect(func(): _try_upgrade("manpower", COST_MAX_MANPOWER))
 	
 	_setup_save_button()
+	_setup_back_button()
+
+func _setup_back_button():
+	var header = $Header
+	if header:
+		var btn_back = Button.new()
+		btn_back.name = "BackBtn"
+		btn_back.text = "返回主菜单"
+		btn_back.custom_minimum_size = Vector2(120, 0)
+		if GameState:
+			GameState.apply_button_style(btn_back)
+		header.add_child(btn_back)
+		btn_back.pressed.connect(_on_back_pressed)
+
+func _on_back_pressed():
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 func _setup_save_button():
 	var header = $Header
@@ -130,18 +147,33 @@ func _on_save_pressed():
 	save_scene.mode = "save"
 	add_child(save_scene)
 
+func get_expand_cost_rows() -> int:
+	var upgrades_done = max(0, GameState.current_rows - 3) if GameState else 0
+	if upgrades_done == 0: return 6
+	elif upgrades_done == 1: return 10
+	else: return 16
+
+func get_expand_cost_cols() -> int:
+	var upgrades_done = max(0, GameState.current_cols - 2) if GameState else 0
+	if upgrades_done == 0: return 6
+	elif upgrades_done == 1: return 10
+	else: return 16
+
 func _refresh_ui():
 	if not GameState: return
 	gold_label.text = "当前军资: %d" % GameState.get_run_gold()
 	
+	var cost_rows = get_expand_cost_rows()
+	var cost_cols = get_expand_cost_cols()
+	
 	# Update buttons state
 	if btn_expand_rows:
-		btn_expand_rows.text = "扩充军阵(行)\n消耗: %d" % COST_EXPAND_ROWS
-		btn_expand_rows.disabled = GameState.get_run_gold() < COST_EXPAND_ROWS or GameState.current_rows >= GameConst.MAP_ROWS
+		btn_expand_rows.text = "扩充军阵(行)\n消耗: %d" % cost_rows
+		btn_expand_rows.disabled = GameState.get_run_gold() < cost_rows or GameState.current_rows >= GameConst.MAP_ROWS
 	
 	if btn_expand_cols:
-		btn_expand_cols.text = "扩充军阵(列)\n消耗: %d" % COST_EXPAND_COLS
-		btn_expand_cols.disabled = GameState.get_run_gold() < COST_EXPAND_COLS or GameState.current_cols >= GameConst.MAP_COLUMNS
+		btn_expand_cols.text = "扩充军阵(列)\n消耗: %d" % cost_cols
+		btn_expand_cols.disabled = GameState.get_run_gold() < cost_cols or GameState.current_cols >= GameConst.MAP_COLUMNS
 		
 	if btn_max_manpower:
 		btn_max_manpower.text = "粮草征收(上限+10)\n消耗: %d" % COST_MAX_MANPOWER
@@ -197,14 +229,7 @@ func _refresh_hospital():
 			if GameState.get_run_gold() < COST_HEAL:
 				btn.disabled = true
 			
-			btn.pressed.connect(func():
-				if GameState.spend_run_gold(COST_HEAL):
-					unit.is_injured = false
-					# GameState.save_player_library(lib) # RAM only
-					# GameState.trigger_autosave() # Removed: Autosave only at level start
-					_refresh_ui()
-					_refresh_hospital()
-			)
+			btn.pressed.connect(_heal_injured_unit.bind(unit))
 			hbox.add_child(btn)
 			
 			hospital_container.add_child(hbox)
@@ -214,6 +239,15 @@ func _refresh_hospital():
 		lbl.text = "没有受伤单位"
 		lbl.add_theme_color_override("font_color", Color.GRAY)
 		hospital_container.add_child(lbl)
+
+func _heal_injured_unit(unit: UnitData) -> void:
+	if not is_instance_valid(unit) or not unit.is_injured:
+		return
+	if GameState.spend_run_gold(COST_HEAL):
+		unit.is_injured = false
+		GameState.trigger_autosave()
+		_refresh_ui()
+		_refresh_hospital()
 
 func _refresh_shop(free: bool = false):
 	if not free:

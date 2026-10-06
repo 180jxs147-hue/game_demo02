@@ -36,7 +36,7 @@ func _run_tutorial() -> void:
 
 	await guide.show_info_step(
 		3, 3, "营帐与民力", "营帐可以持续提供民力。确认材官和营帐都准备好后，点击“开始战斗”。",
-		"CanvasLayer/HUD/BenchPanel/VBox/Scroll/Grid"
+		"CanvasLayer/HUD/BenchPanel"
 	)
 	if not is_inside_tree() or _tutorial_skipped:
 		return

@@ -7,7 +7,7 @@
 [ext_resource type="Texture2D" path="res://Assets/UI/Battle/reward_battlefield_v2.png" id="7_reward_battlefield"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Battle/reward_panel_frame_v2.png" id="8_reward_frame"]
 [ext_resource type="Texture2D" path="res://Assets/UI/Battle/reward_button_primary_v2.png" id="9_reward_primary"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Battle/reward_button_secondary_v2.png" id="10_reward_secondary"]
+[ext_resource type="Texture2D" path="res://Assets/UI/Battle/unit_detail_backdrop_v1.png" id="11_reward_interior"]
 
 [node name="Battle" type="Node2D" unique_id=1806915087 node_paths=PackedStringArray("manpower_label", "enemy_manpower_label", "synergy_label")]
 script = ExtResource("1_p46lj")
@@ -109,7 +109,10 @@ offset_top = 80.0
 offset_right = 200.0
 offset_bottom = 400.0
 theme_override_font_sizes/font_size = 14
-text = "当前羁绊:"
+text = "暂无激活羁绊
+
+部署同势力单位
+可激活战阵加成。"
 
 [node name="TopMenuButton" type="Button" parent="CanvasLayer/HUD" unique_id=2013757316]
 layout_mode = 1
@@ -159,7 +162,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-modulate = Color(0.72, 0.6, 0.47, 1)
+modulate = Color(0.86, 0.8, 0.72, 1)
 texture = ExtResource("7_reward_battlefield")
 expand_mode = 1
 stretch_mode = 6
@@ -171,7 +174,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.02, 0.015, 0.01, 0.66)
+color = Color(0.02, 0.015, 0.01, 0.48)
 
 [node name="Panel" type="Panel" parent="CanvasLayer/ResultOverlay" unique_id=290476886]
 layout_mode = 1
@@ -181,11 +184,28 @@ anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
 offset_left = -560.0
-offset_top = -350.0
+offset_top = -390.0
 offset_right = 560.0
-offset_bottom = 350.0
+offset_bottom = 390.0
 grow_horizontal = 2
 grow_vertical = 2
+
+[node name="RewardInterior" type="TextureRect" parent="CanvasLayer/ResultOverlay/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 48.0
+offset_top = 54.0
+offset_right = -48.0
+offset_bottom = -54.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+modulate = Color(1, 1, 1, 1)
+texture = ExtResource("11_reward_interior")
+expand_mode = 1
+stretch_mode = 6
 
 [node name="RewardFrame" type="TextureRect" parent="CanvasLayer/ResultOverlay/Panel" unique_id=729150631]
 layout_mode = 1
@@ -205,20 +225,21 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 20.0
-offset_top = 20.0
-offset_right = -20.0
-offset_bottom = -20.0
+offset_left = 72.0
+offset_top = 108.0
+offset_right = -72.0
+offset_bottom = -118.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 4
 
 [node name="TitleLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=838546364]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.78, 0.42, 1)
-theme_override_font_sizes/font_size = 42
+theme_override_font_sizes/font_size = 38
 text = "结算"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ProgressLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=1596401242]
 layout_mode = 2
@@ -226,12 +247,14 @@ theme_override_colors/font_color = Color(0.68, 0.59, 0.45, 1)
 theme_override_font_sizes/font_size = 15
 text = "战役进度"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="DetailLabel" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=359889222]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.8, 0.8, 1)
 theme_override_font_sizes/font_size = 16
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="RewardHint" type="Label" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=1163085174]
 layout_mode = 2
@@ -239,13 +262,14 @@ theme_override_colors/font_color = Color(0.86, 0.72, 0.48, 1)
 theme_override_font_sizes/font_size = 18
 text = "选择一项战利品，或将其折现为军资"
 horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="RewardContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=26674139]
 unique_name_in_owner = true
 layout_mode = 2
-custom_minimum_size = Vector2(0, 390)
+custom_minimum_size = Vector2(0, 362)
 size_flags_vertical = 3
-theme_override_constants/separation = 16
+theme_override_constants/separation = 20
 alignment = 1
 
 [node name="HBoxContainer" type="HBoxContainer" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer" unique_id=2030239756]
@@ -255,19 +279,19 @@ alignment = 1
 
 [node name="NextLevelButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer" unique_id=2134236902]
 visible = false
-custom_minimum_size = Vector2(160, 50)
+custom_minimum_size = Vector2(186, 62)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "下一关"
 
 [node name="RetryButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer" unique_id=1109593866]
-custom_minimum_size = Vector2(160, 50)
+custom_minimum_size = Vector2(186, 62)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "再来一次"
 
 [node name="MenuButton" type="Button" parent="CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer" unique_id=1045018941]
-custom_minimum_size = Vector2(160, 50)
+custom_minimum_size = Vector2(186, 62)
 layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "返回主菜单"

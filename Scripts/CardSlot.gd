@@ -93,18 +93,59 @@ func _ready():
 		)
 		
 		# Tooltip support
-		click_button.mouse_entered.connect(func():
-			if _unit_data and BattleManager.instance:
-				BattleManager.instance.show_tooltip(_unit_data, self)
-		)
-		click_button.mouse_exited.connect(func():
-			if BattleManager.instance:
-				BattleManager.instance.hide_tooltip()
-		)
+		click_button.mouse_entered.connect(_show_card_tooltip)
+		click_button.mouse_exited.connect(_hide_card_tooltip)
 	_apply_card_skin(null)
 	
 	if _unit_data:
 		setup(_unit_data)
+
+static var _global_tooltip: Control = null
+
+static func _get_or_create_global_tooltip(tree: SceneTree) -> Control:
+	if _global_tooltip != null and is_instance_valid(_global_tooltip):
+		return _global_tooltip
+	var scene = load("res://Scenes/Tooltip.tscn")
+	if not scene: return null
+	_global_tooltip = scene.instantiate()
+	_global_tooltip.visible = false
+	_global_tooltip.z_index = 250
+	_global_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	var visuals = preload("res://Scripts/MenuVisuals.gd")
+	if visuals:
+		_global_tooltip.theme = visuals.create_theme()
+		_global_tooltip.add_theme_stylebox_override("panel", visuals.cloth(false, Color.WHITE, 12))
+	tree.root.add_child(_global_tooltip)
+	return _global_tooltip
+
+func _show_card_tooltip():
+	if not _unit_data: return
+	if BattleManager.instance:
+		BattleManager.instance.show_tooltip(_unit_data, self)
+		return
+	var tree = get_tree()
+	if not tree: return
+	var tt = _get_or_create_global_tooltip(tree)
+	if not tt: return
+	tt.update_info(_unit_data)
+	tt.visible = true
+	var rect = get_global_rect()
+	var vp_size = get_viewport_rect().size
+	var target_x = rect.end.x + 12
+	var target_y = rect.position.y
+	if target_x + 240 > vp_size.x:
+		target_x = rect.position.x - 240
+	if target_x < 8: target_x = 8
+	if target_y + 180 > vp_size.y:
+		target_y = vp_size.y - 190
+	if target_y < 8: target_y = 8
+	tt.global_position = Vector2(target_x, target_y)
+
+func _hide_card_tooltip():
+	if BattleManager.instance:
+		BattleManager.instance.hide_tooltip()
+	elif _global_tooltip and is_instance_valid(_global_tooltip):
+		_global_tooltip.visible = false
 
 func _apply_card_skin(data: UnitData):
 	var has_base := false

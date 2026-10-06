@@ -299,6 +299,7 @@ func _get_stacked_collected() -> Array[Dictionary]:
 	# “已收集”页需要把同名/同资源的卡牌堆叠显示（xN），所以先按 key 聚合计数。
 	# key 优先用 resource_path（导出更稳定），否则退回 name。
 	var counts: Dictionary = {}
+	var injured_counts: Dictionary = {}
 	var rep: Dictionary = {}
 	if player_library:
 		for d in player_library.collected_cards:
@@ -306,11 +307,13 @@ func _get_stacked_collected() -> Array[Dictionary]:
 				continue
 			var k = _unit_key(d)
 			counts[k] = int(counts.get(k, 0)) + 1
+			if d.is_injured:
+				injured_counts[k] = int(injured_counts.get(k, 0)) + 1
 			if not rep.has(k):
 				rep[k] = d
 	var out: Array[Dictionary] = []
 	for k in counts.keys():
-		out.append({"key": k, "data": rep[k], "count": counts[k]})
+		out.append({"key": k, "data": rep[k], "count": counts[k], "injured_count": injured_counts.get(k, 0)})
 	return out
 
 func _filter_stacked_entries(entries: Array[Dictionary], query: String, type_filter_id: int) -> Array[Dictionary]:
@@ -338,6 +341,7 @@ func _fill_grid_stacked(grid: GridContainer, entries: Array[Dictionary]):
 	for e in entries:
 		var u: UnitData = _resolve_unit_data(e["data"])
 		var c: int = int(e["count"])
+		var injured_count: int = int(e["injured_count"])
 		
 		var wrapper := Control.new()
 		wrapper.custom_minimum_size = Vector2(target_w, target_h)
@@ -355,6 +359,15 @@ func _fill_grid_stacked(grid: GridContainer, entries: Array[Dictionary]):
 		else:
 			slot.setup(u)
 		slot.pressed.connect(_on_card_pressed)
+		if injured_count > 0:
+			var injury_label := Label.new()
+			injury_label.text = "伤员 %d/%d" % [injured_count, c]
+			injury_label.add_theme_color_override("font_color", Color(1.0, 0.65, 0.52))
+			injury_label.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.04))
+			injury_label.add_theme_constant_override("outline_size", 3)
+			injury_label.position = Vector2(6, target_h - 28)
+			injury_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			wrapper.add_child(injury_label)
 	_update_columns.call_deferred()
 
 func _get_all_units() -> Array[UnitData]:

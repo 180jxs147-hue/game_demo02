@@ -20,7 +20,7 @@ func start(bm: BattleManager) -> void:
 func _run_tutorial() -> void:
 	await guide.show_info_step(
 		1, 3, "备战区", "这里存放尚未上阵的单位卡。拖动卡牌可以把单位部署到战场。",
-		"CanvasLayer/HUD/BenchPanel/VBox/Scroll/Grid"
+		"CanvasLayer/HUD/BenchPanel"
 	)
 	if not is_inside_tree() or _tutorial_skipped:
 		return

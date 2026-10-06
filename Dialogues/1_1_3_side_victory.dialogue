@@ -4,7 +4,7 @@ SunJian: 多谢壮士相助。这把古锭刀...不对，这份情义我记下�
 Player01: 将军神勇。我们要去支援长社，不知将军意下如何？ [#pos:left]
 SunJian: 正合我意！我也要去会会那个波才。
 SunJian: 既然顺路，我便助你一臂之力！
-do grant_unit("孙坚")
+do grant_unit("res://Resources/DataFiles/sun_jian.tres")
 System: 【获得英雄单位：孙坚】
 do enter_camp_before_level("1_1_3")
 => END

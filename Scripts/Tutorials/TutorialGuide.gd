@@ -70,7 +70,7 @@ func _create_prompt(step: int, total: int, category: String, title: String, mess
 	current_target_node = target
 
 	var panel: PanelContainer = PanelContainer.new()
-	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var viewport_size: Vector2 = hud.size
 	var card_width: float = maxf(250.0, minf(390.0, viewport_size.x * 0.42))
 	panel.custom_minimum_size = Vector2(card_width, 0)
 	panel.mouse_filter = Control.MOUSE_FILTER_STOP if can_continue else Control.MOUSE_FILTER_IGNORE
@@ -228,7 +228,7 @@ func _update_target_position() -> void:
 		current_indicator.position = target_rect.position - Vector2(5, 5)
 		current_indicator.size = target_rect.size + Vector2(10, 10)
 		current_indicator.visible = true
-	var viewport_size: Vector2 = get_viewport().get_visible_rect().size
+	var viewport_size: Vector2 = (current_panel.get_parent() as Control).size
 	current_panel.position = _place_target_panel(target_rect, current_panel.size, viewport_size)
 
 func _place_target_panel(target: Rect2, panel_size: Vector2, viewport_size: Vector2) -> Vector2:
@@ -259,10 +259,8 @@ func _place_target_panel(target: Rect2, panel_size: Vector2, viewport_size: Vect
 
 func _get_target_rect(node: Node) -> Rect2:
 	if node is Control:
-		return node.get_global_rect()
+		return _rect_in_hud(node as CanvasItem, Rect2(Vector2.ZERO, (node as Control).size))
 	if node is Node2D:
-		var origin: Vector2 = node.get_global_transform_with_canvas().origin
-		var size: Vector2 = Vector2(112, 112)
 		if node.name == "GridVisualizer":
 			var cols: int = int(node.get("override_cols"))
 			var rows: int = int(node.get("override_rows"))
@@ -270,18 +268,27 @@ func _get_target_rect(node: Node) -> Rect2:
 				cols = GridManager.playable_columns
 			if rows <= 0:
 				rows = GridManager.playable_rows
-			var scale: Vector2 = (node as Node2D).global_scale
-			size = Vector2(cols * GameConst.GRID_SIZE * scale.x, rows * GameConst.GRID_SIZE * scale.y)
-			return Rect2(origin + size * 0.5, size)
-		else:
-			for child in node.get_children():
-				if child is Sprite2D:
-					var sprite: Sprite2D = child as Sprite2D
-					if sprite.texture:
-						size = sprite.texture.get_size() * sprite.global_scale
-						break
-		return Rect2(origin - size * 0.5, size)
+			var grid_size := Vector2(cols, rows) * GameConst.GRID_SIZE
+			return _rect_in_hud(node as CanvasItem, Rect2(Vector2.ZERO, grid_size))
+		if node.has_method("_calculate_visual_bounds"):
+			var bounds: Rect2 = node.call("_calculate_visual_bounds")
+			return _rect_in_hud(node as CanvasItem, bounds)
+		if node is Sprite2D:
+			return _rect_in_hud(node as CanvasItem, (node as Sprite2D).get_rect())
+		for child in node.get_children():
+			if child is Sprite2D and child.texture:
+				return _rect_in_hud(child as CanvasItem, (child as Sprite2D).get_rect())
+		return _rect_in_hud(node as CanvasItem, Rect2(Vector2(-56, -56), Vector2(112, 112)))
 	return Rect2()
+
+func _rect_in_hud(item: CanvasItem, local_rect: Rect2) -> Rect2:
+	var hud: Control = current_panel.get_parent() as Control
+	var to_hud: Transform2D = hud.get_global_transform_with_canvas().affine_inverse() * item.get_global_transform_with_canvas()
+	var top_left: Vector2 = to_hud * local_rect.position
+	var top_right: Vector2 = to_hud * Vector2(local_rect.end.x, local_rect.position.y)
+	var bottom_left: Vector2 = to_hud * Vector2(local_rect.position.x, local_rect.end.y)
+	var bottom_right: Vector2 = to_hud * local_rect.end
+	return Rect2(top_left, Vector2.ZERO).expand(top_right).expand(bottom_left).expand(bottom_right)
 
 func _set_mouse_filter_recursive(control: Control, filter: int) -> void:
 	control.mouse_filter = filter

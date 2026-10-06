@@ -8,6 +8,10 @@ const MAX_LOG_LINES = 100
 
 func _ready():
 	visible = false # Default hidden
+	var visuals = preload("res://Scripts/MenuVisuals.gd")
+	if visuals:
+		theme = visuals.create_theme()
+		add_theme_stylebox_override("panel", visuals.cloth(false, Color.WHITE, 14))
 	_update_text()
 	
 	if close_button:

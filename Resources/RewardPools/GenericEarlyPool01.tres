@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="RewardPoolData" format=3 uid="uid://clolq2x6f7iua"]
 
 [ext_resource type="Script" uid="uid://djybbfun8na35" path="res://Resources/RewardPoolData.gd" id="1"]
-[ext_resource type="Resource" uid="uid://bwbtenllive4" path="res://Resources/DataFiles/archer.tres" id="3"]
+[ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="3"]
 
 [resource]
 script = ExtResource("1")

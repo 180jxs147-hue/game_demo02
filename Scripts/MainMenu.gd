@@ -42,7 +42,9 @@ func _button_style(color: Color) -> StyleBoxFlat:
 	return style
 
 func _on_settings_button_pressed():
-	$SettingsDialog/DialogBody/Content.refresh()
+	var content = $SettingsDialog.find_child("Content", true, false)
+	if content and content.has_method("refresh"):
+		content.refresh()
 	$SettingsDialog.popup_centered()
 
 func _on_developer_button_pressed():

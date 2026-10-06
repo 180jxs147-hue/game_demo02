@@ -288,8 +288,8 @@ func layout():
 	battle.enemy_manpower_label.add_theme_constant_override("outline_size", 2)
 	battle.manpower_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	battle.enemy_manpower_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	place(phase, Rect2(w * 0.38, 7, w * 0.24, 56))
-	phase.add_theme_font_size_override("font_size", 30)
+	place(phase, Rect2(w * 0.38, 12, w * 0.24, 48))
+	phase.add_theme_font_size_override("font_size", 26)
 	phase.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	place(hud.get_node("BattleLogButton"), Rect2(w - 228, 23, 132, 40))
 	place(hud.get_node("BattleSpeedButton"), Rect2(w - 84, 23, 66, 40))
@@ -331,16 +331,22 @@ func layout():
 	captions.Enemy.text = "敌方军阵  %d × %d" % [battle.current_enemy_cols, battle.current_enemy_rows]
 
 func _process(_delta: float):
-	if battle.battle_ended:
-		phase.text = "战斗胜利" if battle._count_alive_units(false) == 0 else "战斗结束"
+	var finish_btn = hud.get_node_or_null("FinishBattleButton")
+	var is_finish_visible = finish_btn and finish_btn.visible
+	if battle.battle_ended or is_finish_visible:
+		if is_finish_visible or battle._count_alive_units(false) == 0:
+			phase.text = "战斗胜利"
+		else:
+			phase.text = "战斗结束"
 	elif BattleManager.is_battle_started:
 		phase.text = "交战中"
 	else:
 		phase.text = "布阵阶段"
-	if battle.synergy_label.text.strip_edges() == "当前羁绊:":
-		battle.synergy_label.text = "暂无激活羁绊\n\n部署同文明、同兵种\n单位可激活加成。"
-	elif battle.synergy_label.text.begins_with("当前羁绊:"):
-		battle.synergy_label.text = battle.synergy_label.text.trim_prefix("当前羁绊:\n")
+	var raw_text: String = battle.synergy_label.text.trim_prefix("当前羁绊:\n").trim_prefix("当前羁绊:").strip_edges()
+	if raw_text.is_empty() or raw_text == "暂无激活羁绊":
+		battle.synergy_label.text = "暂无激活羁绊\n\n部署同势力单位\n可激活战阵加成。"
+	elif battle.synergy_label.text != raw_text:
+		battle.synergy_label.text = raw_text
 
 func inspect(data: UnitData):
 	if not data: return

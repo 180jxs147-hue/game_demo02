@@ -112,17 +112,17 @@ mouse_filter = 2
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 26
+theme_override_font_sizes/font_size = 22
 text = "单位名称"
 horizontal_alignment = 0
 clip_text = true
 mouse_filter = 2
 
 [node name="CivClassLabel" type="Label" parent="NameRow"]
-custom_minimum_size = Vector2(110, 0)
+custom_minimum_size = Vector2(90, 0)
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_font_sizes/font_size = 18
 text = "汉 步兵"
 horizontal_alignment = 2
 clip_text = true

@@ -110,6 +110,9 @@ func play_level_intro(id: String):
 				# 使用手动实例化方式，确保行为可控且能在 Pause 状态下运行（虽然 LevelSelect 通常不 Pause）
 				var balloon = balloon_scene.instantiate()
 				get_tree().root.add_child(balloon)
+				balloon.tree_exited.connect(func():
+					get_tree().paused = false
+				)
 				balloon.start(resource, "start", [self])
 				return
 			else:
@@ -120,3 +123,37 @@ func play_level_intro(id: String):
 	print("[LevelSelect] Skipping intro, starting level directly.")
 	GameState.skip_intro = true
 	start_level_id(id)
+
+func enter_camp_before_level(level_id: String):
+	print("[LevelSelect] enter_camp_before_level: ", level_id)
+	get_tree().paused = false
+	if GameState and GameState.has_method("enter_camp_then_level"):
+		GameState.enter_camp_then_level(level_id)
+	else:
+		start_level_id(level_id)
+
+func set_shop_pool_for_next_camp(pool_id: String):
+	if GameState and GameState.has_method("set_next_shop_pool"):
+		GameState.set_next_shop_pool(pool_id)
+
+func grant_unit(unit_identifier: String):
+	print("[LevelSelect] Granting unit: ", unit_identifier)
+	var unit_data: UnitData = null
+	if unit_identifier.begins_with("res://"):
+		if ResourceLoader.exists(unit_identifier):
+			unit_data = load(unit_identifier)
+	if not unit_data and GameState:
+		var db = GameState.get_unit_database()
+		if db:
+			for u in db.units:
+				if u.name == unit_identifier:
+					unit_data = u
+					break
+	if unit_data and GameState:
+		var lib = GameState.load_player_library()
+		if lib:
+			var new_unit = unit_data.duplicate()
+			new_unit.is_injured = false
+			lib.collected_cards.append(new_unit)
+			GameState.set_current_library(lib)
+			GameState.trigger_autosave()

@@ -385,16 +385,20 @@ func take_damage(amount: float):
 		relic_def = GameState.get_relic_effect_value("global_defense")
 		def += relic_def
 	
-	# 最低伤害为 1.0，防止负伤害加血
-	var final_damage = max(1.0, amount - def)
+	# 双曲平滑减伤公式：有效避免低攻打高防完全刮痧(强制1点)以及破防瞬间秒杀
+	# 当 def = 0 时减伤 0%；def = 2 时减免 16.7%；def = 5 时减免 33.3%；def = 10 时减免 50%
+	var effective_def = max(0.0, def)
+	var mitigation_ratio = 10.0 / (10.0 + effective_def)
+	var final_damage = max(1.0, amount * mitigation_ratio)
+	var damage_reduced = max(0.0, amount - final_damage)
 	
 	current_hp -= final_damage
 	
 	if BattleManager.instance:
 		var u_name = data.name if data else name
 		var msg = "%s 受到 %.1f 伤害" % [u_name, final_damage]
-		if def > 0:
-			msg += " (防御减免 %.1f)" % def
+		if def > 0 and damage_reduced > 0.05:
+			msg += " (防御减免 %.1f)" % damage_reduced
 		# 我方受伤显示橙色，敌方受伤显示白色
 		var log_color = Color.ORANGE if faction == Faction.FRIENDLY else Color.WHITE
 		BattleManager.instance.log_message(msg, log_color)
@@ -478,16 +482,20 @@ func _update_health_visuals():
 func _on_death():
 	# 触发死亡状态机
 	current_hp = 0 # 确保数值为0
+	_record_injury()
 	
 	if BattleManager.instance:
 		var u_name = data.name if data else name
 		BattleManager.instance.log_message("%s 阵亡" % u_name, Color.GRAY)
 	
-	# 受伤逻辑：被击败的单位进入受伤状态
-	if faction == Faction.FRIENDLY and data:
-		data.is_injured = true
-		
 	$StateChart.send_event("die")
+
+func _record_injury() -> void:
+	if faction != Faction.FRIENDLY or not data or data.is_injured:
+		return
+	data.is_injured = true
+	if GameState:
+		GameState.trigger_autosave()
 
 func _process(_delta):
 	if is_dragging and in_hand:
@@ -701,6 +709,8 @@ func _on_action_entered():
 # 状态 4: 死亡
 func _on_dead_entered():
 	timer.stop()
+	# 兜住绕过 _on_death() 而直接进入死亡状态的路径。
+	_record_injury()
 	status_label.text = "X"
 	modulate = Color(0.3, 0.3, 0.3)
 	
@@ -1013,33 +1023,6 @@ func reset_state():
 		var max_w = cooldown_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
 		cooldown_bar.size.x = max_w
 
-
-# 战线判定 (由 BattleManager 调用)
-func check_burn(line_x: float, burn_from_right: bool = true):
-	if not is_deployed: return # <--- 加锁，备战区不会被烧死
-	for i in range(visual_blocks.size()):
-		var block = visual_blocks[i]
-		var relative_pos = data.grid_shape[i]
-		var block_world_x = global_position.x + (relative_pos.x * GameConst.GRID_SIZE)
-		
-		if burn_from_right:
-			if block_world_x > line_x:
-				block.color = Color(0.2, 0.2, 0.2)
-		else:
-			if block_world_x < line_x:
-				block.color = Color(0.2, 0.2, 0.2)
-	
-	# 死亡判定 (发送事件给状态机)
-	if burn_from_right:
-		if global_position.x > line_x:
-			_trigger_last_stand()
-			current_hp = 0 # 确保数值为0
-			state_chart.send_event("die")
-	else:
-		if global_position.x < line_x:
-			_trigger_last_stand()
-			current_hp = 0 # 确保数值为0
-			state_chart.send_event("die")
 
 func _trigger_last_stand():
 	if _last_stand_triggered: return

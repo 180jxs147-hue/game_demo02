@@ -7,7 +7,7 @@ const GRID_PADDING: int = 4
 const MAP_COLUMNS: int = 6
 const MAP_ROWS: int = 6
 
-# 计算战场总像素宽度（用于战线判定与布局）
+# 战场宽度（远程单位计算距离时使用）
 const BATTLE_FIELD_WIDTH: float = MAP_COLUMNS * GRID_SIZE
 
 # 技能词条说明

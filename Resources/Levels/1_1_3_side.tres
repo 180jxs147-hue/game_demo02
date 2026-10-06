@@ -19,7 +19,7 @@ grid_pos = Vector2i(2, 2)
 [sub_resource type="Resource" id="UnitSpawn_Add1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_lishi")
-grid_pos = Vector2i(3, 0)
+grid_pos = Vector2i(4, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_Add2"]
 script = ExtResource("2_spawn")

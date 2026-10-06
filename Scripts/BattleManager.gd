@@ -3,7 +3,7 @@ class_name BattleManager extends Node2D
 ## 战斗主控脚本。
 ## 职责：
 ## - 初始化关卡（读取 LevelDatabase，生成敌军）
-## - 管理双方 HP 与“战线红线”推进
+## - 管理双方民力与存活单位，判断战斗胜负
 ## - 生成玩家单位到备战区，并在开始战斗时通知单位进入状态机循环
 ## 约定：
 ## - 玩家单位永远挂在 `$Battlefield/FriendlyField/UnitsContainer`
@@ -87,7 +87,6 @@ var _card_slot_scene = preload("res://Scenes/CardSlot.tscn")
 var _battle_presentation: Node
 const _BENCH_CARD_SIZE := Vector2(126, 180) ## 备战区卡牌的显示尺寸（CardSlot 原始 280x400 等比缩小，适配底栏高度）
 var _reward_primary_button_texture: Texture2D = preload("res://Assets/UI/Battle/reward_button_primary_v2.png")
-var _reward_secondary_button_texture: Texture2D = preload("res://Assets/UI/Battle/reward_button_secondary_v2.png")
 var _reward_resolved: bool = false
 var _reward_action_buttons: Array = []
 
@@ -744,7 +743,7 @@ func _process(_delta):
 			$Battlefield.position = battlefield_position
 	# ---------------------------
 
-	# 战斗循环：推进战线、检测胜负、让超出战线的单位进入死亡状态。
+	# 战斗循环：按双方已部署的存活单位检测胜负。
 	if not is_battle_started:
 		_synergy_update_timer += _delta
 		if _synergy_update_timer > 0.2:
@@ -1114,8 +1113,8 @@ func modify_enemy_manpower(amount: float):
 
 # 统一更新 UI
 func _update_ui():
-	if manpower_label: manpower_label.text = "民力: %.1f" % current_manpower
-	if enemy_manpower_label: enemy_manpower_label.text = "敌方民力: %.1f" % enemy_current_manpower
+	if manpower_label: manpower_label.text = "民力: %d" % roundi(current_manpower)
+	if enemy_manpower_label: enemy_manpower_label.text = "敌方民力: %d" % roundi(enemy_current_manpower)
 
 func _update_tooltip_position():
 	# 更新 Tooltip 位置
@@ -1190,11 +1189,14 @@ func _end_battle(victory: bool):
 	is_battle_started = false
 	
 	if victory:
+		# 战斗结果确定后同步保存；阵亡伤员已在死亡时即时存档。
+		if GameState:
+			GameState.trigger_autosave()
 		# 不直接显示结算界面，而是显示“完成战斗”按钮
 		# show_victory_screen()
 		_show_finish_battle_button()
 	else:
-		# 失败：不保存进度（允许重试），直接显示结算
+		# 失败后保留已记录的伤员，仍允许从本关重新开始。
 		get_tree().paused = true
 		_show_defeat_screen()
 
@@ -1404,12 +1406,12 @@ func show_victory_screen():
 		reward_hint_label.text = "选择一项战利品，或将其折现为军资"
 	
 	# 胜利逻辑
-	var reward_text = ""
+	var reward_summary: Array[String] = []
 	
 	# 发放局外成长货币
 	if GameState and GameState.has_method("add_meta_currency"):
 		GameState.add_meta_currency(1)
-		reward_text += "\n获得威望：+1"
+		reward_summary.append("威望 +1")
 	
 	# 1. 弹出三选一奖励
 	_show_rewards()
@@ -1435,7 +1437,7 @@ func show_victory_screen():
 		print("DEBUG: has_next=true. Next level=", get_next_level_id())
 	else:
 		print("DEBUG: has_next=false. levels.size=", level_database.levels.size() if level_database else "null")
-		reward_text += "\n\n恭喜通关！(Demo结束)"
+		reward_summary.append("战役通关")
 		
 	if next_level_button: 
 		next_level_button.visible = false # 等待选择奖励后再显示
@@ -1443,8 +1445,9 @@ func show_victory_screen():
 		retry_button.visible = false
 	
 	if result_detail_label:
-		var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f%s" % [_count_alive_units(true), _count_alive_units(false), current_manpower, reward_text]
-		result_detail_label.text = detail
+		var summary: Array[String] = ["我方存活 %d" % _count_alive_units(true), "敌方存活 %d" % _count_alive_units(false), "剩余民力 %.1f" % current_manpower]
+		summary.append_array(reward_summary)
+		result_detail_label.text = "    ·    ".join(summary)
 	_update_result_progress()
 
 func _show_defeat_screen():
@@ -1464,8 +1467,7 @@ func _show_defeat_screen():
 	if retry_button: retry_button.visible = true
 	if reward_container: reward_container.visible = false
 	if result_detail_label:
-		var detail := "我方存活: %d\n敌方存活: %d\n民力: %.1f" % [_count_alive_units(true), _count_alive_units(false), current_manpower]
-		result_detail_label.text = detail
+		result_detail_label.text = "    ·    ".join(["我方存活 %d" % _count_alive_units(true), "敌方存活 %d" % _count_alive_units(false), "剩余民力 %.1f" % current_manpower])
 	_update_result_progress()
 
 # --- 羁绊系统 ---
@@ -1822,31 +1824,34 @@ func _apply_adjacency_bonuses(units: Array):
 func _update_synergy_ui(civ_counts, class_counts):
 	if not synergy_label: return
 	
-	var text = "当前羁绊:\n"
+	var active_lines: Array[String] = []
 	
 	# 文明
-	if civ_counts.get("dynasty", 0) >= 4: text += "[王朝] 4: 全体+5攻\n"
-	elif civ_counts.get("dynasty", 0) >= 2: text += "[王朝] 2: 全体+2攻\n"
+	if civ_counts.get("dynasty", 0) >= 4: active_lines.append("[王朝] 4: 全体+5攻")
+	elif civ_counts.get("dynasty", 0) >= 2: active_lines.append("[王朝] 2: 全体+2攻")
 	
-	if civ_counts.get("warlord", 0) >= 4: text += "[诸侯] 4: 全体+50血\n"
-	elif civ_counts.get("warlord", 0) >= 2: text += "[诸侯] 2: 全体+20血\n"
+	if civ_counts.get("warlord", 0) >= 4: active_lines.append("[诸侯] 4: 全体+50血")
+	elif civ_counts.get("warlord", 0) >= 2: active_lines.append("[诸侯] 2: 全体+20血")
 	
-	if civ_counts.get("rebel", 0) >= 4: text += "[义军] 4: 全体-0.5s CD\n"
-	elif civ_counts.get("rebel", 0) >= 2: text += "[义军] 2: 全体-0.2s CD\n"
+	if civ_counts.get("rebel", 0) >= 4: active_lines.append("[义军] 4: 全体-0.5s CD")
+	elif civ_counts.get("rebel", 0) >= 2: active_lines.append("[义军] 2: 全体-0.2s CD")
 	
-	if civ_counts.get("predator", 0) >= 4: text += "[虎狼] 4: 全体+8攻\n"
-	elif civ_counts.get("predator", 0) >= 2: text += "[虎狼] 2: 全体+3攻\n"
+	if civ_counts.get("predator", 0) >= 4: active_lines.append("[虎狼] 4: 全体+8攻")
+	elif civ_counts.get("predator", 0) >= 2: active_lines.append("[虎狼] 2: 全体+3攻")
 	
 	# 兵种
-	if class_counts.get("infantry", 0) >= 4: text += "[步兵] 4: 步兵+30血\n"
-	elif class_counts.get("infantry", 0) >= 2: text += "[步兵] 2: 步兵+10血\n"
+	if class_counts.get("infantry", 0) >= 4: active_lines.append("[步兵] 4: 步兵+30血")
+	elif class_counts.get("infantry", 0) >= 2: active_lines.append("[步兵] 2: 步兵+10血")
 	
-	if class_counts.get("archer", 0) >= 2: text += "[弓兵] 2: 弓兵+2攻\n"
-	if class_counts.get("shield", 0) >= 2: text += "[盾兵] 2: 盾兵+20血\n"
-	if class_counts.get("cavalry", 0) >= 2: text += "[骑兵] 2: 骑兵+2攻+5血\n"
-	if class_counts.get("support", 0) >= 2: text += "[辅助] 2: 辅助+10血\n"
+	if class_counts.get("archer", 0) >= 2: active_lines.append("[弓兵] 2: 弓兵+2攻")
+	if class_counts.get("shield", 0) >= 2: active_lines.append("[盾兵] 2: 盾兵+20血")
+	if class_counts.get("cavalry", 0) >= 2: active_lines.append("[骑兵] 2: 骑兵+2攻+5血")
+	if class_counts.get("support", 0) >= 2: active_lines.append("[辅助] 2: 辅助+10血")
 	
-	synergy_label.text = text
+	if active_lines.is_empty():
+		synergy_label.text = "暂无激活羁绊\n\n部署同势力单位\n可激活战阵加成。"
+	else:
+		synergy_label.text = "\n".join(active_lines)
 
 # 按钮点击回调
 func _on_start_button_pressed():
@@ -1873,7 +1878,7 @@ func _on_next_level_button_pressed():
 		_proceed_to_next_level_direct()
 
 func _on_retry_button_pressed():
-	# 重试时恢复本关开始时的自动检查点，保留此前关卡获得的卡牌。
+	# 重试本关，但保留自动存档中已记录的伤员。
 	if GameState:
 		var checkpoint = GameState.load_player_library(true, true)
 		if checkpoint:
@@ -2011,11 +2016,11 @@ func _show_rewards():
 func _create_reward_card_ui(item: Dictionary):
 	var type = item.get("type", "unit")
 	# 每张奖励卡都使用统一的宽度和暗金样式，保证三选一能完整落在面板内。
-	const CARD_WIDTH := 220.0
-	const CARD_HEIGHT := 292.0
+	const CARD_WIDTH := 208.0
+	const CARD_HEIGHT := 226.0
 	var wrapper := VBoxContainer.new()
-	wrapper.custom_minimum_size = Vector2(CARD_WIDTH, 370)
-	wrapper.add_theme_constant_override("separation", 8)
+	wrapper.custom_minimum_size = Vector2(CARD_WIDTH, 362)
+	wrapper.add_theme_constant_override("separation", 6)
 	wrapper.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 
 	if type == "unit":
@@ -2032,9 +2037,9 @@ func _create_reward_card_ui(item: Dictionary):
 		var slot = _card_slot_scene.instantiate()
 		if slot.has_method("setup"):
 			slot.setup(data)
-		# CardSlot 原始尺寸 280x400，缩放后约 202x288，居中放入统一卡框。
-		slot.scale = Vector2(0.72, 0.72)
-		slot.position = Vector2(9, 0)
+		# CardSlot 原始尺寸 280x400，缩放后约 158x226，居中放入统一卡框。
+		slot.scale = Vector2(0.565, 0.565)
+		slot.position = Vector2(25, 0)
 		if slot.has_signal("pressed"):
 			slot.pressed.connect(func(_d): _on_reward_selected(item))
 		slot_host.add_child(slot)
@@ -2042,7 +2047,8 @@ func _create_reward_card_ui(item: Dictionary):
 
 		var take_button := Button.new()
 		take_button.text = "领取"
-		take_button.custom_minimum_size = Vector2(0, 40)
+		take_button.custom_minimum_size = Vector2(186, 62)
+		take_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		if GameState:
 			GameState.apply_button_style(take_button)
 		_apply_reward_button_art(take_button, _reward_primary_button_texture)
@@ -2055,11 +2061,11 @@ func _create_reward_card_ui(item: Dictionary):
 			sell_price = GameState.get_card_sell_price(data.rarity)
 		var sell_button := Button.new()
 		sell_button.text = "折现  +%d 军资" % sell_price
-		sell_button.custom_minimum_size = Vector2(0, 34)
+		sell_button.custom_minimum_size = Vector2(186, 62)
+		sell_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		if GameState:
 			GameState.apply_button_style(sell_button)
-			sell_button.modulate = Color(1.0, 0.84, 0.5)
-		_apply_reward_button_art(sell_button, _reward_secondary_button_texture, Color(0.92, 0.84, 0.66, 1))
+		_apply_reward_button_art(sell_button, _reward_primary_button_texture)
 		sell_button.pressed.connect(func(): _on_reward_sold(item))
 		_reward_action_buttons.append(sell_button)
 		wrapper.add_child(sell_button)
@@ -2122,7 +2128,8 @@ func _create_reward_card_ui(item: Dictionary):
 
 		var take_button := Button.new()
 		take_button.text = "领取扩充"
-		take_button.custom_minimum_size = Vector2(0, 40)
+		take_button.custom_minimum_size = Vector2(186, 62)
+		take_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		if GameState:
 			GameState.apply_button_style(take_button)
 		_apply_reward_button_art(take_button, _reward_primary_button_texture)
@@ -2137,32 +2144,38 @@ func _set_reward_hover(control: Control, hovered: bool):
 	control.scale = Vector2(1.04, 1.04) if hovered else Vector2.ONE
 	control.modulate = Color(1.08, 1.03, 0.92, 1) if hovered else Color.WHITE
 
-func _apply_reward_button_art(button: Button, texture: Texture2D, tint: Color = Color.WHITE):
+func _apply_reward_button_art(button: Button, texture: Texture2D):
 	if not button or not texture:
 		return
 	var old_art := button.get_node_or_null("RewardButtonArt")
 	if old_art:
 		old_art.queue_free()
 
-	# 让生成的按钮图负责边框与底纹，Button 只负责文字和输入状态。
-	var clear_style := StyleBoxFlat.new()
-	clear_style.bg_color = Color(0, 0, 0, 0)
-	for state in ["normal", "hover", "pressed", "focus", "disabled"]:
-		button.add_theme_stylebox_override(state, clear_style)
+	# 底图作为 Button 的背景样式绘制，文字由 Button 自己绘制在其上方。
+	var state_tints := {
+		"normal": Color.WHITE,
+		"hover": Color(1.15, 1.10, 1.0),
+		"pressed": Color(0.78, 0.72, 0.65),
+		"hover_pressed": Color(0.78, 0.72, 0.65),
+		"disabled": Color(0.50, 0.50, 0.50)
+	}
+	for state in state_tints:
+		var style := StyleBoxTexture.new()
+		style.texture = texture
+		style.modulate_color = state_tints[state]
+		button.add_theme_stylebox_override(state, style)
+	var focus_style := StyleBoxFlat.new()
+	focus_style.draw_center = false
+	focus_style.set_border_width_all(2)
+	focus_style.border_color = Color(1.0, 0.82, 0.44, 0.9)
+	button.add_theme_stylebox_override("focus", focus_style)
+	button.alignment = HORIZONTAL_ALIGNMENT_CENTER
 	button.add_theme_color_override("font_color", Color(0.98, 0.88, 0.66, 1))
 	button.add_theme_color_override("font_hover_color", Color(1.0, 0.95, 0.82, 1))
 	button.add_theme_color_override("font_pressed_color", Color(1.0, 0.82, 0.42, 1))
-
-	var art := TextureRect.new()
-	art.name = "RewardButtonArt"
-	art.set_anchors_preset(Control.PRESET_FULL_RECT)
-	art.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	art.texture = texture
-	art.expand_mode = 1
-	art.stretch_mode = 6
-	art.modulate = tint
-	art.z_index = -1
-	button.add_child(art)
+	button.add_theme_color_override("font_disabled_color", Color(0.72, 0.67, 0.58, 1))
+	button.add_theme_color_override("font_outline_color", Color(0.08, 0.045, 0.02, 1))
+	button.add_theme_constant_override("outline_size", 2)
 
 func _on_reward_sold(item: Dictionary):
 	if _reward_resolved:
@@ -2190,10 +2203,8 @@ func _on_reward_sold(item: Dictionary):
 	reward_container.visible = false
 	
 	# 更新文本提示
-	if result_detail_label:
-		result_detail_label.text += "\n\n已选择: %s" % reward_name
 	if reward_hint_label:
-		reward_hint_label.text = "战利品已入库，整备后继续远征"
+		reward_hint_label.text = "已选择：%s  ·  战利品已入库，整备后继续远征" % reward_name
 		
 	# 无论是否有下一关，都先进入营地
 	# 如果是最后一关，可能也允许进营地看看？或者直接结束？
@@ -2242,10 +2253,8 @@ func _on_reward_selected(item: Dictionary):
 	reward_container.visible = false
 	
 	# 更新文本提示
-	if result_detail_label:
-		result_detail_label.text += "\n\n已选择: %s" % reward_name
 	if reward_hint_label:
-		reward_hint_label.text = "战利品已入库，整备后继续远征"
+		reward_hint_label.text = "已选择：%s  ·  战利品已入库，整备后继续远征" % reward_name
 		
 	_show_camp_button()
 
@@ -2494,19 +2503,21 @@ func _update_result_progress():
 func _fit_result_overlay():
 	if not result_overlay:
 		return
-	var panel = result_overlay.get_node_or_null("Panel")
+	var panel := result_overlay.get_node_or_null("Panel") as Panel
 	if not panel:
 		return
 	var viewport_size := get_viewport_rect().size
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		return
-	# 保留奖励卡的横向空间，同时给低分辨率留下安全边距。
-	var panel_width := clampf(viewport_size.x - 48.0, 760.0, 1120.0)
-	var panel_height := clampf(viewport_size.y - 48.0, 620.0, 700.0)
-	panel.offset_left = -panel_width * 0.5
-	panel.offset_right = panel_width * 0.5
-	panel.offset_top = -panel_height * 0.5
-	panel.offset_bottom = panel_height * 0.5
+	# 保持文字与卡牌的设计间距一致，在较小窗口整体等比缩放。
+	var design_size := Vector2(1120.0, 780.0)
+	var panel_scale := minf(1.0, minf((viewport_size.x - 32.0) / design_size.x, (viewport_size.y - 32.0) / design_size.y))
+	panel.offset_left = -design_size.x * 0.5
+	panel.offset_right = design_size.x * 0.5
+	panel.offset_top = -design_size.y * 0.5
+	panel.offset_bottom = design_size.y * 0.5
+	panel.pivot_offset = design_size * 0.5
+	panel.scale = Vector2.ONE * panel_scale
 
 func _apply_theme():
 	if not GameState: return
@@ -2516,8 +2527,8 @@ func _apply_theme():
 		if node is Button:
 			GameState.apply_button_style(node)
 	_apply_reward_button_art(next_level_button, _reward_primary_button_texture)
-	_apply_reward_button_art(retry_button, _reward_secondary_button_texture)
-	_apply_reward_button_art($CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/MenuButton, _reward_secondary_button_texture)
+	_apply_reward_button_art(retry_button, _reward_primary_button_texture)
+	_apply_reward_button_art($CanvasLayer/ResultOverlay/Panel/VBoxContainer/HBoxContainer/MenuButton, _reward_primary_button_texture)
 	
 	# 胜利/失败面板背景
 	if result_overlay:
