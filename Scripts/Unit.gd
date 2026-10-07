@@ -32,11 +32,20 @@ var bonus_cooldown_flat: float = 0.0
 
 var visual_blocks: Array[ColorRect] = []
 var token_health: ProgressBar
+var health_value_label: Label
+var health_state_badge: PanelContainer
+var health_state_text: Label
+var _health_fill_normal: StyleBoxFlat
+var _health_fill_critical: StyleBoxFlat
+var _last_health_state: int = -1
+var _bench_hidden: bool = false
 var token_backplates: Array[Panel] = []
 var _processed_death_ids: Dictionary = {}
 var _last_stand_triggered: bool = false
 var current_charge_stacks: int = 0 # 剩余冲锋次数
 var active_status_effects: Dictionary = {} # type -> {duration, value, tick_timer}
+var _battle_state_generation: int = 0
+var _status_text_tween: Tween
 
 # --- 拖拽相关变量 ---
 var is_dragging: bool = false
@@ -97,7 +106,10 @@ func _update_tag_defs():
 	# 这需要在 battle_started 时调用 on_battle_start
 
 func set_bench_hidden(hidden: bool):
-	if token_health: token_health.visible = not hidden
+	_bench_hidden = hidden
+	if token_health: token_health.visible = not hidden and current_hp > 0
+	if health_value_label: health_value_label.visible = not hidden and current_hp > 0
+	if health_state_badge: health_state_badge.visible = not hidden and (current_hp <= 0 or current_hp / maxf(get_max_hp(), 1.0) <= 0.25)
 	for plate in token_backplates: plate.visible = not hidden
 	for block in visual_blocks:
 		block.visible = not hidden
@@ -264,20 +276,40 @@ func _ready():
 		token_health = ProgressBar.new()
 		token_health.show_percentage = false
 		token_health.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		token_health.position = Vector2(bounds.position.x + 5, bounds.end.y - 13)
-		token_health.size = Vector2(bounds.size.x - 10, 5)
+		token_health.position = Vector2(bounds.position.x + 5, bounds.end.y - 14)
+		token_health.size = Vector2(bounds.size.x - 10, 7)
 		token_health.z_index = 21
 		var skin = preload("res://Scripts/MenuVisuals.gd")
 		var track = skin.surface(Color("171714"))
-		var fill = skin.surface(Color("8cc597") if faction == Faction.FRIENDLY else Color("d9826d"))
-		for style in [track, fill]:
+		_health_fill_normal = skin.surface(Color("8cc597") if faction == Faction.FRIENDLY else Color("d9826d"))
+		_health_fill_critical = skin.surface(Color("f15b46"))
+		for style in [track, _health_fill_normal, _health_fill_critical]:
 			style.content_margin_top = 0
 			style.content_margin_bottom = 0
 			style.content_margin_left = 0
 			style.content_margin_right = 0
 		token_health.add_theme_stylebox_override("background", track)
-		token_health.add_theme_stylebox_override("fill", fill)
+		token_health.add_theme_stylebox_override("fill", _health_fill_normal)
 		add_child(token_health)
+		health_value_label = Label.new()
+		health_value_label.position = Vector2(bounds.position.x + 5, bounds.end.y - 33)
+		health_value_label.size = Vector2(bounds.size.x - 10, 18)
+		health_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		health_value_label.add_theme_font_size_override("font_size", 12)
+		health_value_label.add_theme_color_override("font_outline_color", Color("17110f"))
+		health_value_label.add_theme_constant_override("outline_size", 3)
+		health_value_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		health_value_label.z_index = 22
+		add_child(health_value_label)
+		health_state_badge = PanelContainer.new()
+		health_state_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		health_state_badge.z_index = 23
+		health_state_text = Label.new()
+		health_state_text.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		health_state_text.add_theme_font_size_override("font_size", 13)
+		health_state_text.add_theme_color_override("font_color", Color("fff2df"))
+		health_state_badge.add_child(health_state_text)
+		add_child(health_state_badge)
 	# 初始化血量显示
 	_update_health_visuals()
 	
@@ -436,9 +468,34 @@ func take_damage(amount: float):
 func _update_health_visuals():
 	if not data: return
 	var bounds = _calculate_visual_bounds()
-	var hp_percent = current_hp / get_max_hp()
-	if token_health: token_health.value = hp_percent * 100.0
-	var buffer_percent = buffer_hp / get_max_hp()
+	var max_hp: float = maxf(get_max_hp(), 1.0)
+	var hp_percent: float = clampf(current_hp / max_hp, 0.0, 1.0)
+	var buffer_percent: float = clampf(buffer_hp / max_hp, 0.0, 1.0)
+	var health_state: int = 2 if current_hp <= 0.0 else (1 if hp_percent <= 0.25 else 0)
+	if token_health:
+		token_health.value = hp_percent * 100.0
+		token_health.visible = not _bench_hidden and health_state != 2
+	if health_value_label:
+		health_value_label.text = "%d/%d" % [ceili(current_hp), ceili(max_hp)]
+		health_value_label.add_theme_color_override("font_color", Color("ffb49a") if health_state == 1 else Color("fff2df"))
+		health_value_label.visible = not _bench_hidden and health_state != 2
+	if health_state_badge:
+		health_state_badge.visible = not _bench_hidden and health_state != 0
+		if health_state != _last_health_state:
+			_last_health_state = health_state
+			if health_state == 1 or health_state == 2:
+				var badge_style := StyleBoxFlat.new()
+				badge_style.bg_color = Color("752119") if health_state == 1 else Color("211917")
+				badge_style.border_color = Color("ff765c") if health_state == 1 else Color("d9bea4")
+				badge_style.set_border_width_all(1)
+				badge_style.set_corner_radius_all(3)
+				badge_style.set_content_margin_all(3)
+				health_state_badge.add_theme_stylebox_override("panel", badge_style)
+				health_state_text.text = "危" if health_state == 1 else "阵亡"
+				health_state_badge.size = Vector2(26, 25) if health_state == 1 else Vector2(52, 25)
+			health_state_badge.position = bounds.get_center() - health_state_badge.size * 0.5
+		if _health_fill_normal and _health_fill_critical and token_health:
+			token_health.add_theme_stylebox_override("fill", _health_fill_critical if health_state == 1 else _health_fill_normal)
 	
 	# 计算全局截断点 (相对于 Unit 节点)
 	# 假设从右向左扣血，即显示部分为 [min_x, min_x + width * percent]
@@ -659,7 +716,7 @@ func _check_condition():
 		# 简单做法：这里 return，依靠 update loop 或者 timer 再次触发？
 		# 状态机在 Ready 状态如果不 act 也不 transition，就会卡住。
 		# 我们可以每 0.5s check 一次
-		get_tree().create_tree_timer(0.5).timeout.connect(_check_condition)
+		get_tree().create_timer(0.5).timeout.connect(_retry_condition.bind(_battle_state_generation))
 		return
 
 	if not is_deployed:
@@ -687,12 +744,17 @@ func _check_condition():
 			
 	if can_act:
 		if BattleManager.is_battle_started:
+			status_label.text = ""
 			state_chart.send_event("act")
 	else:
 		# 缺气，等待 0.5s 后重试 (停留在 Ready 状态)
 		status_label.text = "缺气"
 		if BattleManager.is_battle_started:
-			get_tree().create_timer(0.5).timeout.connect(_check_condition)
+			get_tree().create_timer(0.5).timeout.connect(_retry_condition.bind(_battle_state_generation))
+
+func _retry_condition(expected_generation: int) -> void:
+	if expected_generation == _battle_state_generation and BattleManager.is_battle_started:
+		_check_condition()
 
 # 状态 3: 执行动作
 func _on_action_entered():
@@ -711,8 +773,15 @@ func _on_dead_entered():
 	timer.stop()
 	# 兜住绕过 _on_death() 而直接进入死亡状态的路径。
 	_record_injury()
-	status_label.text = "X"
-	modulate = Color(0.3, 0.3, 0.3)
+	current_hp = 0.0
+	buffer_hp = 0.0
+	_update_health_visuals()
+	status_label.text = ""
+	modulate = Color.WHITE
+	for block in visual_blocks:
+		block.modulate = Color(0.3, 0.3, 0.3)
+	for plate in token_backplates:
+		plate.modulate = Color(0.4, 0.4, 0.4)
 	
 	# 释放格子占用
 	GridManager.clear_unit(self)
@@ -1013,11 +1082,24 @@ func start_battle():
 	state_chart.send_event("battle_started")
 
 func reset_state():
+	_battle_state_generation += 1
 	state_chart.send_event("reset")
 	timer.stop()
+	if _status_text_tween and _status_text_tween.is_running():
+		_status_text_tween.kill()
+	active_status_effects.clear()
+	status_label.text = ""
+	status_label.modulate = Color.WHITE
+	if name_label:
+		status_label.position = name_label.position + Vector2(0, 20)
 	reset_stats()
 	current_hp = get_max_hp()
+	buffer_hp = current_hp
 	modulate = Color.WHITE
+	for block in visual_blocks:
+		block.modulate = Color.WHITE
+	for plate in token_backplates:
+		plate.modulate = Color.WHITE
 	_update_health_visuals()
 	if cooldown_bar:
 		var max_w = cooldown_bar.get_meta("max_width", GameConst.GRID_SIZE - 10)
@@ -1234,14 +1316,16 @@ func _calculate_visual_bounds() -> Rect2:
 	return bounds
 
 func _pop_text(txt, color: Color = Color.WHITE):
+	if _status_text_tween and _status_text_tween.is_running():
+		_status_text_tween.kill()
 	status_label.text = txt
 	status_label.modulate = color
-	var t = create_tween()
+	_status_text_tween = create_tween()
 	# 让状态文字跳动，不要遮挡名字
-	t.tween_property(status_label, "position:y", -50.0, 0.1)
-	t.tween_property(status_label, "position:y", -40.0, 0.1)
+	_status_text_tween.tween_property(status_label, "position:y", -50.0, 0.1)
+	_status_text_tween.tween_property(status_label, "position:y", -40.0, 0.1)
 	# 动画结束后恢复颜色 (可选，防止影响下一次显示)
-	t.tween_callback(func(): status_label.modulate = Color.WHITE)
+	_status_text_tween.tween_callback(func(): status_label.modulate = Color.WHITE)
 
 
 	

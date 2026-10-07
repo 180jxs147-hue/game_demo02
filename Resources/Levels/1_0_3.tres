@@ -28,3 +28,4 @@ level_name = "序章 第 3 关 - 遭遇与线索"
 enemy_power = 5
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_25obb"), SubResource("Resource_tfpm7"), SubResource("Resource_lvi06")])
 reward_pool_id = "generic_early"
+shop_pool_id = "generic_shop"

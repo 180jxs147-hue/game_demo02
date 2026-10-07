@@ -11,9 +11,9 @@
 [ext_resource type="Resource" path="res://Resources/RewardPools/HuangjinMidPool.tres" id="9"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/HuangjinLatePool.tres" id="10"]
 [ext_resource type="Resource" path="res://Resources/RewardPools/EquipmentPool.tres" id="11"]
+[ext_resource type="Resource" path="res://Resources/RewardPools/HanBossPool.tres" id="12_han_boss"]
 
 
 [resource]
 script = ExtResource("1")
-pools = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11")]
-
+pools = [ExtResource("2"), ExtResource("3"), ExtResource("4"), ExtResource("5"), ExtResource("6"), ExtResource("7"), ExtResource("8"), ExtResource("9"), ExtResource("10"), ExtResource("11"), ExtResource("12_han_boss")]

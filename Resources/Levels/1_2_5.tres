@@ -6,9 +6,11 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/danyang_bing.tres" id="4_danyang"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="5_shesheng"]
 
+[ext_resource type="Resource" path="res://Resources/DataFiles/cao_cao.tres" id="chapter_cao_cao"]
+
 [sub_resource type="Resource" id="UnitSpawn_Boss"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_caiguan")
+unit_data = ExtResource("chapter_cao_cao")
 grid_pos = Vector2i(4, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_Add1"]
@@ -37,7 +39,7 @@ level_id = "1_2_5"
 level_name = "黄巾线 第 5 关 - 河间血战"
 grid_width = 9
 grid_height = 6
+enemy_manpower_regen = 5.0
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Boss"), SubResource("UnitSpawn_Add1"), SubResource("UnitSpawn_Add2"), SubResource("UnitSpawn_Add3"), SubResource("UnitSpawn_Add4")])
 reward_pool_id = "huangjin_mid"
 shop_pool_id = "huangjin_shop"
-

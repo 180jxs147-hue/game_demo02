@@ -26,6 +26,7 @@ const COST_HEAL = 2
 const COST_REFRESH = 1
 const COST_CARD_BASE = 3
 
+
 var current_shop_pool = null
 var current_refresh_cost = COST_REFRESH
 var current_base_card_cost = COST_CARD_BASE
@@ -59,10 +60,20 @@ func _load_shop_config():
 		if config_to_use and "shop_pool_id" in config_to_use:
 			shop_pool_id_to_use = config_to_use.shop_pool_id
 
-	if shop_pool_id_to_use != "":
-		var shop_db = load("res://Resources/ShopPoolDatabase.tres")
-		if shop_db:
+	var shop_db = load("res://Resources/ShopPoolDatabase.tres") as ShopPoolDatabase
+	if shop_db:
+		if shop_pool_id_to_use != "":
 			current_shop_pool = shop_db.get_pool_by_id(shop_pool_id_to_use)
+
+		# 纯池化保底：若关卡未明确指定或池子未获取到，严格按路线分配对应标准商店池
+		if not current_shop_pool or current_shop_pool.entries.is_empty():
+			var lvl_id := config_to_use.level_id if config_to_use and "level_id" in config_to_use else ""
+			if lvl_id.begins_with("1_1_"):
+				current_shop_pool = shop_db.get_pool_by_id("han_shop")
+			elif lvl_id.begins_with("1_2_"):
+				current_shop_pool = shop_db.get_pool_by_id("huangjin_shop")
+			else:
+				current_shop_pool = shop_db.get_pool_by_id("generic_shop")
 
 	if current_shop_pool:
 		current_refresh_cost = current_shop_pool.refresh_cost
@@ -262,27 +273,26 @@ func _refresh_shop(free: bool = false):
 		
 	shop_cards.clear()
 	
-	# Generate cards
+	# Generate cards (纯池化驱动抽取：卡牌完全由 ShopPool 维护，杜绝全库随机与黑名单过滤)
 	var generated_cards: Array[Dictionary] = [] # { "unit": UnitData, "cost": int }
+	
+	# 若当前商店池为空，使用通用商店池作为最终保底池
+	if not current_shop_pool or current_shop_pool.entries.is_empty():
+		var shop_db = load("res://Resources/ShopPoolDatabase.tres") as ShopPoolDatabase
+		if shop_db:
+			current_shop_pool = shop_db.get_pool_by_id("generic_shop")
 	
 	if current_shop_pool and not current_shop_pool.entries.is_empty():
 		for i in range(3):
 			var picked = _pick_weighted(current_shop_pool.entries)
 			if picked and picked.has("unit"):
-				var unit = picked.get("unit")
-				# If ShopPool entry has specific cost, use it; otherwise use rarity based price
-				var cost = picked.get("cost", -1)
-				if cost < 0:
-					cost = GameState.get_card_buy_price(unit.rarity)
-				generated_cards.append({ "unit": unit, "cost": cost })
-	else:
-		# Random 3 cards (Fallback)
-		var db = GameState.get_unit_database()
-		if db and not db.units.is_empty(): 
-			for i in range(3):
-				var card = db.units.pick_random()
-				var cost = GameState.get_card_buy_price(card.rarity)
-				generated_cards.append({ "unit": card, "cost": cost })
+				var unit: UnitData = picked.get("unit")
+				if unit:
+					# 若 ShopPool 条目指定了费用则使用，否则使用稀有度定价
+					var cost: int = picked.get("cost", -1)
+					if cost < 0:
+						cost = GameState.get_card_buy_price(unit.rarity)
+					generated_cards.append({ "unit": unit, "cost": cost })
 	
 	for card_info in generated_cards:
 		var card = card_info.unit

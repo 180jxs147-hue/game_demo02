@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
-[ext_resource type="Texture2D" path="res://Assets/UI/Cards/icon_cd.png" id="2_icon"]
+[ext_resource type="Texture2D" uid="uid://cq67s81ewh7ja" path="res://Resources/ImageFiles/shaota.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_data")
@@ -13,11 +13,11 @@ unit_class = "equipment"
 color = Color(1, 1, 1, 1)
 tags = Array[String]([])
 grid_shape = Array[Vector2i]([Vector2i(0, 0)])
-max_hp = 50.0
+max_hp = 70.0
 manpower_cost = 2.0
 cooldown = 5.0
 attack_damage = 0.0
-defense = 0.0
+defense = 2.0
 attack_range = 1
 is_injured = false
 charge_count = 0

@@ -1,10 +1,12 @@
-[gd_resource type="Resource" script_class="UnitData" format=3 uid="uid://b2ho72ardhrnj"]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://b2ho72ardhrnj"]
 
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/quarter.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_data")
 name = "军需官"
+icon = ExtResource("2_icon")
 rarity = "uncommon"
 unit_class = "support"
 color = Color(0.5, 0.5, 0.5, 1)

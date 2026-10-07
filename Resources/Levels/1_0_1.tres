@@ -22,4 +22,5 @@ level_name = "序章 第 1 关 - 使命与净化测试"
 background_texture = ExtResource("3_bg")
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_yba0d"), SubResource("Resource_r334h")])
 reward_pool_id = "generic_early0_1"
+shop_pool_id = "generic_shop"
 allow_camp = false

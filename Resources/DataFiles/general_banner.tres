@@ -1,18 +1,19 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" uid="uid://tnoxyxo1us2p" path="res://Resources/ImageFiles/zhongjundaqi.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_data")
 name = "中军大旗"
-icon = null
+icon = ExtResource("2_icon")
 rarity = "rare"
 civilization = "neutral"
 unit_class = "support"
 color = Color(0.8, 0.2, 0.2, 1)
 tags = Array[String](["banner"])
 grid_shape = Array[Vector2i]([Vector2i(0, 0)])
-max_hp = 200.0
+max_hp = 80.0
 manpower_cost = 0.0
 cooldown = 5.0
 attack_damage = 0.0

@@ -6,34 +6,44 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/changshui_huqi.tres" id="4_changshui"]
 [ext_resource type="Resource" uid="uid://305j83uw7asa" path="res://Resources/DataFiles/yulin_lang.tres" id="5_yulin"]
 
-[sub_resource type="Resource" id="UnitSpawn_Boss"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/liu_bei.tres" id="chapter_liu_bei"]
+
+[ext_resource type="Resource" path="res://Resources/DataFiles/guan_yu.tres" id="chapter_guan_yu"]
+
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_fei.tres" id="chapter_zhang_fei"]
+
+[ext_resource type="Resource" path="res://Resources/DataFiles/junguo_bing.tres" id="chapter_junguo_bing"]
+
+[sub_resource type="Resource" id="UnitSpawn_LiuBei"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_caocao")
+unit_data = ExtResource("chapter_liu_bei")
 grid_pos = Vector2i(4, 0)
 
-[sub_resource type="Resource" id="UnitSpawn_EliteCav1"]
+[sub_resource type="Resource" id="UnitSpawn_GuanYu"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_changshui")
-grid_pos = Vector2i(3, 1)
+unit_data = ExtResource("chapter_guan_yu")
+grid_pos = Vector2i(2, 1)
 
-[sub_resource type="Resource" id="UnitSpawn_EliteCav2"]
+[sub_resource type="Resource" id="UnitSpawn_ZhangFei"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_changshui")
-grid_pos = Vector2i(5, 1)
+unit_data = ExtResource("chapter_zhang_fei")
+grid_pos = Vector2i(4, 3)
 
 [sub_resource type="Resource" id="UnitSpawn_Guard1"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("5_yulin")
-grid_pos = Vector2i(2, 2)
+unit_data = ExtResource("chapter_junguo_bing")
+grid_pos = Vector2i(2, 3)
 
 [sub_resource type="Resource" id="UnitSpawn_Guard2"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("5_yulin")
-grid_pos = Vector2i(6, 2)
+unit_data = ExtResource("chapter_junguo_bing")
+grid_pos = Vector2i(5, 2)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_2_4"
-level_name = "黄巾线 第 4 关 - 乱世奸雄"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Boss"), SubResource("UnitSpawn_EliteCav1"), SubResource("UnitSpawn_EliteCav2"), SubResource("UnitSpawn_Guard1"), SubResource("UnitSpawn_Guard2")])
+level_name = "黄巾线 第 4 关 - 涿郡义军"
+enemy_manpower_regen = 4.0
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_LiuBei"), SubResource("UnitSpawn_GuanYu"), SubResource("UnitSpawn_ZhangFei"), SubResource("UnitSpawn_Guard1"), SubResource("UnitSpawn_Guard2")])
 reward_pool_id = "huangjin_early"
+shop_pool_id = "huangjin_shop"

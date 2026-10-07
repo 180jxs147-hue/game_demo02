@@ -1,11 +1,12 @@
-[gd_resource type="Resource" script_class="UnitData" load_steps=2 format=3 uid="uid://d3ar1fu712kj8"]
+[gd_resource type="Resource" script_class="UnitData" load_steps=3 format=3 uid="uid://d3ar1fu712kj8"]
 
 [ext_resource type="Script" uid="uid://eret7x2tfet4" path="res://Resources/UnitData.gd" id="1_data"]
+[ext_resource type="Texture2D" path="res://Resources/ImageFiles/gou_jian.png" id="2_icon"]
 
 [resource]
 script = ExtResource("1_data")
 name = "勾践"
-icon = null
+icon = ExtResource("2_icon")
 rarity = "epic"
 civilization = "dynasty"
 unit_class = "infantry"

@@ -89,19 +89,37 @@ const CHARACTER_NAMES_ZH = {
 	"RefugeeLeader": "流民首领",
 	"WuZhang": "伍长",
 	"YellowTurban": "黄巾军",
+	"YTArmy_soliders": "黄巾军",
 	"Player01": "指挥官",
+	"Player": "指挥官",
 	"Huangfusong": "皇甫嵩",
 	"System": "系统",
 	"Guide": "引导者",
 	"HanScout": "汉军斥候",
+	"Soldier": "汉军斥候",
 	"Eunuch": "宦官",
 	"ZhuJun": "朱儁",
 	"ZhangBao": "张宝",
 	"ZhangJue": "张角",
+	"ZhangJiao": "张角",
 	"YellowTurbanGeneral": "黄巾将领",
 	"RebelGeneral": "叛军将领",
 	"ZhangLiang": "张梁",
-	"Narrator": "旁白"
+	"CaoCao": "曹操",
+	"LiuBei": "刘备",
+	"SunJian": "孙坚",
+	"BoCai": "波才",
+	"MaYuanyi": "马元义",
+	"Narrator": "旁白",
+	# 第二章角色
+	"French_Peasant": "法国平民",
+	"English_Raider": "英军劫掠者",
+	"Chandos": "钱多斯",
+	"BlackPrince": "黑太子",
+	"Joan_of_Arc": "贞德",
+	"English_Gunner": "英军火枪手",
+	"French_Knight": "法国骑士",
+	"French_Gunner": "法国火枪手"
 }
 
 var _left_base_pos: Vector2
@@ -124,15 +142,14 @@ func _parse_float_tag(prefix: String, tags: PackedStringArray) -> float:
 
 
 func _find_texture_path(dir: String, base: String) -> String:
-	# 优先尝试直接加载 (假设 base 已经包含扩展名，或者不包含)
 	var exts = ["", ".png", ".jpg", ".jpeg", ".webp", ".tga"]
 	for ext in exts:
 		var path = dir + base + ext
-		if ResourceLoader.exists(path):
+		if ResourceLoader.exists(path) or FileAccess.file_exists(path):
 			return path
-	
-	# 如果找不到，尝试不区分大小写的匹配（仅限调试模式或非导出包，导出后 ResourceLoader.exists 通常大小写敏感）
-	# 在导出项目中，强烈建议文件名和代码中引用名保持完全一致（包括大小写）
+		var global_path = ProjectSettings.globalize_path(path)
+		if FileAccess.file_exists(global_path):
+			return path
 	return ""
 
 func _load_texture_any(path: String) -> Texture2D:
@@ -140,6 +157,11 @@ func _load_texture_any(path: String) -> Texture2D:
 		var tex = load(path)
 		if tex is Texture2D:
 			return tex
+	var real_path = ProjectSettings.globalize_path(path)
+	if FileAccess.file_exists(path) or FileAccess.file_exists(real_path):
+		var img = Image.load_from_file(real_path)
+		if img and not img.is_empty():
+			return ImageTexture.create_from_image(img)
 	return null
 
 
@@ -245,26 +267,30 @@ func apply_dialogue_line() -> void:
 		if portrait_path != "":
 			texture = _load_texture_any(portrait_path)
 		
-		var is_right = dialogue_line.tags.has("pos:right") or dialogue_line.tags.has("right")
-		var portrait_offset := _parse_offset_tag("portrait_offset:", dialogue_line.tags)
-		var portrait_scale := _parse_float_tag("portrait_scale:", dialogue_line.tags)
-		
-		if is_right:
-			if texture:
-				right_portrait.texture = texture
-				right_portrait.visible = true
-			right_portrait.position = _right_base_pos + portrait_offset
-			right_portrait.scale = Vector2(portrait_scale, portrait_scale)
-			right_portrait.modulate = Color(1, 1, 1, 1)      # Highlight
-			left_portrait.modulate = Color(0.5, 0.5, 0.5, 1) # Dim
+		if char_name in ["Narrator", "System"]:
+			left_portrait.modulate = Color(0.4, 0.4, 0.4, 0.6)
+			right_portrait.modulate = Color(0.4, 0.4, 0.4, 0.6)
 		else:
-			if texture:
-				left_portrait.texture = texture
-				left_portrait.visible = true
-			left_portrait.position = _left_base_pos + portrait_offset
-			left_portrait.scale = Vector2(portrait_scale, portrait_scale)
-			left_portrait.modulate = Color(1, 1, 1, 1)       # Highlight
-			right_portrait.modulate = Color(0.5, 0.5, 0.5, 1)# Dim
+			var is_right = dialogue_line.tags.has("pos:right") or dialogue_line.tags.has("right")
+			var portrait_offset := _parse_offset_tag("portrait_offset:", dialogue_line.tags)
+			var portrait_scale := _parse_float_tag("portrait_scale:", dialogue_line.tags)
+			
+			if is_right:
+				if texture:
+					right_portrait.texture = texture
+					right_portrait.visible = true
+				right_portrait.position = _right_base_pos + portrait_offset
+				right_portrait.scale = Vector2(portrait_scale, portrait_scale)
+				right_portrait.modulate = Color(1, 1, 1, 1)      # Highlight
+				left_portrait.modulate = Color(0.5, 0.5, 0.5, 1) # Dim
+			else:
+				if texture:
+					left_portrait.texture = texture
+					left_portrait.visible = true
+				left_portrait.position = _left_base_pos + portrait_offset
+				left_portrait.scale = Vector2(portrait_scale, portrait_scale)
+				left_portrait.modulate = Color(1, 1, 1, 1)       # Highlight
+				right_portrait.modulate = Color(0.5, 0.5, 0.5, 1)# Dim
 
 	dialogue_label.hide()
 	dialogue_label.dialogue_line = dialogue_line

@@ -7,9 +7,11 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="5_lishi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/ezei_youqi.tres" id="6_youqi"]
 
+[ext_resource type="Resource" path="res://Resources/DataFiles/zhang_bao.tres" id="chapter_zhang_bao"]
+
 [sub_resource type="Resource" id="UnitSpawn_Boss"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_liang")
+unit_data = ExtResource("chapter_zhang_bao")
 grid_pos = Vector2i(4, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_1"]
@@ -25,18 +27,20 @@ grid_pos = Vector2i(5, 2)
 [sub_resource type="Resource" id="UnitSpawn_Add1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("6_youqi")
-grid_pos = Vector2i(2, 2)
+grid_pos = Vector2i(1, 2)
 
 [sub_resource type="Resource" id="UnitSpawn_Add2"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("6_youqi")
-grid_pos = Vector2i(6, 2)
+grid_pos = Vector2i(7, 2)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_1_9"
-level_name = "汉军线 第 9 关 - 人公将军"
+level_name = "汉军线 第 9 关 - 地公将军"
 grid_width = 9
 grid_height = 6
+enemy_manpower_regen = 3.0
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Boss"), SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_Add1"), SubResource("UnitSpawn_Add2")])
 reward_pool_id = "han_late"
+shop_pool_id = "han_shop"

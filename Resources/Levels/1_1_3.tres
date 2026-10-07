@@ -7,6 +7,8 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="5_qimin"]
 [ext_resource type="Resource" uid="uid://dhr6o214wk8r3" path="res://Resources/DataFiles/taiping_daoshi.tres" id="6_daoshi"]
 
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="chapter_camp"]
+
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("4_youqi")
@@ -20,28 +22,30 @@ grid_pos = Vector2i(3, 2)
 [sub_resource type="Resource" id="UnitSpawn_5"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("3_lishi")
-grid_pos = Vector2i(2, 1)
+grid_pos = Vector2i(1, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_Add1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_qimin")
-grid_pos = Vector2i(4, 0)
+grid_pos = Vector2i(5, 0)
 
 [sub_resource type="Resource" id="UnitSpawn_Add2"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_qimin")
-grid_pos = Vector2i(4, 2)
+grid_pos = Vector2i(5, 2)
 
 [sub_resource type="Resource" id="UnitSpawn_Add3"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("6_daoshi")
+unit_data = ExtResource("chapter_camp")
 grid_pos = Vector2i(0, 1)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_1_3"
-level_name = "汉军线 第 3 关 - 宛城之战与疯狂战术"
+level_name = "汉军线 第 3 关 - 长社坚守"
 grid_width = 9
 grid_height = 6
+enemy_manpower_regen = 0.0
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_2"), SubResource("UnitSpawn_5"), SubResource("UnitSpawn_Add1"), SubResource("UnitSpawn_Add2"), SubResource("UnitSpawn_Add3")])
 reward_pool_id = "han_early"
+shop_pool_id = "han_shop"

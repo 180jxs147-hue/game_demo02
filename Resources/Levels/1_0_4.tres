@@ -38,3 +38,4 @@ level_id = "1_0_4"
 level_name = "序章 第 4 关 - 关键抉择点"
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_l7bdb"), SubResource("Resource_cwqy6"), SubResource("Resource_wln2l"), SubResource("Resource_rkhjh"), SubResource("Resource_s4uiy")])
 reward_pool_id = "generic_early"
+shop_pool_id = "generic_shop"

@@ -4,37 +4,44 @@
 [ext_resource type="Script" uid="uid://c3b5mflfglccw" path="res://Resources/UnitSpawn.gd" id="2_spawn"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/sun_jian.tres" id="3_sunjian"]
 [ext_resource type="Resource" uid="uid://dftd24kpmy2dq" path="res://Resources/DataFiles/sanhe_qishi.tres" id="4_sanhe"]
-[ext_resource type="Resource" uid="uid://di7a6p1bc0f2c" path="res://Resources/DataFiles/camp.tres" id="5_camp"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/granary.tres" id="5_camp"]
 
-[sub_resource type="Resource" id="UnitSpawn_Boss"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/han_caiguan.tres" id="chapter_han_caiguan"]
+
+[ext_resource type="Resource" path="res://Resources/DataFiles/danyang_bing.tres" id="chapter_danyang_bing"]
+
+[ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="chapter_shesheng_shi"]
+
+[sub_resource type="Resource" id="UnitSpawn_Garrison"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("3_sunjian")
+unit_data = ExtResource("chapter_han_caiguan")
 grid_pos = Vector2i(4, 1)
 
-[sub_resource type="Resource" id="UnitSpawn_Cav1"]
+[sub_resource type="Resource" id="UnitSpawn_Infantry"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_sanhe")
+unit_data = ExtResource("chapter_danyang_bing")
 grid_pos = Vector2i(3, 2)
 
-[sub_resource type="Resource" id="UnitSpawn_Cav2"]
+[sub_resource type="Resource" id="UnitSpawn_Archer"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_sanhe")
+unit_data = ExtResource("chapter_shesheng_shi")
 grid_pos = Vector2i(5, 2)
 
-[sub_resource type="Resource" id="Resource_Camp1"]
+[sub_resource type="Resource" id="Resource_Granary1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_camp")
 grid_pos = Vector2i(2, 0)
 
-[sub_resource type="Resource" id="Resource_Camp2"]
+[sub_resource type="Resource" id="Resource_Granary2"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_camp")
-grid_pos = Vector2i(6, 0)
+grid_pos = Vector2i(5, 0)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_2_2"
-level_name = "黄巾线 第 2 关 - 江东猛虎"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Boss"), SubResource("UnitSpawn_Cav1"), SubResource("UnitSpawn_Cav2"), SubResource("Resource_Camp1"), SubResource("Resource_Camp2")])
+level_name = "黄巾线 第 2 关 - 县城粮仓"
+enemy_manpower_regen = 1.0
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Garrison"), SubResource("UnitSpawn_Infantry"), SubResource("UnitSpawn_Archer"), SubResource("Resource_Granary1"), SubResource("Resource_Granary2")])
 reward_pool_id = "huangjin_early"
 shop_pool_id = "huangjin_shop"

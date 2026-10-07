@@ -7,6 +7,8 @@
 [ext_resource type="Resource" path="res://Resources/DataFiles/junguo_bing.tres" id="5_junguo"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/shesheng_shi.tres" id="6_shesheng"]
 
+[ext_resource type="Resource" path="res://Resources/DataFiles/changshui_huqi.tres" id="chapter_changshui_huqi"]
+
 [sub_resource type="Resource" id="UnitSpawn_1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("3_danyang")
@@ -14,12 +16,12 @@ grid_pos = Vector2i(4, 2)
 
 [sub_resource type="Resource" id="UnitSpawn_Add1"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_youqi")
+unit_data = ExtResource("chapter_changshui_huqi")
 grid_pos = Vector2i(3, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_Add2"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("4_youqi")
+unit_data = ExtResource("chapter_changshui_huqi")
 grid_pos = Vector2i(5, 1)
 
 [sub_resource type="Resource" id="UnitSpawn_Add3"]
@@ -43,7 +45,7 @@ level_id = "1_2_6"
 level_name = "黄巾线 第 6 关 - 广宗前线"
 grid_width = 9
 grid_height = 6
+enemy_manpower_regen = 5.0
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_1"), SubResource("UnitSpawn_Add1"), SubResource("UnitSpawn_Add2"), SubResource("UnitSpawn_Add3"), SubResource("UnitSpawn_Add4"), SubResource("UnitSpawn_Add5")])
 reward_pool_id = "huangjin_mid"
 shop_pool_id = "huangjin_shop"
-

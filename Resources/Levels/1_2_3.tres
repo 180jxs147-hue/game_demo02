@@ -8,39 +8,49 @@
 [ext_resource type="Resource" uid="uid://305j83uw7asa" path="res://Resources/DataFiles/yulin_lang.tres" id="6_yulin"]
 [ext_resource type="Resource" uid="uid://dmqkrq7ays640" path="res://Resources/DataFiles/shesheng_shi.tres" id="7_shesheng"]
 
-[sub_resource type="Resource" id="UnitSpawn_Liu"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("3_liubei")
-grid_pos = Vector2i(4, 0)
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_panshou.tres" id="chapter_huangjin_panshou"]
 
-[sub_resource type="Resource" id="UnitSpawn_Guan"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("4_guanyu")
-grid_pos = Vector2i(3, 1)
+[ext_resource type="Resource" path="res://Resources/DataFiles/huangjin_lishi.tres" id="chapter_huangjin_lishi"]
 
-[sub_resource type="Resource" id="UnitSpawn_Zhang"]
+[ext_resource type="Resource" path="res://Resources/DataFiles/taiping_daoshi.tres" id="chapter_taiping_daoshi"]
+
+[ext_resource type="Resource" path="res://Resources/DataFiles/camp.tres" id="chapter_camp"]
+
+[sub_resource type="Resource" id="UnitSpawn_RebelLeader"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("5_zhangfei")
+unit_data = ExtResource("chapter_huangjin_panshou")
+grid_pos = Vector2i(4, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_Lishi1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("chapter_huangjin_lishi")
+grid_pos = Vector2i(2, 1)
+
+[sub_resource type="Resource" id="UnitSpawn_Lishi2"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("chapter_huangjin_lishi")
+grid_pos = Vector2i(4, 3)
+
+[sub_resource type="Resource" id="UnitSpawn_Daoshi1"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("chapter_taiping_daoshi")
+grid_pos = Vector2i(1, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_Daoshi2"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("chapter_taiping_daoshi")
+grid_pos = Vector2i(5, 2)
+
+[sub_resource type="Resource" id="UnitSpawn_Camp"]
+script = ExtResource("2_spawn")
+unit_data = ExtResource("chapter_camp")
 grid_pos = Vector2i(5, 1)
-
-[sub_resource type="Resource" id="UnitSpawn_Guard1"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("6_yulin")
-grid_pos = Vector2i(2, 2)
-
-[sub_resource type="Resource" id="UnitSpawn_Guard2"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("6_yulin")
-grid_pos = Vector2i(6, 2)
-
-[sub_resource type="Resource" id="UnitSpawn_Archer"]
-script = ExtResource("2_spawn")
-unit_data = ExtResource("7_shesheng")
-grid_pos = Vector2i(4, 2)
 
 [resource]
 script = ExtResource("1_level")
 level_id = "1_2_3"
-level_name = "黄巾线 第 3 关 - 桃园三杰"
-enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_Liu"), SubResource("UnitSpawn_Guan"), SubResource("UnitSpawn_Zhang"), SubResource("UnitSpawn_Guard1"), SubResource("UnitSpawn_Guard2"), SubResource("UnitSpawn_Archer")])
+level_name = "黄巾线 第 3 关 - 黄巾内讧"
+enemy_manpower_regen = 2.0
+enemy_units = Array[ExtResource("2_spawn")]([SubResource("UnitSpawn_RebelLeader"), SubResource("UnitSpawn_Lishi1"), SubResource("UnitSpawn_Lishi2"), SubResource("UnitSpawn_Daoshi1"), SubResource("UnitSpawn_Daoshi2"), SubResource("UnitSpawn_Camp")])
 reward_pool_id = "huangjin_early"
+shop_pool_id = "huangjin_shop"

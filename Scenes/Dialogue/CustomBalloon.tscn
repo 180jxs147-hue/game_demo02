@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3 uid="uid://73jm5qjy52vq"]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" uid="uid://dsw5tufclj07m" path="res://Scenes/Dialogue/CustomBalloon.gd" id="1_36de5"]
 [ext_resource type="PackedScene" uid="uid://ckvgyvclnwggo" path="res://addons/dialogue_manager/dialogue_label.tscn" id="2_a8ve6"]

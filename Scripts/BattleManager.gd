@@ -86,6 +86,7 @@ var _adjacency_lines_node: Node2D # 用于绘制连线
 var _card_slot_scene = preload("res://Scenes/CardSlot.tscn")
 var _battle_presentation: Node
 const _BENCH_CARD_SIZE := Vector2(126, 180) ## 备战区卡牌的显示尺寸（CardSlot 原始 280x400 等比缩小，适配底栏高度）
+
 var _reward_primary_button_texture: Texture2D = preload("res://Assets/UI/Battle/reward_button_primary_v2.png")
 var _reward_resolved: bool = false
 var _reward_action_buttons: Array = []
@@ -482,10 +483,18 @@ func start_level(index: int):
 		if units_container:
 			for unit in units_container.get_children():
 				if unit.is_queued_for_deletion(): continue
+				if not unit.has_method("reset_state"): continue
+				# 先判断上一场的阵亡状态；reset_state 会将生命恢复到满值。
+				var was_dead: bool = unit.current_hp <= 0.0 or (unit.data and unit.data.is_injured)
+				if was_dead:
+					if unit.data:
+						unit.data.is_injured = true
+					unit.is_deployed = false
+					unit.in_hand = false
+					unit.set_bench_hidden(true)
 				
 				# 重置状态机和数值
-				if unit.has_method("reset_state"):
-					unit.reset_state()
+				unit.reset_state()
 				
 				# 确保重新注册到 GridManager
 				if unit.is_deployed and "stored_grid_pos" in unit:
@@ -757,6 +766,8 @@ func _process(_delta):
 		var regen = GameState.get_relic_effect_value("manpower_regen")
 		if regen > 0:
 			modify_manpower(regen * _delta)
+	if current_level_config and current_level_config.enemy_manpower_regen > 0.0:
+		modify_enemy_manpower(current_level_config.enemy_manpower_regen * _delta)
 	
 	# 改为检测双方存活单位数量
 	var friendly_alive = _count_alive_units(true)
@@ -788,6 +799,8 @@ func _count_alive_units(is_friendly: bool) -> int:
 		if is_instance_valid(unit) and not unit.is_queued_for_deletion():
 			# 必须是存活的 (假设 Unit 有 current_hp)
 			if "current_hp" in unit and unit.current_hp > 0:
+				if not is_friendly and unit.data and unit.data.tags.has("objective"):
+					continue
 				# 修正：只计算已部署的单位 (is_deployed == true)
 				# 备战区的单位不计入存活数
 				if unit.get("is_deployed") == true:
@@ -1070,6 +1083,7 @@ func _is_valid_target(unit: Node2D) -> bool:
 	if "current_hp" in unit and unit.current_hp <= 0: return false
 	# 装备无法被选为目标
 	if "data" in unit and unit.data and unit.data.unit_class == "equipment": return false
+	if "data" in unit and unit.data and unit.data.tags.has("objective"): return false
 	return true
 
 func _get_unit_occupied_rows(unit: Node2D) -> Array:
@@ -1916,61 +1930,56 @@ func _show_rewards():
 		
 	reward_container.visible = true
 	
-	# --- 根据关卡配置与 RewardPool 抽取奖励 ---
+	# --- 纯池化驱动：关卡战利品完全由 RewardPoolData 维护，杜绝全库随机与黑名单过滤 ---
 	var candidates: Array = []
-	var used_pool := false
 	
-	# 1. 优先尝试使用 RewardPoolDatabase + 当前关卡的 reward_pool_id
+	# 1. 尝试从 RewardPoolDatabase 获取关卡配置的奖励池
 	var pool_id := ""
 	if current_level_config and "reward_pool_id" in current_level_config:
 		pool_id = current_level_config.reward_pool_id
+	var reward_db: RewardPoolDatabase = load("res://Resources/RewardPoolDatabase.tres")
+	var target_pool: RewardPoolData = null
+	if reward_db and pool_id != "":
+		target_pool = reward_db.get_pool_by_id(pool_id)
 	
-	if pool_id != "":
-		var reward_db: RewardPoolDatabase = load("res://Resources/RewardPoolDatabase.tres")
-		if reward_db:
-			var reward_pool := reward_db.get_pool_by_id(pool_id)
-			if reward_pool and not reward_pool.entries.is_empty():
-				used_pool = true
-				for entry in reward_pool.entries:
-					var prob: float = float(entry.get("prob", 0.0))
-					if prob <= 0.0: continue
-					
-					var type = entry.get("type", "unit")
-					# 兼容旧配置：如果没有 type 且有 unit，认为是 unit
-					if not entry.has("type") and entry.has("unit"):
-						type = "unit"
-						
-					if type == "unit":
-						var unit: UnitData = entry.get("unit", null)
-						if unit:
-							var item = { "type": "unit", "data": unit }
-							candidates.append({ "item": item, "weight": prob })
-
-					elif type == "upgrade_row":
-						if GameState and GameState.current_rows < GameConst.MAP_ROWS:
-							candidates.append({ "item": { "type": "upgrade_row", "data": null }, "weight": prob })
-							
-					elif type == "upgrade_col":
-						if GameState and GameState.current_cols < GameConst.MAP_COLUMNS:
-							candidates.append({ "item": { "type": "upgrade_col", "data": null }, "weight": prob })
-	
-	# 2. 如果没配置池或池为空，退回到 UnitDatabase 均匀分布
-	if not used_pool:
-		var db = load("res://Resources/UnitDatabase.tres")
-		if not db:
-			print("DEBUG: Failed to load UnitDatabase")
-			return
-		
-		if db.units.is_empty():
-			print("DEBUG: UnitDatabase is empty")
-			return
-		
-		for unit in db.units:
-			if unit:
-				var item = { "type": "unit", "data": unit }
-				candidates.append({ "item": item, "weight": 1.0 })
+	# 2. 纯池化保底：若关卡未配置池或池为空，严格按关卡所属路线安全退回到指定标准奖励池
+	if not target_pool or target_pool.entries.is_empty():
+		push_warning("[BattleManager] Reward pool '%s' is missing or empty; falling back to route default pool." % pool_id)
+		var fallback_pool_id := "generic_early"
+		if current_level_config:
+			var lvl_id := current_level_config.level_id
+			if lvl_id.begins_with("1_1_"):
+				fallback_pool_id = "han_early"
+			elif lvl_id.begins_with("1_2_"):
+				fallback_pool_id = "huangjin_early"
 			else:
-				print("DEBUG: Found null unit in database")
+				fallback_pool_id = "generic_early"
+		if reward_db:
+			target_pool = reward_db.get_pool_by_id(fallback_pool_id)
+
+	# 3. 严格由目标奖励池填充候选卡牌 (绝不访问 UnitDatabase，完全受池子资源控制)
+	if target_pool and not target_pool.entries.is_empty():
+		for entry in target_pool.entries:
+			var prob: float = float(entry.get("prob", 0.0))
+			if prob <= 0.0: continue
+			
+			var type = entry.get("type", "unit")
+			if not entry.has("type") and entry.has("unit"):
+				type = "unit"
+				
+			if type == "unit":
+				var unit: UnitData = entry.get("unit", null)
+				if unit:
+					var item = { "type": "unit", "data": unit }
+					candidates.append({ "item": item, "weight": prob })
+
+			elif type == "upgrade_row":
+				if GameState and GameState.current_rows < GameConst.MAP_ROWS:
+					candidates.append({ "item": { "type": "upgrade_row", "data": null }, "weight": prob })
+					
+			elif type == "upgrade_col":
+				if GameState and GameState.current_cols < GameConst.MAP_COLUMNS:
+					candidates.append({ "item": { "type": "upgrade_col", "data": null }, "weight": prob })
 	
 	# 3. 加入战线扩充选项 (已移至 RewardPool 配置中控制)
 	# if GameState:
@@ -2325,12 +2334,7 @@ func _spawn_enemy(spawn: UnitSpawn, map_cols: int = -1, map_rows: int = -1):
 			new_unit.modulate = Color.WHITE
 		else:
 			push_error("Failed to place enemy unit at " + str(spawn.grid_pos))
-			# 放置失败也设为 deployed 只是为了测试，或者应该删除？
-			# 暂时强制设为 deployed 以免无敌
-			new_unit.is_deployed = true
-			new_unit.position = GridManager.grid_to_world(spawn.grid_pos) # 强行放置
-			new_unit.stored_grid_pos = spawn.grid_pos
-			new_unit.modulate = Color.WHITE
+			new_unit.queue_free()
 
 func _enemy_can_place(data: UnitData, grid_pos: Vector2i, max_cols: int, max_rows: int) -> bool:
 	for part in data.grid_shape:
@@ -2437,7 +2441,7 @@ func _refresh_bench_ui():
 		if not (data_obj is UnitData):
 			continue
 		var data: UnitData = data_obj
-		var key = data.resource_path if data.resource_path != "" else data.name
+		var key = (data.resource_path if data.resource_path != "" else data.name) + ("|injured" if data.is_injured else "|healthy")
 		if not groups.has(key):
 			groups[key] = { "data": data, "units": [] }
 		groups[key]["units"].append(unit)
@@ -2460,7 +2464,17 @@ func _refresh_bench_ui():
 			slot.setup_stacked(data, units.size())
 		else:
 			slot.setup(data)
-		if slot.has_signal("drag_requested"):
+		if data.is_injured:
+			var injury_badge := Label.new()
+			injury_badge.text = "阵亡 · 待救治"
+			injury_badge.position = Vector2(5, 5)
+			injury_badge.add_theme_color_override("font_color", Color("fff0df"))
+			injury_badge.add_theme_color_override("font_outline_color", Color("6c2018"))
+			injury_badge.add_theme_constant_override("outline_size", 4)
+			injury_badge.add_theme_font_size_override("font_size", 15)
+			injury_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
+			wrapper.add_child(injury_badge)
+		if not data.is_injured and slot.has_signal("drag_requested"):
 			slot.drag_requested.connect(func(_d):
 				if units.size() <= 0:
 					return

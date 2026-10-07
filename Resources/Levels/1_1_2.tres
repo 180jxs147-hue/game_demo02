@@ -6,20 +6,22 @@
 [ext_resource type="Resource" uid="uid://dhr6o214wk8r3" path="res://Resources/DataFiles/taiping_daoshi.tres" id="5_daoshi"]
 [ext_resource type="Resource" path="res://Resources/DataFiles/cangtian_qimin.tres" id="6_qimin"]
 
+[ext_resource type="Resource" path="res://Resources/DataFiles/ma_yuanyi.tres" id="chapter_ma_yuanyi"]
+
 [sub_resource type="Resource" id="Resource_front1"]
 script = ExtResource("2_spawn")
-unit_data = ExtResource("6_qimin")
-grid_pos = Vector2i(0, 0)
+unit_data = ExtResource("chapter_ma_yuanyi")
+grid_pos = Vector2i(0, 1)
 
 [sub_resource type="Resource" id="Resource_front2"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("6_qimin")
-grid_pos = Vector2i(0, 1)
+grid_pos = Vector2i(1, 1)
 
 [sub_resource type="Resource" id="Resource_front3"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("6_qimin")
-grid_pos = Vector2i(0, 2)
+grid_pos = Vector2i(1, 2)
 
 [sub_resource type="Resource" id="Resource_front4"]
 script = ExtResource("2_spawn")
@@ -29,17 +31,17 @@ grid_pos = Vector2i(0, 3)
 [sub_resource type="Resource" id="Resource_mid1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_daoshi")
-grid_pos = Vector2i(1, 1)
+grid_pos = Vector2i(2, 1)
 
 [sub_resource type="Resource" id="Resource_mid2"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("5_daoshi")
-grid_pos = Vector2i(1, 2)
+grid_pos = Vector2i(2, 2)
 
 [sub_resource type="Resource" id="Resource_back1"]
 script = ExtResource("2_spawn")
 unit_data = ExtResource("4_5ryu5")
-grid_pos = Vector2i(2, 1)
+grid_pos = Vector2i(3, 1)
 
 [resource]
 script = ExtResource("1_level")
@@ -47,6 +49,7 @@ level_id = "1_1_2"
 level_name = "汉军线 第 2 关 - 清除内应与混沌之种"
 grid_width = 5
 grid_height = 4
+enemy_manpower_regen = 0.0
 enemy_units = Array[ExtResource("2_spawn")]([SubResource("Resource_front1"), SubResource("Resource_front2"), SubResource("Resource_front3"), SubResource("Resource_front4"), SubResource("Resource_mid1"), SubResource("Resource_mid2"), SubResource("Resource_back1")])
 reward_pool_id = "han_early"
 shop_pool_id = "han_shop"
