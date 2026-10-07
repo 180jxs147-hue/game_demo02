@@ -299,6 +299,12 @@ func enter_camp_then_level(level_id: String):
 	print("GameState: enter_camp_then_level called with ", level_id)
 	next_level_id_from_camp = level_id
 	skip_intro = true
+	var level_db = get_level_database()
+	if level_db:
+		var idx = level_db.get_index_by_id(level_id)
+		if idx != -1:
+			selected_level_index = idx
+	trigger_autosave()
 	get_tree().paused = false # Safety unpause
 	get_tree().change_scene_to_file("res://Scenes/CampShop.tscn")
 

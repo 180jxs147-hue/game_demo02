@@ -248,7 +248,7 @@ func style_action_button(button: Button, primary: bool):
 		button.add_theme_stylebox_override(state, style)
 	button.add_theme_color_override("font_color", Visuals.PAPER)
 	button.add_theme_color_override("font_hover_color", Color.WHITE)
-	button.add_theme_font_size_override("font_size", 22 if primary else 16)
+	button.add_theme_font_size_override("font_size", 20 if primary else 16)
 
 func place(node: Control, rect: Rect2):
 	node.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
@@ -264,8 +264,39 @@ func layout():
 	place(panels.Top, Rect2(0, 0, w, 86))
 	place(panels.Synergy, Rect2(14, 116, 210, dock_y - 128))
 	place(panels.Dock, Rect2(0, dock_y, w, 240))
-	place(panels.Details, Rect2(w * 0.39, dock_y + 14, w * 0.36, 212))
-	place(detail_backdrop, Rect2(w * 0.39 + 8, dock_y + 22, w * 0.36 - 16, 196))
+
+	# 1. 右侧操作按钮区：改成单列垂直排列，缩短红色开始按钮，三者等宽对齐，节约横向空间
+	var btn_w := 156.0
+	var btn_x := w - btn_w - 24.0
+	var action := Rect2(btn_x, dock_y + 26, btn_w, 52)
+	place(hud.get_node("StartButton"), action)
+	style_action_button(hud.get_node("StartButton"), true)
+	if hud.has_node("FinishBattleButton"):
+		place(hud.get_node("FinishBattleButton"), action)
+		style_action_button(hud.get_node("FinishBattleButton"), true)
+	place(hud.get_node("SaveButton"), Rect2(btn_x, dock_y + 88, btn_w, 46))
+	place(hud.get_node("TopMenuButton"), Rect2(btn_x, dock_y + 144, btn_w, 46))
+	style_action_button(hud.get_node("SaveButton"), false)
+	style_action_button(hud.get_node("TopMenuButton"), false)
+
+	# 2. 中间卡牌详情区：向右平移对齐至按钮区左侧，宽度自适应
+	var details_w := minf(540.0, w * 0.32)
+	var details_x := btn_x - 20.0 - details_w
+	place(panels.Details, Rect2(details_x, dock_y + 14, details_w, 212))
+	place(detail_backdrop, Rect2(details_x + 8, dock_y + 22, details_w - 16, 196))
+	card_preview.position = Vector2(details_x + 11, dock_y + 26)
+	card_preview.scale = Vector2.ONE * 0.47
+	place(detail_root, Rect2(details_x + 154, dock_y + 34, details_w - 168, 182))
+
+	# 3. 左侧手牌备战区：充分利用节约的横向空间，宽度延伸至详情区左侧
+	var bench_w := maxf(200.0, details_x - 32.0 - 16.0)
+	place(battle.bench_panel, Rect2(32, dock_y + 20, bench_w, 208))
+	var bench_title := battle.bench_panel.get_node_or_null("VBox/Title") as Label
+	if bench_title:
+		bench_title.add_theme_font_size_override("font_size", 16)
+		bench_title.add_theme_color_override("font_color", Visuals.PAPER)
+	place(captions.Hint, Rect2(164, dock_y + 20, 420, 24))
+
 	place(header_plates.Title, Rect2(20, 14, 170, 54))
 	place(captions.Title, Rect2(20, 18, 170, 42))
 	captions.Title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -278,8 +309,6 @@ func layout():
 	place(header_plates.EnemyPower, Rect2(w * 0.60, 14, w * 0.18, 54))
 	place(header_plates.Log, Rect2(w - 246, 14, 150, 54))
 	place(header_plates.Speed, Rect2(w - 90, 14, 70, 54))
-	place(battle.manpower_label, Rect2(w * 0.20, 24, w * 0.16, 34))
-	place(battle.enemy_manpower_label, Rect2(w * 0.60, 24, w * 0.18, 34))
 	battle.manpower_label.add_theme_color_override("font_color", Color("9bd0ab"))
 	battle.enemy_manpower_label.add_theme_color_override("font_color", Color("e49b87"))
 	battle.manpower_label.add_theme_color_override("font_outline_color", Color(0.02, 0.015, 0.01, 0.95))
@@ -288,30 +317,13 @@ func layout():
 	battle.enemy_manpower_label.add_theme_constant_override("outline_size", 2)
 	battle.manpower_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	battle.enemy_manpower_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	place(battle.manpower_label, Rect2(w * 0.20, 24, w * 0.16, 34))
+	place(battle.enemy_manpower_label, Rect2(w * 0.60, 24, w * 0.18, 34))
 	place(phase, Rect2(w * 0.38, 12, w * 0.24, 48))
 	phase.add_theme_font_size_override("font_size", 26)
 	phase.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	place(hud.get_node("BattleLogButton"), Rect2(w - 228, 23, 132, 40))
 	place(hud.get_node("BattleSpeedButton"), Rect2(w - 84, 23, 66, 40))
-	place(battle.bench_panel, Rect2(32, dock_y + 20, w * 0.36 - 40, 208))
-	var bench_title := battle.bench_panel.get_node_or_null("VBox/Title") as Label
-	if bench_title:
-		bench_title.add_theme_font_size_override("font_size", 16)
-		bench_title.add_theme_color_override("font_color", Visuals.PAPER)
-	place(captions.Hint, Rect2(164, dock_y + 20, 420, 24))
-	card_preview.position = Vector2(w * 0.39 + 11, dock_y + 26)
-	card_preview.scale = Vector2.ONE * 0.47
-	place(detail_root, Rect2(w * 0.39 + 154, dock_y + 34, w * 0.36 - 168, 182))
-	var action := Rect2(w - 360, dock_y + 26, 336, 58)
-	place(hud.get_node("StartButton"), action)
-	style_action_button(hud.get_node("StartButton"), true)
-	if hud.has_node("FinishBattleButton"):
-		place(hud.get_node("FinishBattleButton"), action)
-		style_action_button(hud.get_node("FinishBattleButton"), true)
-	place(hud.get_node("SaveButton"), Rect2(w - 360, dock_y + 100, 156, 48))
-	place(hud.get_node("TopMenuButton"), Rect2(w - 180, dock_y + 100, 156, 48))
-	style_action_button(hud.get_node("SaveButton"), false)
-	style_action_button(hud.get_node("TopMenuButton"), false)
 	# Scale the combined board once. Unequal armies NEVER scale independently.
 	var cols: int = GridManager.playable_columns
 	var rows: int = GridManager.playable_rows

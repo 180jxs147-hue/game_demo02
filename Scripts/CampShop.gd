@@ -67,7 +67,7 @@ func _load_shop_config():
 
 		# 纯池化保底：若关卡未明确指定或池子未获取到，严格按路线分配对应标准商店池
 		if not current_shop_pool or current_shop_pool.entries.is_empty():
-			var lvl_id := config_to_use.level_id if config_to_use and "level_id" in config_to_use else ""
+			var lvl_id: String = config_to_use.level_id if (config_to_use and "level_id" in config_to_use) else ""
 			if lvl_id.begins_with("1_1_"):
 				current_shop_pool = shop_db.get_pool_by_id("han_shop")
 			elif lvl_id.begins_with("1_2_"):
@@ -361,39 +361,22 @@ func _on_next_level_pressed():
 	var target_level_id = ""
 	var is_from_dialogue = false
 	
-	# Prevent loop: If pending ID is same as current level, ignore it
 	var level_db = GameState.get_level_database()
 	if GameState.next_level_id_from_camp != "":
-		var pending_id = GameState.next_level_id_from_camp
-		var current_level_id = ""
-		if level_db:
-			var lvl = level_db.get_level(GameState.selected_level_index)
-			if lvl: current_level_id = lvl.level_id
-			
-		if pending_id == current_level_id:
-			print("CampShop: Pending ID same as current. Ignoring to prevent loop.")
-			GameState.next_level_id_from_camp = ""
-		else:
-			target_level_id = pending_id
-			is_from_dialogue = true
-			print("CampShop: Using next_level_id_from_camp: ", target_level_id)
+		target_level_id = GameState.next_level_id_from_camp
+		GameState.next_level_id_from_camp = ""
+		is_from_dialogue = true
+		print("CampShop: Using next_level_id_from_camp: ", target_level_id)
 	
 	if target_level_id == "":
-		# 正常流程：当前关卡的下一关
 		if not level_db: 
 			print("CampShop: No level database")
 			return
 		
 		var current_idx = GameState.selected_level_index
-		var next_idx = current_idx + 1
-		print("CampShop: Calculating next level. Current: ", current_idx, " Next: ", next_idx)
-		
-		if next_idx < level_db.levels.size():
-			var next_level_data = level_db.levels[next_idx]
-			target_level_id = next_level_data.level_id
-			# 设置 pending ID 以便 BattleManager 播放剧情
-			GameState.next_level_id_from_camp = target_level_id
-			print("CampShop: Calculated next level ID: ", target_level_id)
+		if current_idx < level_db.levels.size():
+			target_level_id = level_db.levels[current_idx].level_id
+			print("CampShop: Using current level index ID: ", target_level_id)
 	
 	if target_level_id != "":
 		# 更新 GameState 索引，确保加载正确的环境
@@ -401,15 +384,11 @@ func _on_next_level_pressed():
 			var idx = level_db.get_index_by_id(target_level_id)
 			if idx != -1:
 				GameState.selected_level_index = idx
-				# GameState.save_progress() # Deprecated: RAM only
 				print("CampShop: Saved progress. Selected Index: ", idx)
 		
-		# 如果是从剧情跳转过来的（例如 1-0-2 -> Camp -> 1-0-2），
-		# 我们希望跳过该关卡的 Intro（因为已经播过了）。
-		# 强制设置 skip_intro = true，防止因存档或其他原因丢失标记。
-		if is_from_dialogue:
-			GameState.skip_intro = true
-			print("CampShop: Forcing skip_intro = true for pending level")
+		# 在营地出征前已完成剧情，进战斗后跳过重复 Intro
+		GameState.skip_intro = true
+		print("CampShop: Forcing skip_intro = true for pending level")
 		
 		print("CampShop: Changing scene to Battle.tscn")
 		get_tree().change_scene_to_file("res://Scenes/Battle.tscn")

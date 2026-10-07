@@ -560,15 +560,15 @@ func _input(event):
 		if event.keycode == KEY_F2:
 			start_intro_dialogue()
 
-func start_intro_dialogue():
+func start_intro_dialogue() -> bool:
 	if _intro_dialogue_started:
 		return true
-	# 只有在第一关（index 0）时才播放开场剧情
-	if level_index != 0:
+	if not current_level_config:
 		return false
 
-	# 使用 1_0_1.dialogue 而不是 level1.dialogue，以便统一管理
-	var dialogue_path = BattleManager.get_dialogue_path_by_id("1_0_1")
+	var dialogue_path = BattleManager.get_dialogue_path_by_id(current_level_config.level_id)
+	if dialogue_path == "":
+		return false
 	var resource = load(dialogue_path)
 	var balloon_scene = load("res://Scenes/Dialogue/CustomBalloon.tscn")
 	if resource and balloon_scene:
@@ -577,7 +577,7 @@ func start_intro_dialogue():
 		DialogueManager.show_dialogue_balloon_scene(balloon_scene, resource, "start", [self])
 		return true
 	else:
-		push_error("Dialogue resource or Balloon scene not found!")
+		push_error("Dialogue resource or Balloon scene not found: " + dialogue_path)
 		return false
 
 func _start_intro_or_tutorial():
@@ -590,7 +590,7 @@ func _start_intro_or_tutorial():
 		GameState.skip_intro = false
 		_check_tutorial()
 		return
-	if level_index == 0 and start_intro_dialogue():
+	if start_intro_dialogue():
 		return
 	_check_tutorial()
 
@@ -1268,8 +1268,10 @@ func get_next_level_id() -> String:
 	if level_database and current_level_config:
 		if current_level_config.level_id == "1_1_10" or current_level_config.level_id == "1_2_8":
 			return "1_3_1"
-		if current_level_config.level_id == "1_3_1" or current_level_config.level_id == "1_1_3_side":
+		if current_level_config.level_id == "1_3_1":
 			return ""
+		if current_level_config.level_id == "1_1_3_side":
+			return "1_1_3"
 		var current_idx = level_database.get_index_by_id(current_level_config.level_id)
 		if current_idx != -1 and current_idx + 1 < level_database.levels.size():
 			return level_database.levels[current_idx + 1].level_id
@@ -1344,14 +1346,15 @@ func show_victory_dialogue():
 		_proceed_to_next_level_direct()
 
 func _proceed_to_next_level_direct():
-	if level_database and current_level_config:
-		var current_idx = level_database.get_index_by_id(current_level_config.level_id)
-		if current_idx != -1 and current_idx + 1 < level_database.levels.size():
-			start_level(current_idx + 1)
-		else:
-			# 没有下一关，回到主菜单 (Demo 结束)
-			get_tree().paused = false
-			get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
+	var next_id = get_next_level_id()
+	if next_id != "" and level_database:
+		var next_idx = level_database.get_index_by_id(next_id)
+		if next_idx != -1:
+			start_level(next_idx)
+			return
+	# 没有下一关，回到主菜单 (Demo 结束)
+	get_tree().paused = false
+	get_tree().change_scene_to_file("res://Scenes/MainMenu.tscn")
 
 # 供对话调用的接口：直接发放单位
 func grant_unit(unit_identifier: String):
@@ -2186,6 +2189,20 @@ func _apply_reward_button_art(button: Button, texture: Texture2D):
 	button.add_theme_color_override("font_outline_color", Color(0.08, 0.045, 0.02, 1))
 	button.add_theme_constant_override("outline_size", 2)
 
+func _advance_progress_and_autosave():
+	# 战利品三选一完成时，当前战斗已彻底通关，关卡进度立即推进并自动存档
+	if GameState:
+		var next_id = get_next_level_id()
+		if next_id != "":
+			if not level_database:
+				level_database = GameState.get_level_database()
+			if level_database:
+				var next_idx = level_database.get_index_by_id(next_id)
+				if next_idx != -1:
+					GameState.selected_level_index = next_idx
+					print("[BattleManager] Reward resolved: Advanced level progress to next level '%s' (index %d)." % [next_id, next_idx])
+		GameState.trigger_autosave()
+
 func _on_reward_sold(item: Dictionary):
 	if _reward_resolved:
 		return
@@ -2205,8 +2222,7 @@ func _on_reward_sold(item: Dictionary):
 	
 	if GameState:
 		GameState.add_run_gold(sell_value)
-		# 触发自动存档
-		GameState.trigger_autosave()
+		_advance_progress_and_autosave()
 		
 	# 隐藏奖励界面
 	reward_container.visible = false
@@ -2256,7 +2272,7 @@ func _on_reward_selected(item: Dictionary):
 			GameState.current_cols = min(GameState.current_cols + 1, GameConst.MAP_COLUMNS)
 
 	if GameState:
-		GameState.trigger_autosave()
+		_advance_progress_and_autosave()
 
 	# 隐藏奖励界面
 	reward_container.visible = false
